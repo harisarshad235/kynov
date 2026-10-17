@@ -26,6 +26,7 @@ export async function ensureEnterpriseSchema(dbInstance?: ReturnType<typeof getD
     sql`ALTER TABLE notifications ADD COLUMN link_url TEXT`,
     sql`ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'CREDENTIALS'`,
     sql`ALTER TABLE users ADD COLUMN provider_id TEXT`,
+    sql`ALTER TABLE projects ADD COLUMN organization_id TEXT`,
   ];
 
   for (const alterSql of columnsToAdd) {
@@ -37,6 +38,37 @@ export async function ensureEnterpriseSchema(dbInstance?: ReturnType<typeof getD
   }
 
   // 2. Table creations
+  try {
+    await db.run(sql`
+      CREATE TABLE IF NOT EXISTS organizations (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        logo_url TEXT,
+        owner_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        plan TEXT DEFAULT 'team',
+        created_at INTEGER DEFAULT (unixepoch() * 1000) NOT NULL,
+        updated_at INTEGER DEFAULT (unixepoch() * 1000) NOT NULL
+      )
+    `);
+  } catch {
+    // Ignore
+  }
+
+  try {
+    await db.run(sql`
+      CREATE TABLE IF NOT EXISTS organization_members (
+        id TEXT PRIMARY KEY NOT NULL,
+        organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        role TEXT NOT NULL DEFAULT 'MEMBER',
+        created_at INTEGER DEFAULT (unixepoch() * 1000) NOT NULL
+      )
+    `);
+  } catch {
+    // Ignore
+  }
+
   try {
     await db.run(sql`
       CREATE TABLE IF NOT EXISTS issue_comments (
@@ -192,6 +224,51 @@ export async function ensureEnterpriseSchema(dbInstance?: ReturnType<typeof getD
         }
       }
     }
+  } catch {
+    // Ignore
+  }
+
+  // 5. Multi-tenancy: Organization Indexes & Auto-Migration
+  const orgIndexes = [
+    sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_organizations_slug ON organizations(slug)`,
+    sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_org_members_org_user ON organization_members(organization_id, user_id)`,
+    sql`CREATE INDEX IF NOT EXISTS idx_org_members_user ON organization_members(user_id)`,
+    sql`CREATE INDEX IF NOT EXISTS idx_projects_org ON projects(organization_id)`,
+  ];
+
+  for (const idxSql of orgIndexes) {
+    try {
+      await db.run(idxSql);
+    } catch {
+      // Ignore
+    }
+  }
+
+  // 6. Multi-tenancy: Auto-seed default organization & backfill existing projects and users
+  try {
+    await db.run(sql`
+      INSERT OR IGNORE INTO organizations (id, name, slug, owner_id, plan)
+      VALUES ('org-kynov', 'Kynov Technologies', 'kynov', NULL, 'enterprise')
+    `);
+
+    // Assign owner to admin user if exists
+    await db.run(sql`
+      UPDATE organizations
+      SET owner_id = (SELECT id FROM users WHERE role = 'Admin' ORDER BY created_at ASC LIMIT 1)
+      WHERE id = 'org-kynov' AND owner_id IS NULL
+    `);
+
+    // Backfill unassigned projects to default organization
+    await db.run(sql`
+      UPDATE projects SET organization_id = 'org-kynov' WHERE organization_id IS NULL OR organization_id = ''
+    `);
+
+    // Backfill all current users as members of the default organization
+    await db.run(sql`
+      INSERT OR IGNORE INTO organization_members (id, organization_id, user_id, role)
+      SELECT 'om-kynov-' || id, 'org-kynov', id, CASE WHEN role = 'Admin' THEN 'OWNER' ELSE 'MEMBER' END
+      FROM users
+    `);
   } catch {
     // Ignore
   }

@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { eq, desc, sql } from 'drizzle-orm';
 import { getDb } from '@/lib/db';
 import { requireRole, getCurrentUser } from '@/lib/auth';
@@ -268,11 +269,15 @@ export async function createProject(data: {
   description?: string;
   category?: string;
   leadId?: string;
+  organizationId?: string;
 }) {
   try {
     const currentUser = await requireRole(['Admin', 'Member']);
     const db = getDb();
     await ensureProjectRbacTables(db);
+
+    const cookieStore = await cookies();
+    const effectiveOrgId = data.organizationId || cookieStore.get('kynov_active_org')?.value || 'org-kynov';
 
     const cleanKey = data.key.trim().toUpperCase();
     const cleanName = sanitizePlainText(data.name.trim());
@@ -304,7 +309,7 @@ export async function createProject(data: {
     const projectId = `proj-${cleanKey.toLowerCase()}-${Date.now().toString(36)}`;
     const effectiveLeadId = data.leadId || currentUser.id;
 
-    // 1. Create project
+    // 1. Create project with organizationId
     await db.insert(projects).values({
       id: projectId,
       key: cleanKey,
@@ -312,6 +317,7 @@ export async function createProject(data: {
       description: cleanDescription,
       category: cleanCategory,
       leadId: effectiveLeadId,
+      organizationId: effectiveOrgId,
       status: 'active',
     });
 
@@ -491,13 +497,16 @@ export interface OrganizationProjectSummary extends Project {
  * Fetch all organization projects with member counts and lead info.
  * Accessible to all authenticated workspace members for directory visibility.
  */
-export async function getAllOrganizationProjectsAction(): Promise<OrganizationProjectSummary[]> {
+export async function getAllOrganizationProjectsAction(orgId?: string): Promise<OrganizationProjectSummary[]> {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) return [];
 
     const db = getDb();
     await ensureProjectRbacTables(db);
+
+    const cookieStore = await cookies();
+    const targetOrgId = orgId || cookieStore.get('kynov_active_org')?.value || 'org-kynov';
 
     const rows = await db.all<any>(sql`
       SELECT
@@ -507,6 +516,7 @@ export async function getAllOrganizationProjectsAction(): Promise<OrganizationPr
         p.description,
         p.category,
         p.lead_id as leadId,
+        p.organization_id as organizationId,
         p.status,
         p.created_at as createdAt,
         p.updated_at as updatedAt,
@@ -517,7 +527,8 @@ export async function getAllOrganizationProjectsAction(): Promise<OrganizationPr
         (SELECT COUNT(*) FROM project_members pm WHERE pm.project_id = p.id) as memberCount
       FROM projects p
       LEFT JOIN users u ON p.lead_id = u.id
-      WHERE (p.is_archived = 0 OR (p.is_archived IS NULL AND p.status != 'archived'))
+      WHERE (p.organization_id = ${targetOrgId} OR (${targetOrgId} = 'org-kynov' AND (p.organization_id IS NULL OR p.organization_id = '')))
+        AND (p.is_archived = 0 OR (p.is_archived IS NULL AND p.status != 'archived'))
       ORDER BY p.name ASC
     `);
 

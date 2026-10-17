@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { getCurrentUser } from '@/lib/auth';
 import { getWorkspaceData } from '@/lib/queries';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const currentUser = await getCurrentUser();
 
@@ -19,10 +20,11 @@ export async function GET() {
       );
     }
 
-    // In the Linear / Jira workspace model:
-    // Newly registered users receive workspace viewing access with zero assigned projects
-    // until an administrator or project manager adds them to project_members.
-    const workspaceData = await getWorkspaceData(currentUser);
+    const { searchParams } = new URL(req.url);
+    const cookieStore = await cookies();
+    const activeOrgId = searchParams.get('orgId') || cookieStore.get('kynov_active_org')?.value || null;
+
+    const workspaceData = await getWorkspaceData(currentUser, activeOrgId);
 
     return NextResponse.json(
       {

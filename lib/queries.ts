@@ -18,11 +18,15 @@ import {
   issueGitLinks,
   issueComments,
 } from '@/db/schema';
-import { FullIssue, FullDocument, WorkspaceMetrics, User, Sprint, Project, Swimlane } from './types';
+import { FullIssue, FullDocument, WorkspaceMetrics, User, Sprint, Project, Swimlane, Organization } from './types';
 import { desc, asc, sql } from 'drizzle-orm';
 import { ensureProjectRbacTables } from './rbac';
+import { getUserOrganizationsAction } from '@/app/actions/org';
 
-export async function getWorkspaceData(currentUser?: User | null): Promise<{
+export async function getWorkspaceData(
+  currentUser?: User | null,
+  activeOrgId?: string | null
+): Promise<{
   users: User[];
   issues: FullIssue[];
   docs: FullDocument[];
@@ -30,6 +34,8 @@ export async function getWorkspaceData(currentUser?: User | null): Promise<{
   projects: Project[];
   swimlanes: Swimlane[];
   metrics: WorkspaceMetrics;
+  organizations: Organization[];
+  currentOrganization: Organization | null;
 }> {
   const db = getDb();
 
@@ -112,15 +118,36 @@ export async function getWorkspaceData(currentUser?: User | null): Promise<{
     projectList = await db.select().from(projects).orderBy(asc(projects.name));
   }
 
-  // Project-level RBAC & Scoping (Linear / Jira Permission Scheme):
-  // - Workspace Super Admins receive all active projects and issues across the organization.
-  // - Non-admin users strictly only see projects they have been assigned to in project_members.
-  // - If a newly registered user has 0 assigned projects, their projectList, swimlaneList, sprintList, and issues are empty ([]).
+  // 1. Multi-Tenant Organization Scoping:
+  // Resolve user's organizations and isolate data to the active tenant
+  const userOrgs = await getUserOrganizationsAction();
+  const effectiveOrg = (activeOrgId ? userOrgs.find((o) => o.id === activeOrgId) : null) || userOrgs[0] || null;
+  const currentOrgId = effectiveOrg?.id || 'org-kynov';
+
+  // Filter projects by organization
+  projectList = projectList.filter((p) => {
+    const pOrg = (p as any).organizationId || (p as any).organization_id;
+    return pOrg === currentOrgId || (currentOrgId === 'org-kynov' && (!pOrg || pOrg === ''));
+  });
+
+  const orgProjectIds = new Set(projectList.map((p) => p.id));
+  swimlaneList = swimlaneList.filter((s) => orgProjectIds.has(s.projectId));
+  sprintList = sprintList.filter((s) => {
+    const pId = (s as any).projectId || (s as any).project_id;
+    return pId ? orgProjectIds.has(pId) : false;
+  });
+  rawIssues = rawIssues.filter((i) => i.projectId && orgProjectIds.has(i.projectId));
+
+  // 2. Project-level RBAC & Scoping (Linear / Jira Permission Scheme):
+  // - Workspace Super Admins and Org Owners receive all active projects in this organization.
+  // - Regular users strictly only see projects they have been assigned to in project_members.
+  // - If an unassigned member has 0 projects, their projectList, swimlaneList, sprintList, and issues are empty ([]).
   if (currentUser) {
     const roleStr = String(currentUser.role || '');
     const isSuperAdmin = roleStr === 'Admin' || roleStr === 'ADMIN' || roleStr.toUpperCase() === 'ADMIN';
+    const isOrgOwner = effectiveOrg?.userRole === 'OWNER';
 
-    if (!isSuperAdmin) {
+    if (!isSuperAdmin && !isOrgOwner) {
       await ensureProjectRbacTables(db);
       const userMemberships = await db.all<{ project_id: string }>(sql`
         SELECT project_id FROM project_members WHERE user_id = ${currentUser.id}
@@ -136,6 +163,15 @@ export async function getWorkspaceData(currentUser?: User | null): Promise<{
       rawIssues = rawIssues.filter((i) => i.projectId && allowedProjectIds.has(i.projectId));
     }
   }
+
+  // 3. Organization-scoped team roster
+  const orgMembers = await db.all<{ user_id: string; role: string }>(sql`
+    SELECT user_id, role FROM organization_members WHERE organization_id = ${currentOrgId}
+  `).catch(() => []);
+  const orgMemberUserIds = new Set(orgMembers.map((m) => m.user_id));
+  const scopedUsers = orgMembers.length > 0
+    ? userList.filter((u) => orgMemberUserIds.has(u.id) || u.role === 'Admin')
+    : userList;
 
   const projectMap = new Map<string, Project>();
   projectList.forEach((p) => projectMap.set(p.id, p));
@@ -327,13 +363,15 @@ export async function getWorkspaceData(currentUser?: User | null): Promise<{
   };
 
   return {
-    users: userList,
+    users: scopedUsers,
     issues: fullIssues,
     docs: fullDocs,
     sprints: sprintList,
     projects: projectList,
     swimlanes: swimlaneList,
     metrics,
+    organizations: userOrgs,
+    currentOrganization: effectiveOrg,
   };
 }
 

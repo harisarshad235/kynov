@@ -77,6 +77,46 @@ export const users = sqliteTable(
 );
 
 /* ------------------------------------------------------------------ */
+/* Organizations & Multi-Tenancy                                       */
+/* ------------------------------------------------------------------ */
+export const ORGANIZATIONS_ROLES = ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] as const;
+export type OrganizationRole = (typeof ORGANIZATIONS_ROLES)[number];
+
+export const organizations = sqliteTable(
+  'organizations',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    slug: text('slug').notNull(),
+    logoUrl: text('logo_url'),
+    ownerId: text('owner_id').references(() => users.id, { onDelete: 'set null' }),
+    plan: text('plan').default('team'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('organizations_slug_uq').on(t.slug)]
+);
+
+export const organizationMembers = sqliteTable(
+  'organization_members',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: text('role', { enum: ORGANIZATIONS_ROLES }).notNull().default('MEMBER'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('org_members_org_user_uq').on(t.organizationId, t.userId),
+    index('org_members_user_idx').on(t.userId),
+  ]
+);
+
+/* ------------------------------------------------------------------ */
 /* Projects & Multi-Project Workspaces                                 */
 /* ------------------------------------------------------------------ */
 export const PROJECT_STATUSES = ['active', 'archived'] as const;
@@ -91,11 +131,16 @@ export const projects = sqliteTable(
     description: text('description').default(''),
     category: text('category').default('Software'),
     leadId: text('lead_id').references(() => users.id, { onDelete: 'set null' }),
+    organizationId: text('organization_id').references(() => organizations.id, { onDelete: 'cascade' }),
     status: text('status', { enum: PROJECT_STATUSES }).notNull().default('active'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [uniqueIndex('projects_key_uq').on(t.key), index('projects_status_idx').on(t.status)],
+  (t) => [
+    uniqueIndex('projects_key_uq').on(t.key),
+    index('projects_status_idx').on(t.status),
+    index('projects_org_idx').on(t.organizationId),
+  ],
 );
 
 /* ------------------------------------------------------------------ */

@@ -11,6 +11,7 @@ import {
   UserRole,
   Project,
   Swimlane,
+  Organization,
   isDemoIssue,
 } from '@/lib/types';
 import { Sidebar } from '@/components/shell/Sidebar';
@@ -30,6 +31,7 @@ import { CreateIssueModal } from '@/components/issues/CreateIssueModal';
 import { ProjectsModal } from '@/components/projects/ProjectsModal';
 import { UserProfileModal } from '@/components/profile/UserProfileModal';
 import { OrganizationView } from '@/components/organization/OrganizationView';
+import { CreateOrganizationModal } from '@/components/organization/CreateOrganizationModal';
 import { Toast, Notification } from '@/components/ui/Toast';
 import { CommandPalette } from '@/components/command/CommandPalette';
 import { playCardErrorSound } from '@/lib/sound';
@@ -60,6 +62,7 @@ import {
   switchPersona,
   updateUserProfile,
 } from '@/app/actions/team';
+import { setActiveOrganizationAction } from '@/app/actions/org';
 
 interface WorkspaceProps {
   currentUser: User;
@@ -70,6 +73,8 @@ interface WorkspaceProps {
   docs: FullDocument[];
   sprints: Sprint[];
   metrics: WorkspaceMetrics;
+  organizations?: Organization[];
+  currentOrganization?: Organization | null;
 }
 
 export function Workspace({
@@ -81,6 +86,8 @@ export function Workspace({
   docs: initialDocs,
   sprints,
   metrics: initialMetrics,
+  organizations = [],
+  currentOrganization = null,
 }: WorkspaceProps) {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
@@ -108,6 +115,7 @@ export function Workspace({
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isCreateDocOpen, setIsCreateDocOpen] = useState<boolean>(false);
   const [isAddUserOpen, setIsAddUserOpen] = useState<boolean>(false);
+  const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState<boolean>(false);
   const [editingDoc, setEditingDoc] = useState<FullDocument | null>(null);
   const [activeDocDetail, setActiveDocDetail] = useState<FullDocument | null>(null);
   const [notification, setNotification] = useState<Notification | null>(null);
@@ -721,6 +729,20 @@ export function Workspace({
     });
   };
 
+  const handleSelectOrganization = async (orgId: string) => {
+    try {
+      const res = await setActiveOrganizationAction(orgId);
+      if (res.success) {
+        showToast('Switched organization', 'success');
+        router.refresh();
+      } else {
+        showToast(res.error || 'Failed to switch organization', 'error');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error switching organization', 'error');
+    }
+  };
+
   if (isPending) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-900 text-white">
@@ -783,7 +805,11 @@ export function Workspace({
         users={initialUsers}
         projects={initialProjects}
         activeProjectId={activeProjectId}
+        organizations={organizations}
+        currentOrganization={currentOrganization}
         onSelectProject={(projId) => setActiveProjectId(projId)}
+        onSelectOrganization={handleSelectOrganization}
+        onOpenCreateOrganization={() => setIsCreateOrgModalOpen(true)}
         onOpenProjectsModal={() => setIsProjectsModalOpen(true)}
         onOpenProfileModal={() => setIsProfileModalOpen(true)}
         completionRate={initialMetrics.completionRate}
@@ -945,9 +971,13 @@ export function Workspace({
               currentUser={currentUser}
               users={initialUsers}
               projects={initialProjects}
+              organizations={organizations}
+              currentOrganization={currentOrganization}
               onSelectProject={(projId) => {
                 setActiveProjectId(projId);
               }}
+              onSelectOrganization={handleSelectOrganization}
+              onOpenCreateOrganization={() => setIsCreateOrgModalOpen(true)}
               onNavigateTab={(tab) => setActiveTab(tab)}
               onOpenCreateProject={() => {
                 if (isViewer) {
@@ -1101,6 +1131,18 @@ export function Workspace({
           onSaveProfile={handleUpdateProfile}
         />
       )}
+
+      {/* Create Organization Modal */}
+      <CreateOrganizationModal
+        isOpen={isCreateOrgModalOpen}
+        onClose={() => setIsCreateOrgModalOpen(false)}
+        onSuccess={(orgId) => {
+          setIsCreateOrgModalOpen(false);
+          showToast('Organization created successfully! Switching...', 'success');
+          handleSelectOrganization(orgId);
+        }}
+        onShowToast={showToast}
+      />
 
       {/* Global Command Palette (Cmd+K / Ctrl+K) */}
       <CommandPalette

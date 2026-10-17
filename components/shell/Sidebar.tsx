@@ -22,10 +22,11 @@ import {
   Globe,
   ExternalLink,
 } from 'lucide-react';
-import { User, Project } from '@/lib/types';
+import { User, Project, Organization } from '@/lib/types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { KynovLogo } from '@/components/brand/KynovLogo';
 import { ProjectSwitcher } from '@/components/layout/ProjectSwitcher';
+import { OrganizationSwitcher } from '@/components/layout/OrganizationSwitcher';
 import { getActiveSprintMetricsAction, ActiveSprintMetrics } from '@/app/actions/sprints';
 
 interface SidebarProps {
@@ -39,7 +40,11 @@ interface SidebarProps {
   users: User[];
   projects: Project[];
   activeProjectId: string;
+  organizations?: Organization[];
+  currentOrganization?: Organization | null;
   onSelectProject: (projectId: string) => void;
+  onSelectOrganization?: (orgId: string) => void;
+  onOpenCreateOrganization?: () => void;
   onOpenProjectsModal: () => void;
   onOpenProfileModal: () => void;
   completionRate: number;
@@ -59,7 +64,11 @@ export function Sidebar({
   users,
   projects,
   activeProjectId,
+  organizations = [],
+  currentOrganization,
   onSelectProject,
+  onSelectOrganization,
+  onOpenCreateOrganization,
   onOpenProjectsModal,
   onOpenProfileModal,
   onSwitchPersona,
@@ -226,9 +235,30 @@ export function Sidebar({
           </div>
         </div>
 
+        {/* Organization Switcher */}
+        <div className="mt-3">
+          <OrganizationSwitcher
+            organizations={organizations}
+            currentOrganization={currentOrganization || null}
+            onSelectOrganization={(orgId) => {
+              onSelectOrganization?.(orgId);
+              if (onCloseMobile) onCloseMobile();
+            }}
+            onOpenCreateOrg={() => {
+              onOpenCreateOrganization?.();
+              if (onCloseMobile) onCloseMobile();
+            }}
+            onNavigateToOrgSettings={() => {
+              setActiveTab('organization');
+              if (onCloseMobile) onCloseMobile();
+            }}
+            collapsed={!sidebarOpen && !mobileOpen}
+          />
+        </div>
+
         {/* Project Switcher */}
         {(sidebarOpen || mobileOpen) && (
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#1E2433]">
+          <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-[#1E2433]">
             <ProjectSwitcher
               activeProjectId={activeProjectId}
               onSelectProject={onSelectProject}

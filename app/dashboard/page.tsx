@@ -12,6 +12,7 @@ import type {
   Sprint,
   Project,
   Swimlane,
+  Organization,
 } from '@/lib/types';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
@@ -24,6 +25,8 @@ interface WorkspaceData {
   projects: Project[];
   swimlanes: Swimlane[];
   metrics: WorkspaceMetrics;
+  organizations?: Organization[];
+  currentOrganization?: Organization | null;
 }
 
 export default function DashboardPage() {
@@ -135,6 +138,8 @@ export default function DashboardPage() {
       projects={data.projects}
       swimlanes={data.swimlanes}
       metrics={data.metrics}
+      organizations={data.organizations || []}
+      currentOrganization={data.currentOrganization || null}
     />
   );
 }

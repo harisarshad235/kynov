@@ -25,8 +25,11 @@ import {
   RefreshCw,
   X,
   BadgeAlert,
+  Edit3,
+  Settings,
+  Trash2,
 } from 'lucide-react';
-import { User, Project, UserRole } from '@/lib/types';
+import { User, Project, UserRole, Organization, OrganizationRole } from '@/lib/types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import {
   getAllOrganizationProjectsAction,
@@ -37,13 +40,24 @@ import {
   UserProjectAssignment,
 } from '@/app/actions/projects';
 import { approveUser, updateUserRole } from '@/app/actions/team';
+import {
+  updateOrganizationAction,
+  addOrganizationMemberAction,
+  removeOrganizationMemberAction,
+  getOrganizationMembersAction,
+  OrgMemberRow,
+} from '@/app/actions/org';
 import { ProjectMembersPanel } from '@/components/projects/ProjectMembersPanel';
 
 interface OrganizationViewProps {
   currentUser: User;
   users: User[];
   projects: Project[];
+  organizations?: Organization[];
+  currentOrganization?: Organization | null;
   onSelectProject: (projectId: string) => void;
+  onSelectOrganization?: (orgId: string) => void;
+  onOpenCreateOrganization?: () => void;
   onNavigateTab: (tab: string) => void;
   onOpenCreateProject?: () => void;
   onShowToast?: (msg: string, type?: 'success' | 'error') => void;
@@ -53,7 +67,11 @@ export function OrganizationView({
   currentUser,
   users: initialUsers,
   projects: initialProjects,
+  organizations = [],
+  currentOrganization,
   onSelectProject,
+  onSelectOrganization,
+  onOpenCreateOrganization,
   onNavigateTab,
   onOpenCreateProject,
   onShowToast,
@@ -61,28 +79,51 @@ export function OrganizationView({
   const [activeTab, setActiveTab] = useState<'projects' | 'members' | 'governance'>('projects');
   const [orgProjects, setOrgProjects] = useState<OrganizationProjectSummary[]>([]);
   const [userAssignments, setUserAssignments] = useState<Record<string, UserProjectAssignment[]>>({});
+  const [orgMembers, setOrgMembers] = useState<OrgMemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProjectForMembers, setSelectedProjectForMembers] = useState<OrganizationProjectSummary | null>(null);
 
-  // Quick Assign Modal state
+  // Edit Organization Modal state
+  const [isEditOrgOpen, setIsEditOrgOpen] = useState(false);
+  const [editOrgName, setEditOrgName] = useState(currentOrganization?.name || 'Kynov Technologies');
+  const [editOrgSlug, setEditOrgSlug] = useState(currentOrganization?.slug || 'kynov');
+
+  // Add Member to Org state
+  const [isAddOrgMemberOpen, setIsAddOrgMemberOpen] = useState(false);
+  const [targetAddUserId, setTargetAddUserId] = useState('');
+  const [targetAddRole, setTargetAddRole] = useState<OrganizationRole>('MEMBER');
+
+  // Quick Assign Project Modal state
   const [assigningUser, setAssigningUser] = useState<User | null>(null);
   const [selectedAssignProjectId, setSelectedAssignProjectId] = useState<string>('');
   const [selectedAssignRole, setSelectedAssignRole] = useState<'MEMBER' | 'PROJECT_MANAGER' | 'VIEWER'>('MEMBER');
 
   const [isPending, startTransition] = useTransition();
 
-  const isAdmin = currentUser.role === 'Admin';
+  const activeOrg = currentOrganization || organizations[0] || {
+    id: 'org-kynov',
+    name: 'Kynov Technologies',
+    slug: 'kynov',
+    plan: 'enterprise',
+  };
+
+  const isOrgAdminOrOwner =
+    currentUser.role === 'Admin' ||
+    activeOrg.userRole === 'OWNER' ||
+    activeOrg.userRole === 'ADMIN';
 
   const loadOrgData = async () => {
     try {
       setLoading(true);
-      const [projectsData, assignmentsData] = await Promise.all([
-        getAllOrganizationProjectsAction(),
+      const [projectsData, assignmentsData, membersData] = await Promise.all([
+        getAllOrganizationProjectsAction(activeOrg.id),
         getAllUserProjectAssignmentsAction(),
+        getOrganizationMembersAction(activeOrg.id),
       ]);
       setOrgProjects(projectsData.length > 0 ? projectsData : initialProjects.map((p) => ({ ...p, memberCount: 1 })));
       setUserAssignments(assignmentsData);
+      setOrgMembers(membersData);
     } catch (err) {
       console.error('Failed to load organization data:', err);
       setOrgProjects(initialProjects.map((p) => ({ ...p, memberCount: 1 })));
@@ -92,23 +133,93 @@ export function OrganizationView({
   };
 
   useEffect(() => {
+    setEditOrgName(activeOrg.name);
+    setEditOrgSlug(activeOrg.slug);
     loadOrgData();
-  }, [initialProjects]);
+  }, [activeOrg.id, initialProjects]);
 
   const filteredProjects = orgProjects.filter((p) => {
     const q = searchQuery.toLowerCase();
     return p.name.toLowerCase().includes(q) || p.key.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q);
   });
 
-  const filteredUsers = initialUsers.filter((u) => {
-    const q = searchQuery.toLowerCase();
-    return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.department || '').toLowerCase().includes(q);
-  });
+  const filteredMembers = orgMembers.length > 0
+    ? orgMembers.filter((m) => {
+        const q = searchQuery.toLowerCase();
+        return m.userName.toLowerCase().includes(q) || m.userEmail.toLowerCase().includes(q) || (m.department || '').toLowerCase().includes(q);
+      })
+    : initialUsers.filter((u) => {
+        const q = searchQuery.toLowerCase();
+        return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.department || '').toLowerCase().includes(q);
+      }).map((u) => ({
+        id: `temp-${u.id}`,
+        organizationId: activeOrg.id,
+        userId: u.id,
+        role: (u.role === 'Admin' ? 'OWNER' : 'MEMBER') as OrganizationRole,
+        userName: u.name,
+        userEmail: u.email,
+        userAvatarUrl: u.avatarUrl,
+        department: u.department,
+        createdAt: Date.now(),
+      }));
 
-  const unassignedUsersCount = initialUsers.filter((u) => {
-    const assigned = userAssignments[u.id] || [];
-    return assigned.length === 0 && u.role !== 'Admin';
+  const unassignedUsersCount = filteredMembers.filter((m) => {
+    const assigned = userAssignments[m.userId] || [];
+    return assigned.length === 0 && m.role !== 'OWNER' && m.role !== 'ADMIN';
   }).length;
+
+  const handleUpdateOrg = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isOrgAdminOrOwner) return;
+
+    startTransition(async () => {
+      const res = await updateOrganizationAction(activeOrg.id, {
+        name: editOrgName,
+        slug: editOrgSlug,
+      });
+
+      if (res.success) {
+        onShowToast?.(res.message || 'Organization updated', 'success');
+        setIsEditOrgOpen(false);
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
+      } else {
+        onShowToast?.(res.error || 'Failed to update organization', 'error');
+      }
+    });
+  };
+
+  const handleAddOrgMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetAddUserId || !isOrgAdminOrOwner) return;
+
+    startTransition(async () => {
+      const res = await addOrganizationMemberAction(activeOrg.id, targetAddUserId, targetAddRole);
+      if (res.success) {
+        onShowToast?.(res.message || 'Member added to organization', 'success');
+        setIsAddOrgMemberOpen(false);
+        setTargetAddUserId('');
+        await loadOrgData();
+      } else {
+        onShowToast?.(res.error || 'Failed to add member', 'error');
+      }
+    });
+  };
+
+  const handleRemoveOrgMember = (userId: string) => {
+    if (!isOrgAdminOrOwner) return;
+
+    startTransition(async () => {
+      const res = await removeOrganizationMemberAction(activeOrg.id, userId);
+      if (res.success) {
+        onShowToast?.(res.message || 'Member removed', 'success');
+        await loadOrgData();
+      } else {
+        onShowToast?.(res.error || 'Failed to remove member', 'error');
+      }
+    });
+  };
 
   const handleQuickAssign = (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,29 +243,9 @@ export function OrganizationView({
     });
   };
 
-  const handleApproveUser = (userId: string, role: UserRole = 'Member') => {
-    startTransition(async () => {
-      const res = await approveUser(userId, role);
-      if (res.success) {
-        onShowToast?.(res.message || 'User approved', 'success');
-        await loadOrgData();
-      } else {
-        onShowToast?.(res.error || 'Failed to approve user', 'error');
-      }
-    });
-  };
-
-  const handleRoleChange = (userId: string, newRole: UserRole) => {
-    startTransition(async () => {
-      const res = await updateUserRole(userId, newRole);
-      if (res.success) {
-        onShowToast?.(res.message || 'Role updated', 'success');
-        await loadOrgData();
-      } else {
-        onShowToast?.(res.error || 'Failed to update role', 'error');
-      }
-    });
-  };
+  const availableUsersToEnroll = initialUsers.filter(
+    (u) => !orgMembers.some((m) => m.userId === u.id)
+  );
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -171,17 +262,28 @@ export function OrganizationView({
                 <Building2 className="w-5 h-5" />
               </span>
               <span className="text-xs font-mono font-semibold text-indigo-400 uppercase tracking-widest">
-                Organization Hub & Governance
+                Tenant: {activeOrg.slug}
               </span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
-                ENTERPRISE
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold uppercase">
+                {activeOrg.plan || 'team'}
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-              Kynov Enterprise Organization
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                {activeOrg.name}
+              </h1>
+              {isOrgAdminOrOwner && (
+                <button
+                  onClick={() => setIsEditOrgOpen(true)}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition cursor-pointer"
+                  title="Edit Organization Name & Settings"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Multi-team workspace management with Linear-style zero-trust project scoping. Manage team projects, configure granular access roles, and monitor cross-project memberships.
+              Multi-tenant organization workspace. Configure projects, assign team members, and manage access permissions specifically within {activeOrg.name}.
             </p>
           </div>
 
@@ -191,15 +293,18 @@ export function OrganizationView({
                 onClick={onOpenCreateProject}
                 className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition active:scale-98"
               >
-                <Plus className="w-4 h-4" /> New Team Project
+                <Plus className="w-4 h-4" /> New Project
               </button>
             )}
-            <button
-              onClick={() => onNavigateTab('team')}
-              className="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700/80 px-4 py-2.5 rounded-xl text-xs font-semibold transition"
-            >
-              <Users className="w-4 h-4" /> Team Directory
-            </button>
+
+            {onOpenCreateOrganization && (
+              <button
+                onClick={onOpenCreateOrganization}
+                className="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700/80 px-4 py-2.5 rounded-xl text-xs font-semibold transition"
+              >
+                <Building2 className="w-4 h-4" /> New Organization
+              </button>
+            )}
           </div>
         </div>
 
@@ -208,7 +313,7 @@ export function OrganizationView({
           <div className="p-3 bg-slate-900/60 rounded-2xl border border-slate-800/60">
             <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
               <FolderKanban className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Active Projects</span>
+              <span>Projects in Org</span>
             </div>
             <div className="text-xl font-bold text-white mt-1">{orgProjects.length}</div>
           </div>
@@ -216,17 +321,19 @@ export function OrganizationView({
           <div className="p-3 bg-slate-900/60 rounded-2xl border border-slate-800/60">
             <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5 text-blue-400" />
-              <span>Total Members</span>
+              <span>Org Members</span>
             </div>
-            <div className="text-xl font-bold text-white mt-1">{initialUsers.length}</div>
+            <div className="text-xl font-bold text-white mt-1">{filteredMembers.length}</div>
           </div>
 
           <div className="p-3 bg-slate-900/60 rounded-2xl border border-slate-800/60">
             <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Security Scheme</span>
+              <span>Your Role</span>
             </div>
-            <div className="text-xs font-bold text-emerald-400 mt-2 truncate">Project Scoped RBAC</div>
+            <div className="text-xs font-bold text-emerald-400 mt-2 truncate">
+              {activeOrg.userRole || 'MEMBER'}
+            </div>
           </div>
 
           <div className="p-3 bg-slate-900/60 rounded-2xl border border-slate-800/60">
@@ -266,9 +373,9 @@ export function OrganizationView({
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>Member Project Roster</span>
+            <span>Organization Members</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/20 font-mono">
-              {initialUsers.length}
+              {filteredMembers.length}
             </span>
           </button>
 
@@ -281,7 +388,7 @@ export function OrganizationView({
             }`}
           >
             <Shield className="w-4 h-4" />
-            <span>RBAC Policy & Schemes</span>
+            <span>Multi-Tenant Policies</span>
           </button>
         </div>
 
@@ -302,101 +409,135 @@ export function OrganizationView({
       {/* TAB 1: PROJECTS & ACCESS MATRIX */}
       {activeTab === 'projects' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredProjects.map((project) => {
-              const leadUser = initialUsers.find((u) => u.id === project.leadId);
-              return (
-                <div
-                  key={project.id}
-                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between group"
+          {filteredProjects.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center">
+                <FolderKanban className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                No Projects in {activeOrg.name}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                Create a dedicated project space for this organization to begin tracking issues, sprints, and roadmaps.
+              </p>
+              {onOpenCreateProject && (
+                <button
+                  onClick={onOpenCreateProject}
+                  className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition"
                 >
-                  <div>
-                    {/* Project Header */}
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono font-bold text-xs">
-                          {project.key}
+                  <Plus className="w-4 h-4" /> Create First Project
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredProjects.map((project) => {
+                const leadUser = initialUsers.find((u) => u.id === project.leadId);
+                return (
+                  <div
+                    key={project.id}
+                    className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between group"
+                  >
+                    <div>
+                      {/* Project Header */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono font-bold text-xs">
+                            {project.key}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                              {project.name}
+                            </h3>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                              {project.category || 'Software'}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
-                            {project.name}
-                          </h3>
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                            {project.category || 'Software'}
-                          </span>
-                        </div>
+
+                        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                          {project.memberCount} {project.memberCount === 1 ? 'member' : 'members'}
+                        </span>
                       </div>
 
-                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                        {project.memberCount} {project.memberCount === 1 ? 'member' : 'members'}
-                      </span>
-                    </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+                        {project.description || 'Enterprise project workspace for tracking tasks and workflows.'}
+                      </p>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
-                      {project.description || 'Enterprise project workspace for tracking tasks and workflows.'}
-                    </p>
-
-                    {/* Lead Information */}
-                    <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80 mb-4">
-                      {leadUser ? (
-                        <>
-                          <UserAvatar user={leadUser} size="xs" />
-                          <div className="text-[11px] text-slate-600 dark:text-slate-400">
-                            <span className="text-slate-400">Lead: </span>
-                            <span className="font-semibold text-slate-800 dark:text-slate-200">{leadUser.name}</span>
+                      {/* Lead Information */}
+                      <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80 mb-4">
+                        {leadUser ? (
+                          <>
+                            <UserAvatar user={leadUser} size="xs" />
+                            <div className="text-[11px] text-slate-600 dark:text-slate-400">
+                              <span className="text-slate-400">Lead: </span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">{leadUser.name}</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5" /> Unassigned Lead
                           </div>
-                        </>
-                      ) : (
-                        <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5" /> Unassigned Lead
-                        </div>
-                      )}
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions Bar */}
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                      <button
+                        onClick={() => setSelectedProjectForMembers(project)}
+                        className="w-full flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-2 rounded-xl text-xs font-semibold transition"
+                      >
+                        <Users className="w-3.5 h-3.5" /> Manage Members
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          onSelectProject(project.id);
+                          onNavigateTab('board');
+                        }}
+                        className="w-full flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 py-2 rounded-xl text-xs font-semibold border border-indigo-200/60 dark:border-indigo-800/60 transition"
+                      >
+                        <Kanban className="w-3.5 h-3.5" /> View Board
+                      </button>
                     </div>
                   </div>
-
-                  {/* Actions Bar */}
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                    <button
-                      onClick={() => setSelectedProjectForMembers(project)}
-                      className="w-full flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-2 rounded-xl text-xs font-semibold transition"
-                    >
-                      <Users className="w-3.5 h-3.5" /> Manage Members
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        onSelectProject(project.id);
-                        onNavigateTab('board');
-                      }}
-                      className="w-full flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 py-2 rounded-xl text-xs font-semibold border border-indigo-200/60 dark:border-indigo-800/60 transition"
-                    >
-                      <Kanban className="w-3.5 h-3.5" /> View Board
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
       {/* TAB 2: MEMBER PROJECT ROSTER */}
       {activeTab === 'members' && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs">
-          <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">Organization Team Roster</h3>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                Members of {activeOrg.name}
+              </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Shows workspace tier roles and exact project assignments. Newly registered users without project assignments are tagged.
+                Manage organization tenant roles and project assignments.
               </p>
             </div>
-            <button
-              onClick={loadOrgData}
-              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
-              title="Refresh Roster"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              {isOrgAdminOrOwner && availableUsersToEnroll.length > 0 && (
+                <button
+                  onClick={() => setIsAddOrgMemberOpen(true)}
+                  className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs transition"
+                >
+                  <UserPlus className="w-3.5 h-3.5" /> Enroll Member
+                </button>
+              )}
+              <button
+                onClick={loadOrgData}
+                className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                title="Refresh Roster"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -404,34 +545,40 @@ export function OrganizationView({
               <thead className="bg-slate-50 dark:bg-slate-950/60 text-slate-500 uppercase tracking-wider font-mono text-[10px] border-b border-slate-100 dark:border-slate-800">
                 <tr>
                   <th className="py-3 px-4">Member</th>
-                  <th className="py-3 px-4">Org Role</th>
-                  <th className="py-3 px-4">Account Status</th>
+                  <th className="py-3 px-4">Organization Role</th>
                   <th className="py-3 px-4">Assigned Projects</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {filteredUsers.map((user) => {
-                  const assignments = userAssignments[user.id] || [];
-                  const isUnassigned = assignments.length === 0 && user.role !== 'Admin';
+                {filteredMembers.map((member) => {
+                  const assignments = userAssignments[member.userId] || [];
+                  const isUserOrgAdmin = member.role === 'OWNER' || member.role === 'ADMIN';
 
                   return (
-                    <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                    <tr key={member.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
                       {/* Member Info */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                          <UserAvatar user={user} size="sm" />
+                          <UserAvatar
+                            user={{
+                              name: member.userName,
+                              email: member.userEmail,
+                              avatarUrl: member.userAvatarUrl,
+                            }}
+                            size="sm"
+                          />
                           <div>
                             <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
-                              {user.name}
-                              {user.id === currentUser.id && (
+                              {member.userName}
+                              {member.userId === currentUser.id && (
                                 <span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.2 rounded font-mono">
                                   YOU
                                 </span>
                               )}
                             </div>
                             <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                              {user.email} • {user.department || 'Engineering'}
+                              {member.userEmail} • {member.department || 'Engineering'}
                             </div>
                           </div>
                         </div>
@@ -439,60 +586,25 @@ export function OrganizationView({
 
                       {/* Organization Role */}
                       <td className="py-3.5 px-4">
-                        {isAdmin && user.id !== currentUser.id ? (
-                          <select
-                            value={user.role}
-                            onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
-                            className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-lg px-2 py-1 font-semibold focus:outline-hidden"
-                          >
-                            <option value="Admin">Admin</option>
-                            <option value="Member">Member</option>
-                            <option value="Viewer">Viewer</option>
-                          </select>
-                        ) : (
-                          <span
-                            className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg ${
-                              user.role === 'Admin'
-                                ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800'
-                                : user.role === 'Member'
-                                ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                            }`}
-                          >
-                            {user.role === 'Admin' && <Shield className="w-3 h-3" />}
-                            {user.role}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-3.5 px-4">
-                        {user.status === 'APPROVED' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
-                            <CheckCircle2 className="w-3 h-3" /> Approved
-                          </span>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-2.5 py-0.5 rounded-full">
-                              <Clock className="w-3 h-3" /> Pending Review
-                            </span>
-                            {isAdmin && (
-                              <button
-                                onClick={() => handleApproveUser(user.id)}
-                                className="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded-md transition"
-                              >
-                                Approve
-                              </button>
-                            )}
-                          </div>
-                        )}
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg ${
+                            member.role === 'OWNER'
+                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                              : member.role === 'ADMIN'
+                              ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          {(member.role === 'OWNER' || member.role === 'ADMIN') && <Shield className="w-3 h-3" />}
+                          {member.role}
+                        </span>
                       </td>
 
                       {/* Project Assignments */}
                       <td className="py-3.5 px-4">
-                        {user.role === 'Admin' ? (
+                        {isUserOrgAdmin ? (
                           <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 rounded-md">
-                            Global Bypass (All Projects)
+                            Global Bypass (All Projects in {activeOrg.name})
                           </span>
                         ) : assignments.length > 0 ? (
                           <div className="flex flex-wrap gap-1.5 max-w-sm">
@@ -500,7 +612,6 @@ export function OrganizationView({
                               <span
                                 key={a.projectId}
                                 className="inline-flex items-center gap-1 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700"
-                                title={`${a.projectName} (${a.projectRole})`}
                               >
                                 <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{a.projectKey}</span>
                                 <span className="text-slate-400 text-[9px] uppercase">({a.projectRole})</span>
@@ -514,19 +625,32 @@ export function OrganizationView({
                         )}
                       </td>
 
-                      {/* Quick Assign Action */}
+                      {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
-                        {isAdmin && (
-                          <button
-                            onClick={() => {
-                              setAssigningUser(user);
-                              setSelectedAssignProjectId(orgProjects[0]?.id || '');
-                            }}
-                            className="inline-flex items-center gap-1 text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded-xl transition"
-                          >
-                            <UserPlus className="w-3 h-3" /> Assign Project
-                          </button>
-                        )}
+                        <div className="flex items-center justify-end gap-2">
+                          {isOrgAdminOrOwner && (
+                            <button
+                              onClick={() => {
+                                const matched = initialUsers.find((u) => u.id === member.userId);
+                                if (matched) setAssigningUser(matched);
+                                setSelectedAssignProjectId(orgProjects[0]?.id || '');
+                              }}
+                              className="inline-flex items-center gap-1 text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1.5 rounded-xl transition"
+                            >
+                              <UserPlus className="w-3 h-3" /> Assign Project
+                            </button>
+                          )}
+
+                          {isOrgAdminOrOwner && member.userId !== currentUser.id && member.role !== 'OWNER' && (
+                            <button
+                              onClick={() => handleRemoveOrgMember(member.userId)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition"
+                              title="Remove member from organization"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -537,7 +661,7 @@ export function OrganizationView({
         </div>
       )}
 
-      {/* TAB 3: RBAC POLICY & SCHEMES */}
+      {/* TAB 3: MULTI-TENANT POLICIES */}
       {activeTab === 'governance' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 space-y-4">
@@ -546,32 +670,32 @@ export function OrganizationView({
                 <Building2 className="w-5 h-5" />
               </span>
               <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                Workspace Tier (Organization Level)
+                Multi-Tenant Architecture
               </h3>
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Organization membership determines access to workspace-level utilities, team directory, and global governance settings.
+              Every organization in Kynov functions as an isolated tenant. Projects, issues, sprints, and swimlanes created in <strong className="text-indigo-500">{activeOrg.name}</strong> are strictly partitioned and cannot be viewed by unauthorized members from other organizations.
             </p>
 
             <div className="space-y-3 font-mono text-xs">
               <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <div className="font-bold text-purple-600 dark:text-purple-400">Admin</div>
+                <div className="font-bold text-amber-600 dark:text-amber-400">OWNER</div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Full super-admin access. Global bypass across all organization projects. Manages team invitations, seat approvals, and project creation.
+                  Creator and primary administrator. Full authority to rename organization, configure billing, and add/remove members.
                 </div>
               </div>
 
               <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <div className="font-bold text-blue-600 dark:text-blue-400">Member</div>
+                <div className="font-bold text-purple-600 dark:text-purple-400">ADMIN</div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Standard team member seat. Can view workspace directory and participate actively in all projects they are assigned to.
+                  Organization manager. Can create projects, invite users, and bypass project-level locks within this organization.
                 </div>
               </div>
 
               <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <div className="font-bold text-slate-600 dark:text-slate-400">Viewer</div>
+                <div className="font-bold text-blue-600 dark:text-blue-400">MEMBER</div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Default seat for newly registered users. Read-only observation. Zero project exposure until explicitly granted project membership.
+                  Standard organization participant. Accesses only the specific projects they have been assigned to.
                 </div>
               </div>
             </div>
@@ -583,35 +707,161 @@ export function OrganizationView({
                 <FolderKanban className="w-5 h-5" />
               </span>
               <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                Project Tier (Per-Project RBAC)
+                Project-Level Isolation
               </h3>
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Linear & Jira zero-trust model: Access to issues, boards, backlogs, and sprints is strictly enforced per project record in <code className="text-indigo-500">project_members</code>.
+              In accordance with Linear and Jira access policies:
             </p>
 
-            <div className="space-y-3 font-mono text-xs">
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <div className="font-bold text-indigo-600 dark:text-indigo-400">PROJECT_MANAGER</div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Project Lead. Can assign members to the project, manage board swimlanes, start/complete sprints, and edit project metadata.
+            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400 list-disc pl-5">
+              <li>Newly registered users join with viewing access to the workspace shell.</li>
+              <li>No confidential project tickets or sprint metrics are exposed until an admin explicitly adds them to a project team.</li>
+              <li>Organizations can create multiple parallel team spaces (e.g. Core Engineering, Mobile Apps, Operations).</li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Organization Modal */}
+      {isEditOrgOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 relative">
+            <button
+              onClick={() => setIsEditOrgOpen(false)}
+              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+              Edit Organization Details
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+              Update organization branding and URL identifier.
+            </p>
+
+            <form onSubmit={handleUpdateOrg} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Organization Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editOrgName}
+                  onChange={(e) => setEditOrgName(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Workspace Slug
+                </label>
+                <div className="flex items-center bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 focus-within:border-indigo-500">
+                  <span className="text-xs text-slate-400 font-mono">kynov.io/</span>
+                  <input
+                    type="text"
+                    required
+                    value={editOrgSlug}
+                    onChange={(e) => setEditOrgSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    className="w-full bg-transparent p-1 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-hidden"
+                  />
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <div className="font-bold text-emerald-600 dark:text-emerald-400">MEMBER</div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Active contributor. Can create and transition issues, comment, estimate story points, link git pull requests, and manage subtasks.
-                </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditOrgOpen(false)}
+                  className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending || !editOrgName.trim()}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-xs shadow-md transition disabled:opacity-50"
+                >
+                  {isPending ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Enroll Existing Member to this Org Modal */}
+      {isAddOrgMemberOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 relative">
+            <button
+              onClick={() => setIsAddOrgMemberOpen(false)}
+              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+              Enroll Member into {activeOrg.name}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+              Select an account to add to this organization.
+            </p>
+
+            <form onSubmit={handleAddOrgMember} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Select User
+                </label>
+                <select
+                  value={targetAddUserId}
+                  onChange={(e) => setTargetAddUserId(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-indigo-500"
+                  required
+                >
+                  <option value="">-- Choose User --</option>
+                  {availableUsersToEnroll.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.email})
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <div className="font-bold text-slate-500 dark:text-slate-400">VIEWER</div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Stakeholder seat. Can inspect issues, sprint progress, and reports within this project, without mutation rights.
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Organization Role
+                </label>
+                <select
+                  value={targetAddRole}
+                  onChange={(e) => setTargetAddRole(e.target.value as OrganizationRole)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-indigo-500"
+                >
+                  <option value="MEMBER">Member (Standard collaborator)</option>
+                  <option value="ADMIN">Admin (Can manage projects and members)</option>
+                  <option value="VIEWER">Viewer (Read-only observer)</option>
+                </select>
               </div>
-            </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddOrgMemberOpen(false)}
+                  className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending || !targetAddUserId}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-xs shadow-md transition disabled:opacity-50"
+                >
+                  {isPending ? 'Enrolling...' : 'Enroll Member'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -664,7 +914,7 @@ export function OrganizationView({
               Assign Project to {assigningUser.name}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-              Select the team project and project-level role to grant this user access.
+              Select the team project and project-level role within {activeOrg.name}.
             </p>
 
             <form onSubmit={handleQuickAssign} className="space-y-4">

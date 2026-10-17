@@ -96,3 +96,19 @@ export interface WorkspaceMetrics {
   completionRate: number;
 }
 
+export type OrganizationRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl?: string | null;
+  ownerId?: string | null;
+  plan?: string | null;
+  createdAt?: Date | number;
+  updatedAt?: Date | number;
+  memberCount?: number;
+  projectCount?: number;
+  userRole?: OrganizationRole;
+}
+
