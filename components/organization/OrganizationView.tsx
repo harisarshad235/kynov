@@ -29,7 +29,7 @@ import {
   Settings,
   Trash2,
 } from 'lucide-react';
-import { User, Project, UserRole, Organization, OrganizationRole } from '@/lib/types';
+import { User, Project, UserRole, Organization, OrganizationRole, OrgMemberRow } from '@/lib/types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import {
   getAllOrganizationProjectsAction,
@@ -45,7 +45,6 @@ import {
   addOrganizationMemberAction,
   removeOrganizationMemberAction,
   getOrganizationMembersAction,
-  OrgMemberRow,
 } from '@/app/actions/org';
 import { ProjectMembersPanel } from '@/components/projects/ProjectMembersPanel';
 

@@ -7,22 +7,8 @@ import { getDb } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { ensureEnterpriseSchema } from '@/lib/schemaInit';
 import { sanitizePlainText } from '@/lib/sanitize';
-import { Organization, OrganizationRole, User } from '@/lib/types';
+import { Organization, OrganizationRole, User, ACTIVE_ORG_COOKIE, OrgMemberRow } from '@/lib/types';
 import { createProject } from './projects';
-
-export const ACTIVE_ORG_COOKIE = 'kynov_active_org';
-
-export interface OrgMemberRow {
-  id: string;
-  organizationId: string;
-  userId: string;
-  role: OrganizationRole;
-  userName: string;
-  userEmail: string;
-  userAvatarUrl: string | null;
-  department: string | null;
-  createdAt: number;
-}
 
 /**
  * Fetch all organizations the current authenticated user belongs to.

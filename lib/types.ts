@@ -98,6 +98,20 @@ export interface WorkspaceMetrics {
 
 export type OrganizationRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
 
+export const ACTIVE_ORG_COOKIE = 'kynov_active_org';
+
+export interface OrgMemberRow {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: OrganizationRole;
+  userName: string;
+  userEmail: string;
+  userAvatarUrl: string | null;
+  department: string | null;
+  createdAt: number;
+}
+
 export interface Organization {
   id: string;
   name: string;
@@ -111,4 +125,5 @@ export interface Organization {
   projectCount?: number;
   userRole?: OrganizationRole;
 }
+
 
