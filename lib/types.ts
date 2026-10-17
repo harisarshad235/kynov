@@ -126,4 +126,32 @@ export interface Organization {
   userRole?: OrganizationRole;
 }
 
+export interface OrganizationInvite {
+  id: string;
+  organizationId: string;
+  organizationName?: string;
+  token: string;
+  email?: string | null;
+  role: OrganizationRole;
+  invitedById?: string | null;
+  inviterName?: string | null;
+  expiresAt: number;
+  createdAt: number;
+  acceptedAt?: number | null;
+}
+
+export interface OrganizationActivity {
+  id: string;
+  organizationId: string;
+  actorId?: string | null;
+  actorName?: string | null;
+  actorAvatarUrl?: string | null;
+  action: string;
+  entityType: string;
+  entityId?: string | null;
+  details?: string | null;
+  createdAt: number;
+}
+
+
 

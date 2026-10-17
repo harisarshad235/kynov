@@ -9,7 +9,7 @@
 > **Release Version**: `v0.1.0`  
 > **Target Deployment Environment**: `Cloudflare Pages Edge (V8 Serverless Isolates)`  
 > **Database Engine**: `Cloudflare D1 Distributed SQLite`  
-> **Last Synchronized**: `2026-10-17 18:53:06 UTC`  
+> **Last Synchronized**: `2026-10-17 19:29:23 UTC`  
 
 ### Verified Active Route Inventory
 
@@ -19,6 +19,7 @@
 | `/awaiting-approval` | Pending Authorization Holding Room | Registered (Pending Status) |
 | `/dashboard` | Core Application View | Authenticated User |
 | `/forgot-password` | Tokenized Self-Service Password Recovery | Public / Anonymous |
+| `/join` | Core Application View | Authenticated User |
 | `/landing` | Core Application View | Authenticated User |
 | `/login` | User Sign-In & Authentication Form | Public / Anonymous |
 | `/projects/[projectId]` | Core Application View | Authenticated User |

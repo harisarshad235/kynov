@@ -34,6 +34,7 @@ import { OrganizationView } from '@/components/organization/OrganizationView';
 import { CreateOrganizationModal } from '@/components/organization/CreateOrganizationModal';
 import { Toast, Notification } from '@/components/ui/Toast';
 import { CommandPalette } from '@/components/command/CommandPalette';
+import { KeyboardShortcutsModal } from '@/components/command/KeyboardShortcutsModal';
 import { playCardErrorSound } from '@/lib/sound';
 import { Building2, Users as UsersIcon } from 'lucide-react';
 
@@ -116,6 +117,8 @@ export function Workspace({
   const [isCreateDocOpen, setIsCreateDocOpen] = useState<boolean>(false);
   const [isAddUserOpen, setIsAddUserOpen] = useState<boolean>(false);
   const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState<boolean>(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState<boolean>(false);
+  const [selectedCardKey, setSelectedCardKey] = useState<string | null>(null);
   const [editingDoc, setEditingDoc] = useState<FullDocument | null>(null);
   const [activeDocDetail, setActiveDocDetail] = useState<FullDocument | null>(null);
   const [notification, setNotification] = useState<Notification | null>(null);
@@ -138,17 +141,7 @@ export function Workspace({
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [router]);
 
-  // Global Cmd+K / Ctrl+K shortcut for Command Palette
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setIsCommandPaletteOpen((prev) => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+
 
   // Synchronize issue detail drawer with URL param (?issue=APEX-XXX)
   useEffect(() => {
@@ -743,6 +736,106 @@ export function Workspace({
     }
   };
 
+  // Global Linear-style keyboard shortcuts (Cmd+K, ?, C, J, K, Space, M, Esc)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 1. Cmd+K / Ctrl+K Palette
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
+      // If user is focused inside an editable input/textarea or has modifiers, ignore single key navigation
+      const activeEl = document.activeElement;
+      const isInput =
+        activeEl?.tagName === 'INPUT' ||
+        activeEl?.tagName === 'TEXTAREA' ||
+        activeEl?.tagName === 'SELECT' ||
+        (activeEl as HTMLElement)?.isContentEditable;
+
+      if (isInput || e.metaKey || e.ctrlKey || e.altKey) {
+        return;
+      }
+
+      // 2. '?' shortcut -> Keyboard shortcuts helper
+      if (e.key === '?') {
+        e.preventDefault();
+        setIsShortcutsModalOpen((prev) => !prev);
+        return;
+      }
+
+      // 3. 'c' / 'C' shortcut -> Quick create issue
+      if (e.key === 'c' || e.key === 'C') {
+        if (!isViewer && !isCreateIssueOpen && !selectedIssueKey) {
+          e.preventDefault();
+          setIsCreateIssueOpen(true);
+          return;
+        }
+      }
+
+      // 4. 'j' / 'k' -> Move selection between cards
+      if (filteredIssues.length > 0 && !selectedIssueKey) {
+        if (e.key === 'j' || e.key === 'J') {
+          e.preventDefault();
+          const currIdx = selectedCardKey
+            ? filteredIssues.findIndex((i) => i.key === selectedCardKey)
+            : -1;
+          const nextIdx = currIdx + 1 < filteredIssues.length ? currIdx + 1 : 0;
+          setSelectedCardKey(filteredIssues[nextIdx].key);
+          return;
+        }
+
+        if (e.key === 'k' || e.key === 'K') {
+          e.preventDefault();
+          const currIdx = selectedCardKey
+            ? filteredIssues.findIndex((i) => i.key === selectedCardKey)
+            : 0;
+          const prevIdx = currIdx - 1 >= 0 ? currIdx - 1 : filteredIssues.length - 1;
+          setSelectedCardKey(filteredIssues[prevIdx].key);
+          return;
+        }
+      }
+
+      // 5. 'Space' or 'Enter' -> Open selected card drawer
+      if ((e.key === ' ' || e.key === 'Enter') && selectedCardKey && !selectedIssueKey) {
+        e.preventDefault();
+        handleSelectIssue(selectedCardKey);
+        return;
+      }
+
+      // 6. 'm' / 'M' -> Quick assign selected card to Me
+      if ((e.key === 'm' || e.key === 'M') && (selectedIssueKey || selectedCardKey)) {
+        if (isViewer) return;
+        const targetKey = selectedIssueKey || selectedCardKey;
+        if (targetKey) {
+          e.preventDefault();
+          updateIssue(targetKey, { assigneeId: currentUser.id });
+          showToast(`Assigned ${targetKey} to you`, 'success');
+          return;
+        }
+      }
+
+      // 7. Escape -> close shortcuts modal
+      if (e.key === 'Escape') {
+        if (isShortcutsModalOpen) {
+          setIsShortcutsModalOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isViewer,
+    isCreateIssueOpen,
+    selectedIssueKey,
+    selectedCardKey,
+    filteredIssues,
+    isShortcutsModalOpen,
+    currentUser.id,
+  ]);
+
   if (isPending) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-900 text-white">
@@ -832,6 +925,7 @@ export function Workspace({
           isViewer={isViewer}
           onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onOpenShortcuts={() => setIsShortcutsModalOpen(true)}
           activeProjectName={currentProject?.name || 'Kynov Platform'}
           activeTab={activeTab}
           users={initialUsers}
@@ -1172,6 +1266,12 @@ export function Workspace({
           setIsCreateDocOpen(true);
         }}
         onOpenProjectsModal={() => setIsProjectsModalOpen(true)}
+      />
+
+      {/* Keyboard Shortcuts Cheat Sheet (?) */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
       />
     </div>
   );

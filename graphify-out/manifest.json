@@ -228,9 +228,9 @@
     "semantic_hash": "11f176444b9a92c161480cffa11335fb"
   },
   "components/Workspace.tsx": {
-    "mtime": 1792262288.527615,
-    "seen": 1792262515.7554839,
-    "ast_hash": "1102e4005bd7251fcf3259f5231766e1",
+    "mtime": 1792265311.225072,
+    "seen": 1792265461.2232778,
+    "ast_hash": "79ead05496c39ec8e10b2ac0dadc7bfd",
     "semantic_hash": ""
   },
   "components/auth/LoginForm.tsx": {
@@ -276,9 +276,9 @@
     "semantic_hash": "62bf62b437cda2c874524e315fa5229f"
   },
   "components/board/KanbanBoard.tsx": {
-    "mtime": 1792189808.7112799,
-    "seen": 1792245661.1726031,
-    "ast_hash": "f3fbc398ed57c6c0d3676b443cebd360",
+    "mtime": 1792265099.6376119,
+    "seen": 1792265461.2311335,
+    "ast_hash": "c3771a190b7f95423d819610a3b9ffb7",
     "semantic_hash": ""
   },
   "components/board/VelocityMetricsWidget.tsx": {
@@ -432,9 +432,9 @@
     "semantic_hash": "15125af3060f7e2794823275809db0ca"
   },
   "components/shell/Header.tsx": {
-    "mtime": 1792260293.2055333,
-    "seen": 1792260350.3409164,
-    "ast_hash": "a6b565ed2ebd109ee8ed998356d7e4a8",
+    "mtime": 1792265018.0109272,
+    "seen": 1792265461.251595,
+    "ast_hash": "7c74b65d4bda5b177681a512686d3fc4",
     "semantic_hash": ""
   },
   "components/shell/Sidebar.tsx": {
@@ -504,9 +504,9 @@
     "semantic_hash": "6ecbed95a58e495a9dde8b53432d0cdc"
   },
   "db/schema.ts": {
-    "mtime": 1792261421.5430422,
-    "seen": 1792262515.7844758,
-    "ast_hash": "a88a82e86f08dc9154049967ea6968cd",
+    "mtime": 1792264465.827716,
+    "seen": 1792265461.2594137,
+    "ast_hash": "3852485ac6bd8863f75bdb8461c5cd43",
     "semantic_hash": ""
   },
   "drizzle.config.ts": {
@@ -612,9 +612,9 @@
     "semantic_hash": "a8661e737ab038e8c1f46e80ba8cdf81"
   },
   "lib/schemaInit.ts": {
-    "mtime": 1792261521.8800955,
-    "seen": 1792262515.794715,
-    "ast_hash": "42aa894103609397de459335607c961f",
+    "mtime": 1792264488.1432657,
+    "seen": 1792265461.2761083,
+    "ast_hash": "24465310d4b4d3717307e08d35cedca1",
     "semantic_hash": ""
   },
   "lib/schemas.ts": {
@@ -630,9 +630,9 @@
     "semantic_hash": "1c1b3a4c59f55e1f5e430da158c9023f"
   },
   "lib/types.ts": {
-    "mtime": 1792263104.4928858,
-    "seen": 1792263363.317679,
-    "ast_hash": "736206c0aab6dceba1e449ead69e3316",
+    "mtime": 1792264444.1139035,
+    "seen": 1792265461.2780495,
+    "ast_hash": "06ab17bc4e1d79c8ad34aab5ff2dfa5d",
     "semantic_hash": ""
   },
   "middleware.ts": {
@@ -714,9 +714,9 @@
     "semantic_hash": ""
   },
   "docs/USER_OPERATIONS_MANUAL.md": {
-    "mtime": 1792263186.8603172,
-    "seen": 1792263363.3276892,
-    "ast_hash": "2c97d189ee91073e5dc07b373f25a5ef",
+    "mtime": 1792265363.4612787,
+    "seen": 1792265461.2878625,
+    "ast_hash": "8fe9cc77bd9d399a1d147630aa958803",
     "semantic_hash": ""
   },
   "docs/assets/screenshots/README.md": {
@@ -894,15 +894,15 @@
     "semantic_hash": ""
   },
   "components/organization/OrganizationView.tsx": {
-    "mtime": 1792263144.621266,
-    "seen": 1792263363.2884283,
-    "ast_hash": "3428a3449e285fcc86951c6e9aba892f",
+    "mtime": 1792264850.4966297,
+    "seen": 1792265461.2486672,
+    "ast_hash": "3b5357b229ee5738a35f4dd8829a8832",
     "semantic_hash": ""
   },
   "app/actions/org.ts": {
-    "mtime": 1792263124.3184958,
-    "seen": 1792263363.2400756,
-    "ast_hash": "d707ef09bcd291304656aa5b1d456c6e",
+    "mtime": 1792265196.591719,
+    "seen": 1792265461.2051382,
+    "ast_hash": "61430d0fd2ed3669a4c76109a11616fe",
     "semantic_hash": ""
   },
   "components/layout/OrganizationSwitcher.tsx": {
@@ -915,6 +915,24 @@
     "mtime": 1792261917.8110797,
     "seen": 1792262515.7734802,
     "ast_hash": "2e2dca46559b55ca464c717edf08be15",
+    "semantic_hash": ""
+  },
+  "app/join/page.tsx": {
+    "mtime": 1792264627.599063,
+    "seen": 1792265461.219371,
+    "ast_hash": "10c318db50c5e34aa4502c75e6de28c5",
+    "semantic_hash": ""
+  },
+  "components/command/KeyboardShortcutsModal.tsx": {
+    "mtime": 1792264669.4959073,
+    "seen": 1792265461.2340617,
+    "ast_hash": "5833d007939ca4840bcae38d082ebc94",
+    "semantic_hash": ""
+  },
+  "components/organization/InviteMemberModal.tsx": {
+    "mtime": 1792265215.3899496,
+    "seen": 1792265461.2486672,
+    "ast_hash": "ee0da972bfdc7b34b6f4cd8f9af899b7",
     "semantic_hash": ""
   }
 }

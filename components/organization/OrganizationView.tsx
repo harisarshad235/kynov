@@ -28,8 +28,11 @@ import {
   Edit3,
   Settings,
   Trash2,
+  Link as LinkIcon,
+  Activity,
+  History,
 } from 'lucide-react';
-import { User, Project, UserRole, Organization, OrganizationRole, OrgMemberRow } from '@/lib/types';
+import { User, Project, UserRole, Organization, OrganizationRole, OrgMemberRow, OrganizationActivity } from '@/lib/types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import {
   getAllOrganizationProjectsAction,
@@ -45,8 +48,10 @@ import {
   addOrganizationMemberAction,
   removeOrganizationMemberAction,
   getOrganizationMembersAction,
+  getOrganizationActivityAction,
 } from '@/app/actions/org';
 import { ProjectMembersPanel } from '@/components/projects/ProjectMembersPanel';
+import { InviteMemberModal } from './InviteMemberModal';
 
 interface OrganizationViewProps {
   currentUser: User;
@@ -75,13 +80,16 @@ export function OrganizationView({
   onOpenCreateProject,
   onShowToast,
 }: OrganizationViewProps) {
-  const [activeTab, setActiveTab] = useState<'projects' | 'members' | 'governance'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'members' | 'governance' | 'activity'>('projects');
   const [orgProjects, setOrgProjects] = useState<OrganizationProjectSummary[]>([]);
   const [userAssignments, setUserAssignments] = useState<Record<string, UserProjectAssignment[]>>({});
   const [orgMembers, setOrgMembers] = useState<OrgMemberRow[]>([]);
+  const [activities, setActivities] = useState<OrganizationActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingActivity, setLoadingActivity] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProjectForMembers, setSelectedProjectForMembers] = useState<OrganizationProjectSummary | null>(null);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // Edit Organization Modal state
   const [isEditOrgOpen, setIsEditOrgOpen] = useState(false);
@@ -115,14 +123,16 @@ export function OrganizationView({
   const loadOrgData = async () => {
     try {
       setLoading(true);
-      const [projectsData, assignmentsData, membersData] = await Promise.all([
+      const [projectsData, assignmentsData, membersData, activitiesData] = await Promise.all([
         getAllOrganizationProjectsAction(activeOrg.id),
         getAllUserProjectAssignmentsAction(),
         getOrganizationMembersAction(activeOrg.id),
+        getOrganizationActivityAction(activeOrg.id),
       ]);
       setOrgProjects(projectsData.length > 0 ? projectsData : initialProjects.map((p) => ({ ...p, memberCount: 1 })));
       setUserAssignments(assignmentsData);
       setOrgMembers(membersData);
+      setActivities(activitiesData);
     } catch (err) {
       console.error('Failed to load organization data:', err);
       setOrgProjects(initialProjects.map((p) => ({ ...p, memberCount: 1 })));
@@ -389,9 +399,24 @@ export function OrganizationView({
             <Shield className="w-4 h-4" />
             <span>Multi-Tenant Policies</span>
           </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('activity');
+              getOrganizationActivityAction(activeOrg.id).then(setActivities);
+            }}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${
+              activeTab === 'activity'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            <span>Activity Audit Log</span>
+          </button>
         </div>
 
-        {activeTab !== 'governance' && (
+        {activeTab !== 'governance' && activeTab !== 'activity' && (
           <div className="relative w-full sm:w-64">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -521,6 +546,14 @@ export function OrganizationView({
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {isOrgAdminOrOwner && (
+                <button
+                  onClick={() => setIsInviteModalOpen(true)}
+                  className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs transition"
+                >
+                  <LinkIcon className="w-3.5 h-3.5 text-indigo-500" /> Invite via Link
+                </button>
+              )}
               {isOrgAdminOrOwner && availableUsersToEnroll.length > 0 && (
                 <button
                   onClick={() => setIsAddOrgMemberOpen(true)}
@@ -791,6 +824,77 @@ export function OrganizationView({
         </div>
       )}
 
+      {/* TAB 4: ACTIVITY AUDIT LOG */}
+      {activeTab === 'activity' && (
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 md:p-8 space-y-6 shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                <Activity className="w-5 h-5 text-indigo-500" /> Organization Activity & Audit Trail
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Real-time security and operational events across the {activeOrg.name} tenant.
+              </p>
+            </div>
+            <button
+              onClick={() => getOrganizationActivityAction(activeOrg.id).then(setActivities)}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition text-xs font-semibold flex items-center gap-1.5"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh Log
+            </button>
+          </div>
+
+          {activities.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 space-y-2">
+              <History className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-700" />
+              <p className="text-xs">No recorded activity yet for this organization.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 relative before:absolute before:inset-0 before:left-5 before:w-0.5 before:bg-slate-100 dark:before:bg-slate-800">
+              {activities.map((act) => {
+                const date = new Date(act.createdAt);
+                const timeStr = date.toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+
+                return (
+                  <div key={act.id} className="relative flex items-start gap-4 pl-1 text-xs">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center relative z-10 shrink-0">
+                      <UserAvatar
+                        user={{
+                          name: act.actorName,
+                          avatarUrl: act.actorAvatarUrl,
+                        }}
+                        size="xs"
+                      />
+                    </div>
+                    <div className="flex-1 bg-slate-50/70 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {act.actorName}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {timeStr}
+                        </span>
+                      </div>
+                      <p className="text-slate-600 dark:text-slate-300 text-xs">
+                        {act.details || act.action}
+                      </p>
+                      <span className="inline-block mt-2 text-[9px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase font-bold">
+                        {act.action}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Enroll Existing Member to this Org Modal */}
       {isAddOrgMemberOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -970,6 +1074,15 @@ export function OrganizationView({
           </div>
         </div>
       )}
+
+      {/* Shareable Invite Link Modal */}
+      <InviteMemberModal
+        isOpen={isInviteModalOpen}
+        orgId={activeOrg.id}
+        orgName={activeOrg.name}
+        onClose={() => setIsInviteModalOpen(false)}
+        onShowToast={onShowToast}
+      />
     </div>
   );
 }

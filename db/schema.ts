@@ -116,6 +116,47 @@ export const organizationMembers = sqliteTable(
   ]
 );
 
+export const organizationInvites = sqliteTable(
+  'organization_invites',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    token: text('token').notNull(),
+    email: text('email'),
+    role: text('role', { enum: ORGANIZATIONS_ROLES }).notNull().default('MEMBER'),
+    invitedById: text('invited_by_id').references(() => users.id, { onDelete: 'set null' }),
+    expiresAt: integer('expires_at').notNull(),
+    createdAt: createdAt(),
+    acceptedAt: integer('accepted_at'),
+  },
+  (t) => [
+    uniqueIndex('org_invites_token_uq').on(t.token),
+    index('org_invites_org_idx').on(t.organizationId),
+  ]
+);
+
+export const organizationActivity = sqliteTable(
+  'organization_activity',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    actorId: text('actor_id').references(() => users.id, { onDelete: 'set null' }),
+    action: text('action').notNull(),
+    entityType: text('entity_type').notNull(),
+    entityId: text('entity_id'),
+    details: text('details'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('org_activity_org_idx').on(t.organizationId),
+    index('org_activity_created_idx').on(t.createdAt),
+  ]
+);
+
 /* ------------------------------------------------------------------ */
 /* Projects & Multi-Project Workspaces                                 */
 /* ------------------------------------------------------------------ */

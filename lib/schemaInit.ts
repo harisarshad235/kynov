@@ -71,6 +71,41 @@ export async function ensureEnterpriseSchema(dbInstance?: ReturnType<typeof getD
 
   try {
     await db.run(sql`
+      CREATE TABLE IF NOT EXISTS organization_invites (
+        id TEXT PRIMARY KEY NOT NULL,
+        organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+        token TEXT NOT NULL,
+        email TEXT,
+        role TEXT NOT NULL DEFAULT 'MEMBER',
+        invited_by_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        expires_at INTEGER NOT NULL,
+        created_at INTEGER DEFAULT (unixepoch() * 1000) NOT NULL,
+        accepted_at INTEGER
+      )
+    `);
+  } catch {
+    // Ignore
+  }
+
+  try {
+    await db.run(sql`
+      CREATE TABLE IF NOT EXISTS organization_activity (
+        id TEXT PRIMARY KEY NOT NULL,
+        organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+        actor_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+        action TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id TEXT,
+        details TEXT,
+        created_at INTEGER DEFAULT (unixepoch() * 1000) NOT NULL
+      )
+    `);
+  } catch {
+    // Ignore
+  }
+
+  try {
+    await db.run(sql`
       CREATE TABLE IF NOT EXISTS issue_comments (
         id TEXT PRIMARY KEY NOT NULL,
         issue_id TEXT NOT NULL REFERENCES issues(key) ON DELETE CASCADE,
