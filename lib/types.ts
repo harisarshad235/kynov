@@ -124,6 +124,8 @@ export interface Organization {
   memberCount?: number;
   projectCount?: number;
   userRole?: OrganizationRole;
+  allowedDomain?: string | null;
+  autoJoinEnabled?: boolean | number | null;
 }
 
 export interface OrganizationInvite {

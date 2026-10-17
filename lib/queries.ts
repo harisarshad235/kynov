@@ -121,7 +121,7 @@ export async function getWorkspaceData(
   // 1. Multi-Tenant Organization Scoping:
   // Resolve user's organizations and isolate data to the active tenant
   const userOrgs = await getUserOrganizationsAction();
-  const effectiveOrg = (activeOrgId ? userOrgs.find((o) => o.id === activeOrgId) : null) || userOrgs[0] || null;
+  const effectiveOrg = (activeOrgId ? userOrgs.find((o) => o.id === activeOrgId || o.slug === activeOrgId) : null) || userOrgs[0] || null;
   const currentOrgId = effectiveOrg?.id || 'org-kynov';
 
   // Filter projects by organization

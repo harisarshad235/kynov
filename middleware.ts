@@ -91,7 +91,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/signup') ||
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/awaiting-approval')
+    pathname.startsWith('/awaiting-approval') ||
+    pathname.startsWith('/join')
   ) {
     return withSecurityHeaders(NextResponse.next());
   }

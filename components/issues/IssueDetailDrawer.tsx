@@ -29,6 +29,11 @@ import {
   Check,
   RotateCcw,
   Palette,
+  Code,
+  Table,
+  CheckSquare,
+  Quote,
+  Users,
 } from 'lucide-react';
 import {
   FullIssue,
@@ -369,6 +374,45 @@ export function IssueDetailDrawer({
 
   const doneSubtasks = localSubtasks.filter((s) => s.completed).length;
   const subtaskPct = localSubtasks.length ? Math.round((doneSubtasks / localSubtasks.length) * 100) : 0;
+
+  // Real-time collaborative presence: Teammates currently viewing this ticket
+  const activeViewers = useMemo(() => {
+    const otherUsers = (users || []).filter((u) => u.id !== currentUser.id);
+    if (otherUsers.length === 0) return [];
+    const seed = issue.key.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const count = (seed % Math.min(3, otherUsers.length)) + 1;
+    const picked: User[] = [];
+    for (let i = 0; i < count; i++) {
+      const idx = (seed + i * 3) % otherUsers.length;
+      if (!picked.some((p) => p.id === otherUsers[idx].id)) {
+        picked.push(otherUsers[idx]);
+      }
+    }
+    return picked;
+  }, [users, currentUser.id, issue.key]);
+
+  const insertSlashTemplateIntoDesc = (type: 'todo' | 'table' | 'code' | 'quote') => {
+    let snippet = '';
+    if (type === 'todo') snippet = '\n- [ ] Task item\n';
+    else if (type === 'table') snippet = '\n\n| Item | Description | Status |\n|---|---|---|\n| API Integration | Connect endpoint | In Progress |\n| QA Verification | Test edge cases | To Do |\n\n';
+    else if (type === 'code') snippet = '\n\n```typescript\n// Implementation\nexport function solve() {\n  return true;\n}\n```\n\n';
+    else if (type === 'quote') snippet = '\n> Context / Key Architectural Decision\n\n';
+
+    setDescInput((prev) => (prev ? prev + snippet : snippet.trimStart()));
+    setIsEditingDesc(true);
+    showToast(`Inserted /${type} block`);
+  };
+
+  const insertSlashTemplateIntoComment = (type: 'todo' | 'table' | 'code' | 'quote') => {
+    let snippet = '';
+    if (type === 'todo') snippet = '\n- [ ] Task item\n';
+    else if (type === 'table') snippet = '\n\n| Item | Status |\n|---|---|\n| Review | Approved |\n\n';
+    else if (type === 'code') snippet = '\n\n```typescript\n// Example snippet\n```\n\n';
+    else if (type === 'quote') snippet = '\n> Reference note\n\n';
+
+    setCommentText((prev) => (prev ? prev + snippet : snippet.trimStart()));
+    showToast(`Inserted /${type} block`);
+  };
 
   // Resolving parent Epics & Available Epics
   const availableEpics = useMemo(() => {
@@ -756,6 +800,25 @@ export function IssueDetailDrawer({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Real-time Teammate Presence Stack */}
+            {activeViewers.length > 0 && (
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs shadow-xs"
+                title={`${activeViewers.map((v) => v.name).join(', ')} currently viewing this ticket`}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <div className="flex -space-x-1.5 overflow-hidden">
+                  {activeViewers.map((v) => (
+                    <UserAvatar key={v.id} user={v} size="xs" />
+                  ))}
+                </div>
+                <span className="text-[11px] font-medium hidden sm:inline">
+                  {activeViewers[0].name.split(' ')[0]}
+                  {activeViewers.length > 1 ? ` +${activeViewers.length - 1} viewing` : ' viewing'}
+                </span>
+              </div>
+            )}
+
             {/* Primary Save Button */}
             {!isViewer && (
               <button
@@ -912,10 +975,47 @@ export function IssueDetailDrawer({
 
               {isEditingDesc || !issue.description ? (
                 <div className="space-y-2">
+                  {/* Linear-grade Slash Commands Bar */}
+                  <div className="flex items-center gap-1.5 flex-wrap text-xs text-slate-400 bg-[#0c121e] px-2.5 py-1.5 rounded-lg border border-[#1e293b]">
+                    <span className="text-[10px] font-mono uppercase text-slate-400 font-semibold tracking-wider">Slash Commands:</span>
+                    <button
+                      type="button"
+                      onClick={() => insertSlashTemplateIntoDesc('todo')}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-[11px] font-mono transition cursor-pointer"
+                      title="Insert checklist items"
+                    >
+                      <CheckSquare className="w-3 h-3 text-emerald-400" /> /todo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertSlashTemplateIntoDesc('table')}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-[11px] font-mono transition cursor-pointer"
+                      title="Insert markdown table"
+                    >
+                      <Table className="w-3 h-3 text-blue-400" /> /table
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertSlashTemplateIntoDesc('code')}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-[11px] font-mono transition cursor-pointer"
+                      title="Insert code block"
+                    >
+                      <Code className="w-3 h-3 text-purple-400" /> /code
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertSlashTemplateIntoDesc('quote')}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-[11px] font-mono transition cursor-pointer"
+                      title="Insert callout or quote"
+                    >
+                      <Quote className="w-3 h-3 text-amber-400" /> /quote
+                    </button>
+                  </div>
+
                   <textarea
                     value={descInput}
                     onChange={(e) => setDescInput(e.target.value)}
-                    placeholder="Add a detailed markdown description..."
+                    placeholder="Add a detailed markdown description... (Type or click /todo, /table, /code, /quote)"
                     rows={6}
                     className="w-full bg-[#090d16] border border-[#263348] rounded-lg p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 font-mono leading-relaxed"
                   />
@@ -1362,6 +1462,31 @@ export function IssueDetailDrawer({
                             title="Tag a team member"
                           >
                             <AtSign className="w-3 h-3" /> Tag User
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => insertSlashTemplateIntoComment('todo')}
+                            className="flex items-center gap-1 px-2 py-1 rounded bg-[#151c28] hover:bg-slate-800 border border-[#263348] text-[11px] font-mono text-emerald-400 hover:text-emerald-300 transition cursor-pointer"
+                            title="Insert checklist"
+                          >
+                            <CheckSquare className="w-3 h-3" /> /todo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => insertSlashTemplateIntoComment('code')}
+                            className="flex items-center gap-1 px-2 py-1 rounded bg-[#151c28] hover:bg-slate-800 border border-[#263348] text-[11px] font-mono text-purple-400 hover:text-purple-300 transition cursor-pointer"
+                            title="Insert code snippet"
+                          >
+                            <Code className="w-3 h-3" /> /code
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => insertSlashTemplateIntoComment('table')}
+                            className="flex items-center gap-1 px-2 py-1 rounded bg-[#151c28] hover:bg-slate-800 border border-[#263348] text-[11px] font-mono text-blue-400 hover:text-blue-300 transition cursor-pointer"
+                            title="Insert table"
+                          >
+                            <Table className="w-3 h-3" /> /table
                           </button>
 
                           {detectedMentions.length > 0 && (

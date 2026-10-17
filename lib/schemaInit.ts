@@ -56,6 +56,18 @@ export async function ensureEnterpriseSchema(dbInstance?: ReturnType<typeof getD
   }
 
   try {
+    await db.run(sql`ALTER TABLE organizations ADD COLUMN allowed_domain TEXT`);
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    await db.run(sql`ALTER TABLE organizations ADD COLUMN auto_join_enabled INTEGER DEFAULT 0`);
+  } catch {
+    // Column already exists
+  }
+
+  try {
     await db.run(sql`
       CREATE TABLE IF NOT EXISTS organization_members (
         id TEXT PRIMARY KEY NOT NULL,

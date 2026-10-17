@@ -91,6 +91,8 @@ export const organizations = sqliteTable(
     logoUrl: text('logo_url'),
     ownerId: text('owner_id').references(() => users.id, { onDelete: 'set null' }),
     plan: text('plan').default('team'),
+    allowedDomain: text('allowed_domain'),
+    autoJoinEnabled: integer('auto_join_enabled').default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

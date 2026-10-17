@@ -724,10 +724,15 @@ export function Workspace({
 
   const handleSelectOrganization = async (orgId: string) => {
     try {
+      const targetOrg = (organizations || []).find((o) => o.id === orgId);
       const res = await setActiveOrganizationAction(orgId);
       if (res.success) {
         showToast('Switched organization', 'success');
-        router.refresh();
+        if (targetOrg?.slug) {
+          router.push(`/${targetOrg.slug}/dashboard`);
+        } else {
+          router.refresh();
+        }
       } else {
         showToast(res.error || 'Failed to switch organization', 'error');
       }

@@ -43,6 +43,8 @@ export async function getUserOrganizationsAction(): Promise<Organization[]> {
           o.logo_url as logoUrl,
           o.owner_id as ownerId,
           o.plan,
+          o.allowed_domain as allowedDomain,
+          o.auto_join_enabled as autoJoinEnabled,
           o.created_at as createdAt,
           o.updated_at as updatedAt,
           COALESCE(om.role, 'OWNER') as userRole,
@@ -61,6 +63,8 @@ export async function getUserOrganizationsAction(): Promise<Organization[]> {
           o.logo_url as logoUrl,
           o.owner_id as ownerId,
           o.plan,
+          o.allowed_domain as allowedDomain,
+          o.auto_join_enabled as autoJoinEnabled,
           o.created_at as createdAt,
           o.updated_at as updatedAt,
           om.role as userRole,
@@ -771,4 +775,61 @@ export async function getOrganizationActivityAction(orgId: string): Promise<Orga
     return [];
   }
 }
+
+/**
+ * Configure domain auto-join policies for an organization.
+ */
+export async function updateOrgDomainAutoJoinAction(
+  orgId: string,
+  allowedDomain: string | null,
+  autoJoinEnabled: boolean
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return { success: false, error: 'Unauthenticated.' };
+
+    const db = getDb();
+    await ensureEnterpriseSchema(db);
+
+    const roleStr = String(currentUser.role || '');
+    const isSuperAdmin = roleStr === 'Admin' || roleStr.toUpperCase() === 'ADMIN';
+
+    if (!isSuperAdmin) {
+      const membership = await db.all<{ role: string }>(sql`
+        SELECT role FROM organization_members
+        WHERE organization_id = ${orgId} AND user_id = ${currentUser.id}
+      `);
+      const callerRole = membership[0]?.role;
+      if (callerRole !== 'OWNER' && callerRole !== 'ADMIN') {
+        return { success: false, error: 'Only Organization Admins or Owners can modify domain policies.' };
+      }
+    }
+
+    const cleanDomain = allowedDomain ? sanitizePlainText(allowedDomain.trim().toLowerCase().replace(/^@/, '')) : null;
+
+    await db.run(sql`
+      UPDATE organizations
+      SET
+        allowed_domain = ${cleanDomain},
+        auto_join_enabled = ${autoJoinEnabled ? 1 : 0},
+        updated_at = (unixepoch() * 1000)
+      WHERE id = ${orgId}
+    `);
+
+    await logOrgActivityAction(
+      orgId,
+      'DOMAIN_POLICY_UPDATED',
+      'ORGANIZATION',
+      orgId,
+      `Updated auto-join policy: domain=${cleanDomain || 'none'}, enabled=${autoJoinEnabled}`
+    );
+
+    revalidatePath('/');
+    return { success: true, message: 'Domain auto-join policy updated.' };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to update domain policy';
+    return { success: false, error: message };
+  }
+}
+
 

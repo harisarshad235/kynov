@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Workspace } from '@/components/Workspace';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import type {
@@ -14,7 +14,7 @@ import type {
   Swimlane,
   Organization,
 } from '@/lib/types';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, WifiOff } from 'lucide-react';
 
 interface WorkspaceData {
   currentUser: User;
@@ -29,11 +29,19 @@ interface WorkspaceData {
   currentOrganization?: Organization | null;
 }
 
-export default function DashboardPage() {
+interface DashboardContentProps {
+  initialOrgSlug?: string;
+}
+
+function DashboardContent({ initialOrgSlug }: DashboardContentProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const orgSlug = initialOrgSlug || searchParams.get('org') || searchParams.get('orgSlug') || null;
+
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState<boolean>(false);
 
   const fetchData = useCallback(
     async (isBackground = false) => {
@@ -42,8 +50,11 @@ export default function DashboardPage() {
         setError(null);
       }
 
+      const cacheKey = `kynov_cached_workspace_${orgSlug || 'default'}`;
+
       try {
-        const res = await fetch('/api/dashboard', {
+        const query = orgSlug ? `?org=${encodeURIComponent(orgSlug)}` : '';
+        const res = await fetch(`/api/dashboard${query}`, {
           headers: {
             Accept: 'application/json',
           },
@@ -67,8 +78,35 @@ export default function DashboardPage() {
         const json: WorkspaceData = await res.json();
         setData(json);
         setError(null);
+        setIsOffline(false);
+
+        // Store snapshot in local cache for offline resiliency
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(cacheKey, JSON.stringify(json));
+            localStorage.setItem('kynov_cached_workspace_default', JSON.stringify(json));
+          }
+        } catch {
+          // Ignore quota/private browsing errors
+        }
       } catch (err: any) {
-        console.error('Failed to load dashboard data:', err);
+        console.warn('Network issue fetching live dashboard:', err);
+        // Attempt recovery from offline cache
+        if (typeof window !== 'undefined') {
+          const cached =
+            localStorage.getItem(cacheKey) ||
+            localStorage.getItem('kynov_cached_workspace_default');
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached) as WorkspaceData;
+              setData(parsed);
+              setIsOffline(true);
+              setError(null);
+              return;
+            } catch {}
+          }
+        }
+
         if (!isBackground) {
           setError(err?.message || 'Failed to connect to workspace database');
         }
@@ -78,7 +116,7 @@ export default function DashboardPage() {
         }
       }
     },
-    [router]
+    [router, orgSlug]
   );
 
   useEffect(() => {
@@ -88,12 +126,24 @@ export default function DashboardPage() {
     const handleFocus = () => fetchData(true);
     window.addEventListener('focus', handleFocus);
 
+    // Online / Offline listener
+    const handleOnline = () => {
+      setIsOffline(false);
+      fetchData(true);
+    };
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     // Support custom manual refresh trigger
     const handleCustomRefresh = () => fetchData(true);
     window.addEventListener('kynov:refresh-data', handleCustomRefresh);
 
     return () => {
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       window.removeEventListener('kynov:refresh-data', handleCustomRefresh);
     };
   }, [fetchData]);
@@ -129,17 +179,33 @@ export default function DashboardPage() {
   }
 
   return (
-    <Workspace
-      currentUser={data.currentUser}
-      users={data.users}
-      issues={data.issues}
-      docs={data.docs}
-      sprints={data.sprints}
-      projects={data.projects}
-      swimlanes={data.swimlanes}
-      metrics={data.metrics}
-      organizations={data.organizations || []}
-      currentOrganization={data.currentOrganization || null}
-    />
+    <>
+      {isOffline && (
+        <div className="bg-amber-600/90 text-white text-xs font-semibold px-4 py-2 flex items-center justify-center gap-2 shadow-sm z-50">
+          <WifiOff className="w-4 h-4" />
+          <span>Working Offline — Viewing cached snapshot. Changes will sync once reconnected.</span>
+        </div>
+      )}
+      <Workspace
+        currentUser={data.currentUser}
+        users={data.users}
+        issues={data.issues}
+        docs={data.docs}
+        sprints={data.sprints}
+        projects={data.projects}
+        swimlanes={data.swimlanes}
+        metrics={data.metrics}
+        organizations={data.organizations || []}
+        currentOrganization={data.currentOrganization || null}
+      />
+    </>
+  );
+}
+
+export default function DashboardPage({ initialOrgSlug }: { initialOrgSlug?: string }) {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent initialOrgSlug={initialOrgSlug} />
+    </Suspense>
   );
 }

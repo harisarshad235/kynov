@@ -31,6 +31,7 @@ import {
   Link as LinkIcon,
   Activity,
   History,
+  Globe,
 } from 'lucide-react';
 import { User, Project, UserRole, Organization, OrganizationRole, OrgMemberRow, OrganizationActivity } from '@/lib/types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -49,6 +50,7 @@ import {
   removeOrganizationMemberAction,
   getOrganizationMembersAction,
   getOrganizationActivityAction,
+  updateOrgDomainAutoJoinAction,
 } from '@/app/actions/org';
 import { ProjectMembersPanel } from '@/components/projects/ProjectMembersPanel';
 import { InviteMemberModal } from './InviteMemberModal';
@@ -95,6 +97,9 @@ export function OrganizationView({
   const [isEditOrgOpen, setIsEditOrgOpen] = useState(false);
   const [editOrgName, setEditOrgName] = useState(currentOrganization?.name || 'Kynov Technologies');
   const [editOrgSlug, setEditOrgSlug] = useState(currentOrganization?.slug || 'kynov');
+  const [domainInput, setDomainInput] = useState(currentOrganization?.allowedDomain || '');
+  const [autoJoinEnabled, setAutoJoinEnabled] = useState(!!currentOrganization?.autoJoinEnabled);
+  const [isSavingDomain, setIsSavingDomain] = useState(false);
 
   // Add Member to Org state
   const [isAddOrgMemberOpen, setIsAddOrgMemberOpen] = useState(false);
@@ -144,6 +149,8 @@ export function OrganizationView({
   useEffect(() => {
     setEditOrgName(activeOrg.name);
     setEditOrgSlug(activeOrg.slug);
+    setDomainInput(activeOrg.allowedDomain || '');
+    setAutoJoinEnabled(!!activeOrg.autoJoinEnabled);
     loadOrgData();
   }, [activeOrg.id, initialProjects]);
 
@@ -693,64 +700,155 @@ export function OrganizationView({
         </div>
       )}
 
-      {/* TAB 3: MULTI-TENANT POLICIES */}
+      {/* TAB 3: MULTI-TENANT POLICIES & CAPABILITY MATRIX */}
       {activeTab === 'governance' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                <Building2 className="w-5 h-5" />
-              </span>
-              <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                Multi-Tenant Architecture
-              </h3>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Domain Auto-Join Provisioning Card */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 space-y-4 shadow-xs">
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <Globe className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                    Domain Auto-Join Provisioning
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Allow new employees with verified corporate emails to automatically join this organization.
+                  </p>
+                </div>
+              </div>
+
+              {isOrgAdminOrOwner ? (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setIsSavingDomain(true);
+                    try {
+                      const res = await updateOrgDomainAutoJoinAction(activeOrg.id, domainInput || null, autoJoinEnabled);
+                      if (res.success) {
+                        onShowToast?.(res.message || 'Domain policy updated', 'success');
+                        await loadOrgData();
+                      } else {
+                        onShowToast?.(res.error || 'Failed to update', 'error');
+                      }
+                    } catch (err: any) {
+                      onShowToast?.(err.message || 'Error occurred', 'error');
+                    } finally {
+                      setIsSavingDomain(false);
+                    }
+                  }}
+                  className="space-y-4 pt-2"
+                >
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Corporate Domain (e.g. acme.com)
+                    </label>
+                    <input
+                      type="text"
+                      value={domainInput}
+                      onChange={(e) => setDomainInput(e.target.value)}
+                      placeholder="company.com"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800">
+                    <input
+                      type="checkbox"
+                      id="autoJoinCheck"
+                      checked={autoJoinEnabled}
+                      onChange={(e) => setAutoJoinEnabled(e.target.checked)}
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="autoJoinCheck" className="text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                      Enable instant auto-join for anyone with <span className="font-mono text-indigo-600 dark:text-indigo-400">@{domainInput || 'your-domain'}</span> email
+                    </label>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSavingDomain}
+                    className="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs transition shadow-sm"
+                  >
+                    {isSavingDomain ? 'Saving Policy...' : 'Save Domain Policy'}
+                  </button>
+                </form>
+              ) : (
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
+                  <p>Auto-join domain: <strong className="text-slate-900 dark:text-white font-mono">{activeOrg.allowedDomain || 'None configured'}</strong></p>
+                  <p className="mt-1">Status: {activeOrg.autoJoinEnabled ? 'Active (Auto-join enabled)' : 'Disabled'}</p>
+                </div>
+              )}
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Every organization in Kynov functions as an isolated tenant. Projects, issues, sprints, and swimlanes created in <strong className="text-indigo-500">{activeOrg.name}</strong> are strictly partitioned and cannot be viewed by unauthorized members from other organizations.
-            </p>
 
-            <div className="space-y-3 font-mono text-xs">
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <div className="font-bold text-amber-600 dark:text-amber-400">OWNER</div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Creator and primary administrator. Full authority to rename organization, configure billing, and add/remove members.
-                </div>
+            {/* Project-Level Isolation Overview */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 space-y-4 shadow-xs">
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <FolderKanban className="w-5 h-5" />
+                </span>
+                <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                  Zero-Trust Project Isolation
+                </h3>
               </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                In strict accordance with Jira and Linear security schemes:
+              </p>
 
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <div className="font-bold text-purple-600 dark:text-purple-400">ADMIN</div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Organization manager. Can create projects, invite users, and bypass project-level locks within this organization.
-                </div>
-              </div>
-
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
-                <div className="font-bold text-blue-600 dark:text-blue-400">MEMBER</div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Standard organization participant. Accesses only the specific projects they have been assigned to.
-                </div>
-              </div>
+              <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400 list-disc pl-5">
+                <li>Newly registered users join with viewing access to the workspace shell.</li>
+                <li>Confidential sprint tickets, backlogs, and metrics remain hidden until an admin assigns the user to a project team.</li>
+                <li>Organizations can maintain distinct projects (e.g. Core Engine, Mobile, Operations) without cross-team leakage.</li>
+              </ul>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                <FolderKanban className="w-5 h-5" />
-              </span>
-              <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                Project-Level Isolation
+          {/* Role Capability Matrix */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 md:p-8 space-y-4 shadow-xs">
+            <div>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-indigo-500" /> Enterprise Role Capability Matrix
               </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Formal capability matrix defining tenant administration vs project-scoped permissions.
+              </p>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              In accordance with Linear and Jira access policies:
-            </p>
 
-            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400 list-disc pl-5">
-              <li>Newly registered users join with viewing access to the workspace shell.</li>
-              <li>No confidential project tickets or sprint metrics are exposed until an admin explicitly adds them to a project team.</li>
-              <li>Organizations can create multiple parallel team spaces (e.g. Core Engineering, Mobile Apps, Operations).</li>
-            </ul>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border border-slate-200/80 dark:border-slate-800 rounded-2xl overflow-hidden">
+                <thead className="bg-slate-50 dark:bg-slate-950/60 text-slate-500 font-mono text-[10px] uppercase border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Capability / Operation</th>
+                    <th className="py-3 px-4 text-center text-amber-600 dark:text-amber-400">Owner</th>
+                    <th className="py-3 px-4 text-center text-purple-600 dark:text-purple-400">Admin</th>
+                    <th className="py-3 px-4 text-center text-blue-600 dark:text-blue-400">Member</th>
+                    <th className="py-3 px-4 text-center text-slate-500">Viewer</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {[
+                    { cap: 'Rename Organization & Delete Tenant', owner: true, admin: false, member: false, viewer: false },
+                    { cap: 'Configure Domain Auto-Join & Security Policies', owner: true, admin: true, member: false, viewer: false },
+                    { cap: 'Generate Shareable Invite Links (/join)', owner: true, admin: true, member: false, viewer: false },
+                    { cap: 'Create & Archive Projects in Organization', owner: true, admin: true, member: false, viewer: false },
+                    { cap: 'Assign Users to Project Teams', owner: true, admin: true, member: false, viewer: false },
+                    { cap: 'Create, Edit, and Transition Issues on Assigned Projects', owner: true, admin: true, member: true, viewer: false },
+                    { cap: 'Start & Complete Sprints on Assigned Projects', owner: true, admin: true, member: true, viewer: false },
+                    { cap: 'Read-Only Access to Assigned Projects & Docs', owner: true, admin: true, member: true, viewer: true },
+                  ].map((row, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                      <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{row.cap}</td>
+                      <td className="py-3 px-4 text-center">{row.owner ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <span className="text-slate-300 dark:text-slate-700">—</span>}</td>
+                      <td className="py-3 px-4 text-center">{row.admin ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <span className="text-slate-300 dark:text-slate-700">—</span>}</td>
+                      <td className="py-3 px-4 text-center">{row.member ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <span className="text-slate-300 dark:text-slate-700">—</span>}</td>
+                      <td className="py-3 px-4 text-center">{row.viewer ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <span className="text-slate-300 dark:text-slate-700">—</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

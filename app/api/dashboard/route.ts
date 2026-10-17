@@ -22,7 +22,12 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const cookieStore = await cookies();
-    const activeOrgId = searchParams.get('orgId') || cookieStore.get('kynov_active_org')?.value || null;
+    const activeOrgId =
+      searchParams.get('org') ||
+      searchParams.get('orgSlug') ||
+      searchParams.get('orgId') ||
+      cookieStore.get('kynov_active_org')?.value ||
+      null;
 
     const workspaceData = await getWorkspaceData(currentUser, activeOrgId);
 
@@ -33,7 +38,8 @@ export async function GET(req: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'no-store, must-revalidate',
+          'Cache-Control': 'private, max-age=3, stale-while-revalidate=30',
+          'Vary': 'Cookie, Accept',
         },
       }
     );
