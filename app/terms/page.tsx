@@ -86,7 +86,7 @@ export default function TermsPage() {
             <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1">
               <span className="font-semibold text-xs text-slate-900 dark:text-white">Workspace Security:</span>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                You must immediately notify Kynov security at <span className="font-mono text-blue-600 dark:text-blue-400">security@kynov.io</span> if you suspect any unauthorized access or breach of credentials.
+                You must immediately notify Kynov security at <span className="font-mono text-blue-600 dark:text-blue-400">security@harisarshad.site</span> if you suspect any unauthorized access or breach of credentials.
               </p>
             </div>
           </section>
@@ -149,7 +149,7 @@ export default function TermsPage() {
               For legal inquiries, copyright notices, or questions regarding these Terms, please contact our legal operations team:
             </p>
             <p className="font-mono text-xs text-blue-600 dark:text-blue-400">
-              legal@kynov.io • Kynov Technologies Inc.
+              legal@harisarshad.site • Kynov Technologies Inc.
             </p>
           </section>
         </div>

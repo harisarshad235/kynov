@@ -145,7 +145,7 @@ export default function PrivacyPage() {
               To exercise any of your privacy rights or to submit inquiries regarding data retention, please contact our Data Protection Officer:
             </p>
             <p className="font-mono text-xs text-blue-600 dark:text-blue-400">
-              privacy@kynov.io • Data Protection Officer, Kynov Inc.
+              privacy@harisarshad.site • Data Protection Officer, Kynov Inc.
             </p>
           </section>
         </div>
