@@ -101,6 +101,10 @@ export function ProjectMembersPanel({
         setSelectedUserId('');
         setSelectedRole('MEMBER');
         await loadData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:projects-updated'));
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+        }
       } else {
         setActionError(res.error || 'Failed to assign user');
         onShowToast?.(res.error || 'Failed to assign user', 'error');
@@ -121,6 +125,10 @@ export function ProjectMembersPanel({
       if (res.success) {
         onShowToast?.(`Removed ${targetName} from project`, 'success');
         await loadData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:projects-updated'));
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+        }
       } else {
         setActionError(res.error || 'Failed to remove user');
         onShowToast?.(res.error || 'Failed to remove user', 'error');
@@ -147,6 +155,10 @@ export function ProjectMembersPanel({
 
       if (res.success) {
         onShowToast?.(res.message || 'Project role updated successfully', 'success');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:projects-updated'));
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+        }
       } else {
         setActionError(res.error || 'Failed to update member role');
         onShowToast?.(res.error || 'Failed to update member role', 'error');

@@ -217,6 +217,10 @@ export function OrganizationView({
         setIsAddOrgMemberOpen(false);
         setTargetAddUserId('');
         await loadOrgData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:projects-updated'));
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+        }
       } else {
         onShowToast?.(res.error || 'Failed to add member', 'error');
       }
@@ -231,6 +235,10 @@ export function OrganizationView({
       if (res.success) {
         onShowToast?.(res.message || 'Member removed', 'success');
         await loadOrgData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:projects-updated'));
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+        }
       } else {
         onShowToast?.(res.error || 'Failed to remove member', 'error');
       }
@@ -253,6 +261,10 @@ export function OrganizationView({
         setAssigningUser(null);
         setSelectedAssignProjectId('');
         await loadOrgData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:projects-updated'));
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+        }
       } else {
         onShowToast?.(res.error || 'Failed to assign user', 'error');
       }

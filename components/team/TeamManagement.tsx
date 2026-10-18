@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Shield,
   Plus,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { User, UserRole } from '@/lib/types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { RoleDropdown } from './RoleDropdown';
 
 interface TeamManagementViewProps {
   users: User[];
@@ -36,9 +37,29 @@ export function TeamManagementView({
 }: TeamManagementViewProps) {
   const [tab, setTab] = useState<'all' | 'pending'>('all');
   const [selectedRoles, setSelectedRoles] = useState<Record<string, UserRole>>({});
+  const [localUsers, setLocalUsers] = useState<User[]>(users);
 
-  const pendingUsers = users.filter((u) => u.status === 'PENDING');
-  const approvedUsers = users.filter((u) => u.status !== 'PENDING');
+  useEffect(() => {
+    setLocalUsers(users);
+  }, [users]);
+
+  // Real-time synchronization when a role update occurs elsewhere
+  useEffect(() => {
+    const handleUserRoleUpdated = (e: any) => {
+      if (e.detail?.userId && e.detail?.newRole) {
+        setLocalUsers((prev) =>
+          prev.map((u) => (u.id === e.detail.userId ? { ...u, role: e.detail.newRole } : u))
+        );
+      }
+    };
+    window.addEventListener('kynov:users-updated', handleUserRoleUpdated);
+    return () => {
+      window.removeEventListener('kynov:users-updated', handleUserRoleUpdated);
+    };
+  }, []);
+
+  const pendingUsers = localUsers.filter((u) => u.status === 'PENDING');
+  const approvedUsers = localUsers.filter((u) => u.status !== 'PENDING');
 
   const getPendingRole = (userId: string, defaultRole: UserRole): UserRole => {
     return selectedRoles[userId] || defaultRole || 'Member';
@@ -46,6 +67,14 @@ export function TeamManagementView({
 
   const handleRoleSelection = (userId: string, role: UserRole) => {
     setSelectedRoles((prev) => ({ ...prev, [userId]: role }));
+  };
+
+  // Instant optimistic update with zero reload lag
+  const handleRoleChange = (userId: string, newRole: UserRole) => {
+    setLocalUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+    );
+    onUpdateRole(userId, newRole);
   };
 
   return (
@@ -252,18 +281,12 @@ export function TeamManagementView({
 
                           <td className="py-4 px-6">
                             {isAdmin ? (
-                              <select
-                                value={assignedRole}
-                                style={{ colorScheme: 'dark' }}
-                                onChange={(e) =>
-                                  handleRoleSelection(member.id, e.target.value as UserRole)
+                              <RoleDropdown
+                                currentRole={assignedRole}
+                                onSelectRole={(newRole) =>
+                                  handleRoleSelection(member.id, newRole)
                                 }
-                                className="text-xs bg-slate-50 dark:bg-slate-750 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-slate-800 dark:text-slate-200 font-semibold focus:outline-none focus:border-blue-500 cursor-pointer"
-                              >
-                                <option value="Member">Member (Read / Write)</option>
-                                <option value="Viewer">Viewer (Read-Only)</option>
-                                <option value="Admin">Admin (Full Control)</option>
-                              </select>
+                              />
                             ) : (
                               <span className="text-xs font-mono">{member.role}</span>
                             )}
@@ -305,7 +328,7 @@ export function TeamManagementView({
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-colors">
           {/* Mobile Card List (< md) */}
           <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-700/60 p-2.5 space-y-2.5">
-            {users.map((member) => {
+            {approvedUsers.map((member) => {
               const isSelf = member.id === currentUser.id;
               const isPending = member.status === 'PENDING';
 
@@ -359,18 +382,12 @@ export function TeamManagementView({
                     <div>
                       <span className="text-[11px] text-slate-400 block font-mono">Role</span>
                       {isAdmin && !isSelf ? (
-                        <select
-                          value={member.role}
-                          style={{ colorScheme: 'dark' }}
-                          onChange={(e) =>
-                            onUpdateRole(member.id, e.target.value as UserRole)
-                          }
-                          className="mt-0.5 w-full text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-slate-800 dark:text-slate-200 font-semibold focus:outline-none"
-                        >
-                          <option value="Admin">Admin</option>
-                          <option value="Member">Member</option>
-                          <option value="Viewer">Viewer</option>
-                        </select>
+                        <RoleDropdown
+                          currentRole={member.role}
+                          onSelectRole={(newRole) => handleRoleChange(member.id, newRole)}
+                          compact
+                          className="mt-0.5 w-full"
+                        />
                       ) : (
                         <span
                           className={`inline-block mt-0.5 text-[11px] px-2 py-0.5 rounded font-semibold font-mono ${
@@ -425,7 +442,7 @@ export function TeamManagementView({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-sm">
-                {users.map((member) => {
+                {approvedUsers.map((member) => {
                   const isSelf = member.id === currentUser.id;
                   const isPending = member.status === 'PENDING';
 
@@ -459,18 +476,12 @@ export function TeamManagementView({
 
                       <td className="py-4 px-6">
                         {isAdmin && !isSelf ? (
-                          <select
-                            value={member.role}
-                            style={{ colorScheme: 'dark' }}
-                            onChange={(e) =>
-                              onUpdateRole(member.id, e.target.value as UserRole)
+                          <RoleDropdown
+                            currentRole={member.role}
+                            onSelectRole={(newRole) =>
+                              handleRoleChange(member.id, newRole)
                             }
-                            className="text-xs bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded px-2.5 py-1 text-slate-800 dark:text-slate-200 font-semibold focus:outline-none focus:border-blue-500"
-                          >
-                            <option value="Admin">Admin (Full Control)</option>
-                            <option value="Member">Member (Read/Write)</option>
-                            <option value="Viewer">Viewer (Read-Only)</option>
-                          </select>
+                          />
                         ) : (
                           <span
                             className={`text-xs px-2.5 py-1 rounded-full font-semibold font-mono ${

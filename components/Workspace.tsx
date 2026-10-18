@@ -177,6 +177,30 @@ export function Workspace({
   const [liveIssues, setLiveIssues] = useState<FullIssue[]>(initialIssues);
   const recentlyMovedRef = useRef<Map<string, number>>(new Map());
 
+  // Real-time live projects state (synced with multi-user assignments in background)
+  const [liveProjects, setLiveProjects] = useState<Project[]>(initialProjects);
+  useEffect(() => {
+    setLiveProjects(initialProjects);
+  }, [initialProjects]);
+
+  // Real-time live users roster (synced with multi-user permissions in background)
+  const [liveUsers, setLiveUsers] = useState<User[]>(initialUsers);
+  useEffect(() => {
+    setLiveUsers(initialUsers);
+  }, [initialUsers]);
+
+  // Real-time live session user (synced when permissions/roles are updated)
+  const [liveCurrentUser, setLiveCurrentUser] = useState<User>(currentUser);
+  useEffect(() => {
+    setLiveCurrentUser(currentUser);
+  }, [currentUser]);
+
+  // Real-time live organizations state (synced with project counts and member counts)
+  const [liveOrganizations, setLiveOrganizations] = useState<Organization[]>(organizations);
+  useEffect(() => {
+    setLiveOrganizations(organizations);
+  }, [organizations]);
+
   useEffect(() => {
     setLiveIssues((prev) => {
       const recentlyMoved = recentlyMovedRef.current;
@@ -205,7 +229,7 @@ export function Workspace({
   const isSyncingRef = useRef<boolean>(false);
 
   useEffect(() => {
-    const userMap = new Map(initialUsers.map((u) => [u.id, u]));
+    const userMap = new Map(liveUsers.map((u) => [u.id, u]));
     const sprintMap = new Map(sprints.map((s) => [s.id, s]));
 
     const syncIssues = async () => {
@@ -219,10 +243,64 @@ export function Workspace({
           { cache: 'no-store' }
         );
         if (res.ok) {
-          const data = (await res.json()) as { issues?: any[]; timestamp?: number };
+          const data = (await res.json()) as {
+            issues?: any[];
+            projects?: Project[];
+            currentUser?: User;
+            users?: User[];
+            organizations?: Organization[];
+            timestamp?: number;
+          };
           if (data.timestamp) {
             lastSyncTimeRef.current = data.timestamp;
           }
+
+          // Real-time accessible projects synchronization for newly added members
+          if (data.projects && Array.isArray(data.projects)) {
+            setLiveProjects((prev) => {
+              const prevIds = prev.map((p) => p.id).sort().join(',');
+              const nextIds = data.projects!.map((p) => p.id).sort().join(',');
+              if (prevIds !== nextIds) {
+                // If member previously had 0 projects or activeProjectId is no longer accessible, auto-select first
+                if (data.projects!.length > 0 && (!activeProjectId || !data.projects!.some((p) => p.id === activeProjectId))) {
+                  setActiveProjectId(data.projects![0].id);
+                }
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('kynov:projects-updated', { detail: data.projects }));
+                }
+                return data.projects!;
+              }
+              return prev;
+            });
+          }
+
+          // Real-time organizations synchronization (keeps project & member count fresh in sidebar)
+          if (data.organizations && Array.isArray(data.organizations) && data.organizations.length > 0) {
+            setLiveOrganizations((prev) => {
+              const prevSummary = prev.map((o) => `${o.id}:${o.projectCount}:${o.memberCount}:${o.name}`).join(',');
+              const nextSummary = data.organizations!.map((o: any) => `${o.id}:${o.projectCount}:${o.memberCount}:${o.name}`).join(',');
+              return prevSummary !== nextSummary ? data.organizations! : prev;
+            });
+          }
+
+          // Real-time current user permissions & role update
+          if (data.currentUser && (data.currentUser.role !== liveCurrentUser.role || data.currentUser.status !== liveCurrentUser.status)) {
+            setLiveCurrentUser((prev) => ({
+              ...prev,
+              role: data.currentUser!.role,
+              status: data.currentUser!.status,
+            }));
+          }
+
+          // Real-time active users roster for team management
+          if (data.users && Array.isArray(data.users) && data.users.length > 0) {
+            setLiveUsers((prev) => {
+              const prevSummary = prev.map((u) => `${u.id}:${u.role}:${u.status}`).join(',');
+              const nextSummary = data.users!.map((u: any) => `${u.id}:${u.role}:${u.status}`).join(',');
+              return prevSummary !== nextSummary ? data.users! : prev;
+            });
+          }
+
           if (data.issues && data.issues.length > 0) {
             setLiveIssues((prevIssues) => {
               const updatedMap = new Map(data.issues!.map((u: any) => [u.key, u]));
@@ -281,7 +359,7 @@ export function Workspace({
 
     const interval = setInterval(syncIssues, 3500);
     return () => clearInterval(interval);
-  }, [activeProjectId, initialUsers, sprints]);
+  }, [activeProjectId, liveUsers, sprints, liveCurrentUser.role, liveCurrentUser.status]);
 
   // Optimistic UI updates for issues drag-and-drop
   const [optimisticIssues, setOptimisticIssues] = useOptimistic(
@@ -308,9 +386,9 @@ export function Workspace({
     });
   };
 
-  const isAdmin = currentUser.role === 'Admin';
-  const isViewer = currentUser.role === 'Viewer';
-  const isPending = currentUser.status === 'PENDING';
+  const isAdmin = liveCurrentUser.role === 'Admin';
+  const isViewer = liveCurrentUser.role === 'Viewer';
+  const isPending = liveCurrentUser.status === 'PENDING';
   const isOrgAdminOrOwner =
     isAdmin ||
     currentOrganization?.userRole === 'OWNER' ||
@@ -328,17 +406,17 @@ export function Workspace({
 
   // Issues strictly scoped to the active project
   const projectIssues = useMemo(() => {
-    const curProj = initialProjects.find((p) => p.id === activeProjectId);
+    const curProj = liveProjects.find((p) => p.id === activeProjectId);
     return optimisticIssues.filter((issue) => {
       if (issue.projectId) return issue.projectId === activeProjectId;
       if (curProj && issue.key.startsWith(curProj.key)) return true;
       return !issue.projectId;
     });
-  }, [optimisticIssues, activeProjectId, initialProjects]);
+  }, [optimisticIssues, activeProjectId, liveProjects]);
 
   // Sprints scoped strictly to the active project
   const activeProjectSprints = useMemo(() => {
-    const curProj = initialProjects.find((p) => p.id === activeProjectId);
+    const curProj = liveProjects.find((p) => p.id === activeProjectId);
     return optimisticSprints.filter((s) => {
       const pId = (s as any).projectId || (s as any).project_id;
       if (pId) return pId === activeProjectId;
@@ -354,9 +432,9 @@ export function Workspace({
       }
 
       // If sprint is unassociated and empty, assign to default first project
-      return activeProjectId === initialProjects[0]?.id;
+      return activeProjectId === liveProjects[0]?.id;
     });
-  }, [optimisticSprints, activeProjectId, initialIssues, initialProjects]);
+  }, [optimisticSprints, activeProjectId, initialIssues, liveProjects]);
 
   // Metrics accurately scoped to the active project
   const projectMetrics = useMemo(() => {
@@ -680,11 +758,23 @@ export function Workspace({
   const handleApproveUser = (userId: string, role?: UserRole) => {
     if (!isAdmin) return;
 
+    // Instant optimistic UI update
+    setLiveUsers((prev) =>
+      prev.map((u) =>
+        u.id === userId ? { ...u, status: 'APPROVED', role: role || u.role } : u
+      )
+    );
+
     startTransition(async () => {
       const res = await approveUser(userId, role);
       if (res.success) {
         showToast(res.message || 'User approved');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+          window.dispatchEvent(new CustomEvent('kynov:users-updated', { detail: { userId, role } }));
+        }
       } else {
+        setLiveUsers(initialUsers);
         showToast(res.error || 'Failed to approve user', 'error');
       }
     });
@@ -693,11 +783,21 @@ export function Workspace({
   const handleUpdateUserRole = (userId: string, newRole: UserRole) => {
     if (!isAdmin) return;
 
+    // Instant optimistic UI update
+    setLiveUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+    );
+
     startTransition(async () => {
       const res = await updateUserRole(userId, newRole);
       if (res.success) {
         showToast(res.message || `Role updated to ${newRole}`);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+          window.dispatchEvent(new CustomEvent('kynov:users-updated', { detail: { userId, newRole } }));
+        }
       } else {
+        setLiveUsers(initialUsers);
         showToast(res.error || 'Failed to update role', 'error');
       }
     });
@@ -706,11 +806,18 @@ export function Workspace({
   const handleDeleteUser = (userId: string) => {
     if (!isAdmin) return;
 
+    // Instant optimistic UI update
+    setLiveUsers((prev) => prev.filter((u) => u.id !== userId));
+
     startTransition(async () => {
       const res = await removeUser(userId);
       if (res.success) {
         showToast('Team member removed');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('kynov:refresh-data'));
+        }
       } else {
+        setLiveUsers(initialUsers);
         showToast(res.error || 'Failed to remove user', 'error');
       }
     });
@@ -881,7 +988,7 @@ export function Workspace({
   }
 
   const currentProject =
-    initialProjects.find((p) => p.id === activeProjectId) || initialProjects[0];
+    liveProjects.find((p) => p.id === activeProjectId) || liveProjects[0];
 
   return (
     <div className="flex h-screen w-full bg-[#F8FAFC] dark:bg-[#080B11] text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
@@ -903,11 +1010,11 @@ export function Workspace({
         setSidebarOpen={setSidebarOpen}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
-        currentUser={currentUser}
-        users={initialUsers}
-        projects={initialProjects}
+        currentUser={liveCurrentUser}
+        users={liveUsers}
+        projects={liveProjects}
         activeProjectId={activeProjectId}
-        organizations={organizations}
+        organizations={liveOrganizations}
         currentOrganization={currentOrganization}
         onSelectProject={(projId) => setActiveProjectId(projId)}
         onSelectOrganization={handleSelectOrganization}
@@ -930,14 +1037,14 @@ export function Workspace({
         <Header
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          currentUser={currentUser}
+          currentUser={liveCurrentUser}
           isViewer={isViewer}
           onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           onOpenShortcuts={() => setIsShortcutsModalOpen(true)}
           activeProjectName={currentProject?.name || 'Kynov Platform'}
           activeTab={activeTab}
-          users={initialUsers}
+          users={liveUsers}
           onOpenCreateIssue={() => {
             if (isViewer) {
               showToast('Viewers cannot create issues. Please switch roles.', 'error');
@@ -962,17 +1069,17 @@ export function Workspace({
           <BoardFilters
             filters={boardFilters}
             onChangeFilters={setBoardFilters}
-            users={initialUsers}
+            users={liveUsers}
             allIssues={projectIssues}
             metrics={projectMetrics}
-            currentUserId={currentUser.id}
+            currentUserId={liveCurrentUser.id}
           />
         )}
 
         {/* View Content with Dynamic Smooth Transition */}
         <div key={activeTab} className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 animate-slide-up relative z-10">
           {/* Zero-project unassigned state for new workspace members */}
-          {initialProjects.length === 0 && (activeTab === 'dashboard' || activeTab === 'board' || activeTab === 'backlog') ? (
+          {liveProjects.length === 0 && (activeTab === 'dashboard' || activeTab === 'board' || activeTab === 'backlog') ? (
             <div className="max-w-2xl mx-auto my-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl text-center space-y-6">
               <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center border border-indigo-500/20">
                 <Building2 className="w-8 h-8" />
@@ -1056,7 +1163,7 @@ export function Workspace({
                 <BacklogView
                   issues={filteredIssues}
                   allProjectIssues={projectIssues}
-                  users={initialUsers}
+                  users={liveUsers}
                   sprints={activeProjectSprints}
                   swimlanes={activeSwimlanes}
                   onSelectIssue={(key) => handleSelectIssue(key)}
@@ -1071,10 +1178,10 @@ export function Workspace({
 
           {activeTab === 'organization' && (
             <OrganizationView
-              currentUser={currentUser}
-              users={initialUsers}
-              projects={initialProjects}
-              organizations={organizations}
+              currentUser={liveCurrentUser}
+              users={liveUsers}
+              projects={liveProjects}
+              organizations={liveOrganizations}
               currentOrganization={currentOrganization}
               onSelectProject={(projId) => {
                 setActiveProjectId(projId);
@@ -1096,7 +1203,7 @@ export function Workspace({
           {activeTab === 'documents' && (
             <DocumentsView
               docs={initialDocs}
-              users={initialUsers}
+              users={liveUsers}
               onSelectDoc={(doc) => setActiveDocDetail(doc)}
               onEditDoc={(doc) => {
                 if (isViewer) {
@@ -1121,8 +1228,8 @@ export function Workspace({
 
           {activeTab === 'team' && (
             <TeamManagementView
-              users={initialUsers}
-              currentUser={currentUser}
+              users={liveUsers}
+              currentUser={liveCurrentUser}
               isAdmin={isAdmin}
               onAddUser={() => setIsAddUserOpen(true)}
               onApproveUser={handleApproveUser}
@@ -1134,7 +1241,7 @@ export function Workspace({
           {activeTab === 'metrics' && (
             <MetricsReportView
               issues={optimisticIssues}
-              users={initialUsers}
+              users={liveUsers}
               metrics={initialMetrics}
               sprints={optimisticSprints}
             />
@@ -1146,8 +1253,8 @@ export function Workspace({
       {selectedIssue && (
         <IssueDetailDrawer
           issue={selectedIssue}
-          users={initialUsers}
-          currentUser={currentUser}
+          users={liveUsers}
+          currentUser={liveCurrentUser}
           swimlanes={activeSwimlanes}
           allIssues={optimisticIssues}
           sprints={activeProjectSprints}
@@ -1166,9 +1273,9 @@ export function Workspace({
 
       {isCreateIssueOpen && (
         <CreateIssueModal
-          users={initialUsers}
-          currentUser={currentUser}
-          projects={initialProjects}
+          users={liveUsers}
+          currentUser={liveCurrentUser}
+          projects={liveProjects}
           activeProjectId={activeProjectId}
           swimlanes={activeSwimlanes}
           issues={projectIssues}
@@ -1214,10 +1321,10 @@ export function Workspace({
 
       {isProjectsModalOpen && (
         <ProjectsModal
-          projects={initialProjects}
+          projects={liveProjects}
           activeProjectId={activeProjectId}
-          users={initialUsers}
-          currentUser={currentUser}
+          users={liveUsers}
+          currentUser={liveCurrentUser}
           isViewer={isViewer}
           canCreateProject={isOrgAdminOrOwner}
           onSelectProject={(projId) => {
@@ -1231,7 +1338,7 @@ export function Workspace({
 
       {isProfileModalOpen && (
         <UserProfileModal
-          currentUser={currentUser}
+          currentUser={liveCurrentUser}
           onClose={() => setIsProfileModalOpen(false)}
           onSaveProfile={handleUpdateProfile}
         />
@@ -1254,7 +1361,7 @@ export function Workspace({
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         issues={optimisticIssues}
-        projects={initialProjects}
+        projects={liveProjects}
         activeProjectId={activeProjectId}
         onSelectProject={(projId) => {
           setActiveProjectId(projId);

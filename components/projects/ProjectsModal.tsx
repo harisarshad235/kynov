@@ -47,13 +47,38 @@ export function ProjectsModal({
   const [selectedProjectForMembers, setSelectedProjectForMembers] = useState<Project | null>(null);
   const [projectsList, setProjectsList] = useState<Project[]>(initialProjects);
 
-  // Load dynamically accessible projects
+  // Load dynamically accessible projects and sync with initialProjects
   useEffect(() => {
+    if (initialProjects && Array.isArray(initialProjects)) {
+      setProjectsList(initialProjects);
+    }
+  }, [initialProjects]);
+
+  const refreshAccessibleProjects = () => {
     getUserProjectsAction().then((accessible) => {
       if (accessible && accessible.length > 0) {
         setProjectsList(accessible);
       }
     }).catch(console.error);
+  };
+
+  useEffect(() => {
+    refreshAccessibleProjects();
+
+    const handleProjectsUpdated = (e: any) => {
+      if (e.detail && Array.isArray(e.detail)) {
+        setProjectsList(e.detail);
+      } else {
+        refreshAccessibleProjects();
+      }
+    };
+
+    window.addEventListener('kynov:projects-updated', handleProjectsUpdated);
+    window.addEventListener('kynov:refresh-data', handleProjectsUpdated);
+    return () => {
+      window.removeEventListener('kynov:projects-updated', handleProjectsUpdated);
+      window.removeEventListener('kynov:refresh-data', handleProjectsUpdated);
+    };
   }, []);
 
   // Form fields
@@ -110,6 +135,11 @@ export function ProjectsModal({
         onShowToast(res.message || 'Project created');
         onSelectProject(res.projectId);
         setView('list');
+        refreshAccessibleProjects();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:projects-updated'));
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+        }
       } else {
         setError(res.error || 'Failed to create project');
       }
@@ -132,6 +162,11 @@ export function ProjectsModal({
       if (res.success) {
         onShowToast('Project updated');
         setView('list');
+        refreshAccessibleProjects();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:projects-updated'));
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+        }
       } else {
         setError(res.error || 'Failed to update project');
       }
@@ -152,6 +187,11 @@ export function ProjectsModal({
         if (activeProjectId === proj.id) {
           const fallback = projectsList.find((p) => p.id !== proj.id);
           if (fallback) onSelectProject(fallback.id);
+        }
+        refreshAccessibleProjects();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:projects-updated'));
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
         }
       } else {
         onShowToast(res.error || 'Failed to archive project', 'error');
