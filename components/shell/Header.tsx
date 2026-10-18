@@ -29,6 +29,7 @@ interface HeaderProps {
   onSelectIssue?: (issueKey: string) => void;
   onToggleMobileSidebar?: () => void;
   onOpenCommandPalette?: () => void;
+  onOpenShortcuts?: () => void;
   activeProjectName?: string;
   activeTab?: string;
   users?: User[];
@@ -45,6 +46,7 @@ export function Header({
   onSelectIssue,
   onToggleMobileSidebar,
   onOpenCommandPalette,
+  onOpenShortcuts,
   activeProjectName = 'Core Engine',
   activeTab = 'dashboard',
   daysRemaining = 6,
@@ -59,6 +61,8 @@ export function Header({
         return 'Sprint Backlog';
       case 'documents':
         return 'Knowledge Base';
+      case 'organization':
+        return 'Organization Hub';
       case 'team':
         return 'Team Management';
       case 'metrics':
@@ -115,14 +119,25 @@ export function Header({
                 <X className="w-3.5 h-3.5" />
               </button>
             ) : (
-              <button
-                onClick={onOpenCommandPalette}
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer"
-                title="Command Palette"
-              >
-                <span>⌘</span>
-                <span>K</span>
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={onOpenCommandPalette}
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer transition"
+                  title="Command Palette (⌘K)"
+                >
+                  <span>⌘</span>
+                  <span>K</span>
+                </button>
+                {onOpenShortcuts && (
+                  <button
+                    onClick={onOpenShortcuts}
+                    className="inline-flex items-center justify-center w-5 h-5 text-[10px] font-mono text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer transition"
+                    title="Keyboard Shortcuts (?)"
+                  >
+                    ?
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

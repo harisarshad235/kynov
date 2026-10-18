@@ -11,6 +11,7 @@ import {
   UserRole,
   Project,
   Swimlane,
+  Organization,
   isDemoIssue,
 } from '@/lib/types';
 import { Sidebar } from '@/components/shell/Sidebar';
@@ -29,9 +30,13 @@ import { IssueDetailDrawer } from '@/components/drawer/IssueDetailDrawer';
 import { CreateIssueModal } from '@/components/issues/CreateIssueModal';
 import { ProjectsModal } from '@/components/projects/ProjectsModal';
 import { UserProfileModal } from '@/components/profile/UserProfileModal';
+import { OrganizationView } from '@/components/organization/OrganizationView';
+import { CreateOrganizationModal } from '@/components/organization/CreateOrganizationModal';
 import { Toast, Notification } from '@/components/ui/Toast';
 import { CommandPalette } from '@/components/command/CommandPalette';
+import { KeyboardShortcutsModal } from '@/components/command/KeyboardShortcutsModal';
 import { playCardErrorSound } from '@/lib/sound';
+import { Building2, Users as UsersIcon } from 'lucide-react';
 
 import {
   moveIssueStatus,
@@ -58,6 +63,7 @@ import {
   switchPersona,
   updateUserProfile,
 } from '@/app/actions/team';
+import { setActiveOrganizationAction } from '@/app/actions/org';
 
 interface WorkspaceProps {
   currentUser: User;
@@ -68,6 +74,8 @@ interface WorkspaceProps {
   docs: FullDocument[];
   sprints: Sprint[];
   metrics: WorkspaceMetrics;
+  organizations?: Organization[];
+  currentOrganization?: Organization | null;
 }
 
 export function Workspace({
@@ -79,6 +87,8 @@ export function Workspace({
   docs: initialDocs,
   sprints,
   metrics: initialMetrics,
+  organizations = [],
+  currentOrganization = null,
 }: WorkspaceProps) {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
@@ -106,6 +116,9 @@ export function Workspace({
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isCreateDocOpen, setIsCreateDocOpen] = useState<boolean>(false);
   const [isAddUserOpen, setIsAddUserOpen] = useState<boolean>(false);
+  const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState<boolean>(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState<boolean>(false);
+  const [selectedCardKey, setSelectedCardKey] = useState<string | null>(null);
   const [editingDoc, setEditingDoc] = useState<FullDocument | null>(null);
   const [activeDocDetail, setActiveDocDetail] = useState<FullDocument | null>(null);
   const [notification, setNotification] = useState<Notification | null>(null);
@@ -128,17 +141,7 @@ export function Workspace({
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [router]);
 
-  // Global Cmd+K / Ctrl+K shortcut for Command Palette
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setIsCommandPaletteOpen((prev) => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+
 
   // Synchronize issue detail drawer with URL param (?issue=APEX-XXX)
   useEffect(() => {
@@ -308,6 +311,10 @@ export function Workspace({
   const isAdmin = currentUser.role === 'Admin';
   const isViewer = currentUser.role === 'Viewer';
   const isPending = currentUser.status === 'PENDING';
+  const isOrgAdminOrOwner =
+    isAdmin ||
+    currentOrganization?.userRole === 'OWNER' ||
+    currentOrganization?.userRole === 'ADMIN';
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type });
@@ -719,6 +726,125 @@ export function Workspace({
     });
   };
 
+  const handleSelectOrganization = async (orgId: string) => {
+    try {
+      const targetOrg = (organizations || []).find((o) => o.id === orgId);
+      const res = await setActiveOrganizationAction(orgId);
+      if (res.success) {
+        showToast('Switched organization', 'success');
+        if (targetOrg?.slug) {
+          router.push(`/${targetOrg.slug}/dashboard`);
+        } else {
+          router.refresh();
+        }
+      } else {
+        showToast(res.error || 'Failed to switch organization', 'error');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error switching organization', 'error');
+    }
+  };
+
+  // Global Linear-style keyboard shortcuts (Cmd+K, ?, C, J, K, Space, M, Esc)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 1. Cmd+K / Ctrl+K Palette
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
+      // If user is focused inside an editable input/textarea or has modifiers, ignore single key navigation
+      const activeEl = document.activeElement;
+      const isInput =
+        activeEl?.tagName === 'INPUT' ||
+        activeEl?.tagName === 'TEXTAREA' ||
+        activeEl?.tagName === 'SELECT' ||
+        (activeEl as HTMLElement)?.isContentEditable;
+
+      if (isInput || e.metaKey || e.ctrlKey || e.altKey) {
+        return;
+      }
+
+      // 2. '?' shortcut -> Keyboard shortcuts helper
+      if (e.key === '?') {
+        e.preventDefault();
+        setIsShortcutsModalOpen((prev) => !prev);
+        return;
+      }
+
+      // 3. 'c' / 'C' shortcut -> Quick create issue
+      if (e.key === 'c' || e.key === 'C') {
+        if (!isViewer && !isCreateIssueOpen && !selectedIssueKey) {
+          e.preventDefault();
+          setIsCreateIssueOpen(true);
+          return;
+        }
+      }
+
+      // 4. 'j' / 'k' -> Move selection between cards
+      if (filteredIssues.length > 0 && !selectedIssueKey) {
+        if (e.key === 'j' || e.key === 'J') {
+          e.preventDefault();
+          const currIdx = selectedCardKey
+            ? filteredIssues.findIndex((i) => i.key === selectedCardKey)
+            : -1;
+          const nextIdx = currIdx + 1 < filteredIssues.length ? currIdx + 1 : 0;
+          setSelectedCardKey(filteredIssues[nextIdx].key);
+          return;
+        }
+
+        if (e.key === 'k' || e.key === 'K') {
+          e.preventDefault();
+          const currIdx = selectedCardKey
+            ? filteredIssues.findIndex((i) => i.key === selectedCardKey)
+            : 0;
+          const prevIdx = currIdx - 1 >= 0 ? currIdx - 1 : filteredIssues.length - 1;
+          setSelectedCardKey(filteredIssues[prevIdx].key);
+          return;
+        }
+      }
+
+      // 5. 'Space' or 'Enter' -> Open selected card drawer
+      if ((e.key === ' ' || e.key === 'Enter') && selectedCardKey && !selectedIssueKey) {
+        e.preventDefault();
+        handleSelectIssue(selectedCardKey);
+        return;
+      }
+
+      // 6. 'm' / 'M' -> Quick assign selected card to Me
+      if ((e.key === 'm' || e.key === 'M') && (selectedIssueKey || selectedCardKey)) {
+        if (isViewer) return;
+        const targetKey = selectedIssueKey || selectedCardKey;
+        if (targetKey) {
+          e.preventDefault();
+          updateIssue(targetKey, { assigneeId: currentUser.id });
+          showToast(`Assigned ${targetKey} to you`, 'success');
+          return;
+        }
+      }
+
+      // 7. Escape -> close shortcuts modal
+      if (e.key === 'Escape') {
+        if (isShortcutsModalOpen) {
+          setIsShortcutsModalOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isViewer,
+    isCreateIssueOpen,
+    selectedIssueKey,
+    selectedCardKey,
+    filteredIssues,
+    isShortcutsModalOpen,
+    currentUser.id,
+  ]);
+
   if (isPending) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-900 text-white">
@@ -781,7 +907,11 @@ export function Workspace({
         users={initialUsers}
         projects={initialProjects}
         activeProjectId={activeProjectId}
+        organizations={organizations}
+        currentOrganization={currentOrganization}
         onSelectProject={(projId) => setActiveProjectId(projId)}
+        onSelectOrganization={handleSelectOrganization}
+        onOpenCreateOrganization={() => setIsCreateOrgModalOpen(true)}
         onOpenProjectsModal={() => setIsProjectsModalOpen(true)}
         onOpenProfileModal={() => setIsProfileModalOpen(true)}
         completionRate={initialMetrics.completionRate}
@@ -804,6 +934,7 @@ export function Workspace({
           isViewer={isViewer}
           onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onOpenShortcuts={() => setIsShortcutsModalOpen(true)}
           activeProjectName={currentProject?.name || 'Kynov Platform'}
           activeTab={activeTab}
           users={initialUsers}
@@ -840,53 +971,125 @@ export function Workspace({
 
         {/* View Content with Dynamic Smooth Transition */}
         <div key={activeTab} className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 animate-slide-up relative z-10">
-          {activeTab === 'dashboard' && (
-            <DashboardOverview
-              issues={optimisticIssues}
-              users={initialUsers}
-              metrics={initialMetrics}
-              sprints={optimisticSprints}
-              projects={initialProjects}
-              onNavigateTab={(tab) => setActiveTab(tab)}
-              onSelectIssue={(key) => handleSelectIssue(key)}
-            />
+          {/* Zero-project unassigned state for new workspace members */}
+          {initialProjects.length === 0 && (activeTab === 'dashboard' || activeTab === 'board' || activeTab === 'backlog') ? (
+            <div className="max-w-2xl mx-auto my-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl text-center space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center border border-indigo-500/20">
+                <Building2 className="w-8 h-8" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full uppercase tracking-wider">
+                  Workspace Viewer • Zero Projects Assigned
+                </span>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-3">
+                  Welcome to the Organization Workspace
+                </h2>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 max-w-lg mx-auto leading-relaxed">
+                  Your account is active with workspace viewing access. In accordance with our Linear & Jira zero-trust security scheme, project issues, sprint boards, and backlogs remain private until an Administrator assigns you to a project team.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left max-w-lg mx-auto pt-2">
+                <div
+                  onClick={() => setActiveTab('organization')}
+                  className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 cursor-pointer transition group"
+                >
+                  <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                    <Building2 className="w-4 h-4 text-indigo-500" /> Organization Hub
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    Explore team projects across the organization and view access roles.
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('team')}
+                  className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 cursor-pointer transition group"
+                >
+                  <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                    <UsersIcon className="w-4 h-4 text-blue-500" /> Team Directory
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    See organization administrators and project managers to request access.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'dashboard' && (
+                <DashboardOverview
+                  issues={optimisticIssues}
+                  users={initialUsers}
+                  metrics={initialMetrics}
+                  sprints={optimisticSprints}
+                  projects={initialProjects}
+                  onNavigateTab={(tab) => setActiveTab(tab)}
+                  onSelectIssue={(key) => handleSelectIssue(key)}
+                />
+              )}
+
+              {activeTab === 'board' && (
+                <KanbanBoardView
+                  issues={filteredIssues}
+                  users={initialUsers}
+                  swimlanes={activeSwimlanes}
+                  sprints={activeProjectSprints}
+                  onSelectIssue={(key) => handleSelectIssue(key)}
+                  onStatusChange={handleUpdateIssueStatus}
+                  onCreateSwimlane={handleCreateSwimlane}
+                  onUpdateSwimlane={handleUpdateSwimlane}
+                  onDeleteSwimlane={handleDeleteSwimlane}
+                  isViewer={isViewer}
+                  currentUserId={currentUser.id}
+                  onQuickCreateIssue={() => {
+                    if (isViewer) {
+                      showToast('Viewers cannot create issues. Please switch roles.', 'error');
+                      return;
+                    }
+                    setIsCreateIssueOpen(true);
+                  }}
+                />
+              )}
+
+              {activeTab === 'backlog' && (
+                <BacklogView
+                  issues={filteredIssues}
+                  allProjectIssues={projectIssues}
+                  users={initialUsers}
+                  sprints={activeProjectSprints}
+                  swimlanes={activeSwimlanes}
+                  onSelectIssue={(key) => handleSelectIssue(key)}
+                  onStatusChange={handleUpdateIssueStatus}
+                  onCreateIssue={() => setIsCreateIssueOpen(true)}
+                  onUpdateSprint={handleUpdateSprint}
+                  isViewer={isViewer}
+                />
+              )}
+            </>
           )}
 
-          {activeTab === 'board' && (
-            <KanbanBoardView
-              issues={filteredIssues}
+          {activeTab === 'organization' && (
+            <OrganizationView
+              currentUser={currentUser}
               users={initialUsers}
-              swimlanes={activeSwimlanes}
-              sprints={activeProjectSprints}
-              onSelectIssue={(key) => handleSelectIssue(key)}
-              onStatusChange={handleUpdateIssueStatus}
-              onCreateSwimlane={handleCreateSwimlane}
-              onUpdateSwimlane={handleUpdateSwimlane}
-              onDeleteSwimlane={handleDeleteSwimlane}
-              isViewer={isViewer}
-              currentUserId={currentUser.id}
-              onQuickCreateIssue={() => {
-                if (isViewer) {
-                  showToast('Viewers cannot create issues. Please switch roles.', 'error');
+              projects={initialProjects}
+              organizations={organizations}
+              currentOrganization={currentOrganization}
+              onSelectProject={(projId) => {
+                setActiveProjectId(projId);
+              }}
+              onSelectOrganization={handleSelectOrganization}
+              onOpenCreateOrganization={() => setIsCreateOrgModalOpen(true)}
+              onNavigateTab={(tab) => setActiveTab(tab)}
+              onOpenCreateProject={() => {
+                if (!isOrgAdminOrOwner) {
+                  showToast('Only organization administrators and owners can create projects.', 'error');
                   return;
                 }
-                setIsCreateIssueOpen(true);
+                setIsProjectsModalOpen(true);
               }}
-            />
-          )}
-
-          {activeTab === 'backlog' && (
-            <BacklogView
-              issues={filteredIssues}
-              allProjectIssues={projectIssues}
-              users={initialUsers}
-              sprints={activeProjectSprints}
-              swimlanes={activeSwimlanes}
-              onSelectIssue={(key) => handleSelectIssue(key)}
-              onStatusChange={handleUpdateIssueStatus}
-              onCreateIssue={() => setIsCreateIssueOpen(true)}
-              onUpdateSprint={handleUpdateSprint}
-              isViewer={isViewer}
+              onShowToast={showToast}
             />
           )}
 
@@ -1014,7 +1217,9 @@ export function Workspace({
           projects={initialProjects}
           activeProjectId={activeProjectId}
           users={initialUsers}
+          currentUser={currentUser}
           isViewer={isViewer}
+          canCreateProject={isOrgAdminOrOwner}
           onSelectProject={(projId) => {
             setActiveProjectId(projId);
             setIsProjectsModalOpen(false);
@@ -1031,6 +1236,18 @@ export function Workspace({
           onSaveProfile={handleUpdateProfile}
         />
       )}
+
+      {/* Create Organization Modal */}
+      <CreateOrganizationModal
+        isOpen={isCreateOrgModalOpen}
+        onClose={() => setIsCreateOrgModalOpen(false)}
+        onSuccess={(orgId) => {
+          setIsCreateOrgModalOpen(false);
+          showToast('Organization created successfully! Switching...', 'success');
+          handleSelectOrganization(orgId);
+        }}
+        onShowToast={showToast}
+      />
 
       {/* Global Command Palette (Cmd+K / Ctrl+K) */}
       <CommandPalette
@@ -1060,6 +1277,12 @@ export function Workspace({
           setIsCreateDocOpen(true);
         }}
         onOpenProjectsModal={() => setIsProjectsModalOpen(true)}
+      />
+
+      {/* Keyboard Shortcuts Cheat Sheet (?) */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { eq, desc, sql } from 'drizzle-orm';
 import { getDb } from '@/lib/db';
 import { requireRole, getCurrentUser } from '@/lib/auth';
@@ -25,11 +26,9 @@ export async function getUserProjectsAction(): Promise<Project[]> {
 
     const roleStr = String(currentUser.role || '');
     const isAdmin = roleStr === 'Admin' || roleStr === 'ADMIN' || roleStr.toUpperCase() === 'ADMIN';
-    const designation = (currentUser as any).designation || currentUser.department;
-    const isCTO = designation?.toUpperCase() === 'CTO';
 
-    if (isAdmin || isCTO) {
-      // Admin / CTO bypass: all active projects
+    if (isAdmin) {
+      // Admin bypass: all active projects
       const activeProjects = await db.all<Project>(sql`
         SELECT p.*
         FROM projects p
@@ -270,11 +269,38 @@ export async function createProject(data: {
   description?: string;
   category?: string;
   leadId?: string;
+  organizationId?: string;
 }) {
   try {
-    const currentUser = await requireRole(['Admin', 'Member']);
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'Unauthenticated: Please log in.' };
+    }
     const db = getDb();
     await ensureProjectRbacTables(db);
+
+    const cookieStore = await cookies();
+    const effectiveOrgId = data.organizationId || cookieStore.get('kynov_active_org')?.value || 'org-kynov';
+
+    const roleStr = String(currentUser.role || '');
+    const isGlobalAdmin = roleStr === 'Admin' || roleStr === 'ADMIN' || roleStr.toUpperCase() === 'ADMIN';
+
+    // Verify Organization-level Admin or Owner role in organization_members
+    const orgMembership = await db.all<{ role: string }>(sql`
+      SELECT role FROM organization_members
+      WHERE organization_id = ${effectiveOrgId} AND user_id = ${currentUser.id}
+      LIMIT 1
+    `).catch(() => []);
+
+    const orgRole = orgMembership[0]?.role ? String(orgMembership[0].role).toUpperCase() : '';
+    const isOrgAdminOrOwner = orgRole === 'OWNER' || orgRole === 'ADMIN';
+
+    if (!isGlobalAdmin && !isOrgAdminOrOwner) {
+      return {
+        success: false,
+        error: 'Unauthorized: Only an Organization Admin or Owner can create projects.',
+      };
+    }
 
     const cleanKey = data.key.trim().toUpperCase();
     const cleanName = sanitizePlainText(data.name.trim());
@@ -306,7 +332,7 @@ export async function createProject(data: {
     const projectId = `proj-${cleanKey.toLowerCase()}-${Date.now().toString(36)}`;
     const effectiveLeadId = data.leadId || currentUser.id;
 
-    // 1. Create project
+    // 1. Create project with organizationId
     await db.insert(projects).values({
       id: projectId,
       key: cleanKey,
@@ -314,6 +340,7 @@ export async function createProject(data: {
       description: cleanDescription,
       category: cleanCategory,
       leadId: effectiveLeadId,
+      organizationId: effectiveOrgId,
       status: 'active',
     });
 
@@ -454,7 +481,10 @@ export async function updateProject(
 
 export async function deleteProject(projectId: string) {
   try {
-    await requireRole(['Admin']);
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'Unauthenticated: Please log in.' };
+    }
     const db = getDb();
     await ensureProjectRbacTables(db);
 
@@ -464,6 +494,26 @@ export async function deleteProject(projectId: string) {
 
     if (!existing) {
       return { success: false, error: 'Project not found.' };
+    }
+
+    const roleStr = String(currentUser.role || '');
+    const isGlobalAdmin = roleStr === 'Admin' || roleStr === 'ADMIN' || roleStr.toUpperCase() === 'ADMIN';
+
+    const orgId = existing.organizationId || 'org-kynov';
+    const orgMembership = await db.all<{ role: string }>(sql`
+      SELECT role FROM organization_members
+      WHERE organization_id = ${orgId} AND user_id = ${currentUser.id}
+      LIMIT 1
+    `).catch(() => []);
+
+    const orgRole = orgMembership[0]?.role ? String(orgMembership[0].role).toUpperCase() : '';
+    const isOrgAdminOrOwner = orgRole === 'OWNER' || orgRole === 'ADMIN';
+
+    if (!isGlobalAdmin && !isOrgAdminOrOwner) {
+      return {
+        success: false,
+        error: 'Unauthorized: Only an Organization Admin or Owner can archive projects.',
+      };
     }
 
     // Instead of destructive drop, archive the project
@@ -479,5 +529,112 @@ export async function deleteProject(projectId: string) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to archive project';
     return { success: false, error: message };
+  }
+}
+
+export interface OrganizationProjectSummary extends Project {
+  memberCount: number;
+  leadName?: string | null;
+  leadEmail?: string | null;
+  leadAvatarUrl?: string | null;
+}
+
+/**
+ * Fetch all organization projects with member counts and lead info.
+ * Accessible to all authenticated workspace members for directory visibility.
+ */
+export async function getAllOrganizationProjectsAction(orgId?: string): Promise<OrganizationProjectSummary[]> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return [];
+
+    const db = getDb();
+    await ensureProjectRbacTables(db);
+
+    const cookieStore = await cookies();
+    const targetOrgId = orgId || cookieStore.get('kynov_active_org')?.value || 'org-kynov';
+
+    const rows = await db.all<any>(sql`
+      SELECT
+        p.id,
+        p.key,
+        p.name,
+        p.description,
+        p.category,
+        p.lead_id as leadId,
+        p.organization_id as organizationId,
+        p.status,
+        p.created_at as createdAt,
+        p.updated_at as updatedAt,
+        p.is_archived as isArchived,
+        u.name as leadName,
+        u.email as leadEmail,
+        u.avatar_url as leadAvatarUrl,
+        (SELECT COUNT(*) FROM project_members pm WHERE pm.project_id = p.id) as memberCount
+      FROM projects p
+      LEFT JOIN users u ON p.lead_id = u.id
+      WHERE (p.organization_id = ${targetOrgId} OR (${targetOrgId} = 'org-kynov' AND (p.organization_id IS NULL OR p.organization_id = '')))
+        AND (p.is_archived = 0 OR (p.is_archived IS NULL AND p.status != 'archived'))
+      ORDER BY p.name ASC
+    `);
+
+    return rows.map((r) => ({
+      ...r,
+      memberCount: Number(r.memberCount || 0),
+    }));
+  } catch (err) {
+    console.error('Failed to get all organization projects:', err);
+    return [];
+  }
+}
+
+export interface UserProjectAssignment {
+  projectId: string;
+  projectKey: string;
+  projectName: string;
+  projectRole: string;
+}
+
+/**
+ * Fetch project assignment mapping for all organization users.
+ */
+export async function getAllUserProjectAssignmentsAction(): Promise<Record<string, UserProjectAssignment[]>> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return {};
+
+    const db = getDb();
+    await ensureProjectRbacTables(db);
+
+    const rows = await db.all<any>(sql`
+      SELECT
+        pm.user_id as userId,
+        pm.project_id as projectId,
+        pm.project_role as projectRole,
+        p.key as projectKey,
+        p.name as projectName
+      FROM project_members pm
+      INNER JOIN projects p ON pm.project_id = p.id
+      WHERE (p.is_archived = 0 OR (p.is_archived IS NULL AND p.status != 'archived'))
+      ORDER BY p.name ASC
+    `);
+
+    const mapping: Record<string, UserProjectAssignment[]> = {};
+    for (const r of rows) {
+      if (!mapping[r.userId]) {
+        mapping[r.userId] = [];
+      }
+      mapping[r.userId].push({
+        projectId: r.projectId,
+        projectKey: r.projectKey,
+        projectName: r.projectName,
+        projectRole: r.projectRole,
+      });
+    }
+
+    return mapping;
+  } catch (err) {
+    console.error('Failed to fetch user project assignments:', err);
+    return {};
   }
 }

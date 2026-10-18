@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { getCurrentUser } from '@/lib/auth';
 import { getWorkspaceData } from '@/lib/queries';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const currentUser = await getCurrentUser();
 
@@ -12,14 +13,23 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (currentUser.status === 'PENDING') {
+    if (currentUser.status === 'SUSPENDED') {
       return NextResponse.json(
-        { error: 'Account pending approval', status: 'PENDING' },
+        { error: 'Account suspended by an administrator', status: 'SUSPENDED' },
         { status: 403 }
       );
     }
 
-    const workspaceData = await getWorkspaceData();
+    const { searchParams } = new URL(req.url);
+    const cookieStore = await cookies();
+    const activeOrgId =
+      searchParams.get('org') ||
+      searchParams.get('orgSlug') ||
+      searchParams.get('orgId') ||
+      cookieStore.get('kynov_active_org')?.value ||
+      null;
+
+    const workspaceData = await getWorkspaceData(currentUser, activeOrgId);
 
     return NextResponse.json(
       {
@@ -28,7 +38,8 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 'no-store, must-revalidate',
+          'Cache-Control': 'private, max-age=3, stale-while-revalidate=30',
+          'Vary': 'Cookie, Accept',
         },
       }
     );

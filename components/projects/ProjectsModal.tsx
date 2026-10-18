@@ -23,6 +23,7 @@ interface ProjectsModalProps {
   users: User[];
   currentUser?: User;
   isViewer: boolean;
+  canCreateProject?: boolean;
   onSelectProject: (projectId: string) => void;
   onClose: () => void;
   onShowToast: (msg: string, type?: 'success' | 'error') => void;
@@ -34,10 +35,13 @@ export function ProjectsModal({
   users,
   currentUser,
   isViewer,
+  canCreateProject,
   onSelectProject,
   onClose,
   onShowToast,
 }: ProjectsModalProps) {
+  const isSuperAdmin = currentUser?.role === 'Admin';
+  const effectiveCanCreate = canCreateProject !== undefined ? canCreateProject : (!isViewer && isSuperAdmin);
   const [view, setView] = useState<'list' | 'create' | 'edit' | 'members'>('list');
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [selectedProjectForMembers, setSelectedProjectForMembers] = useState<Project | null>(null);
@@ -62,6 +66,10 @@ export function ProjectsModal({
   const [isPending, startTransition] = useTransition();
 
   const handleOpenCreate = () => {
+    if (!effectiveCanCreate) {
+      onShowToast('Only Organization Admins and Owners can create projects.', 'error');
+      return;
+    }
     setKey('');
     setName('');
     setDescription('');
@@ -83,7 +91,10 @@ export function ProjectsModal({
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isViewer) return;
+    if (!effectiveCanCreate) {
+      setError('Only Organization Admins and Owners can create projects.');
+      return;
+    }
 
     setError(null);
     startTransition(async () => {
@@ -182,13 +193,18 @@ export function ProjectsModal({
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Projects ({projectsList.length})
                 </span>
-                {!isViewer && (
+                {effectiveCanCreate ? (
                   <button
                     onClick={handleOpenCreate}
                     className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl shadow-sm transition active:scale-95"
                   >
                     <Plus className="w-3.5 h-3.5" /> New Project
                   </button>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg">
+                    <Shield className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Admin-only creation</span>
+                  </div>
                 )}
               </div>
 

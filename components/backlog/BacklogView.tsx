@@ -28,6 +28,7 @@ import {
   deleteSprintAction,
   moveIssueSprintAction,
 } from '@/app/actions/sprints';
+import { updateIssue } from '@/app/actions/issues';
 import { playCardPickupSound, playCardDropSound } from '@/lib/sound';
 
 interface BacklogViewProps {
@@ -66,6 +67,7 @@ function formatDateDisplay(dateStr?: string | null | number | Date): string {
 export function BacklogView({
   issues: initialIssues,
   allProjectIssues,
+  users = [],
   sprints = [],
   swimlanes = [],
   onSelectIssue,
@@ -96,6 +98,12 @@ export function BacklogView({
   const [isCreatingSprint, setIsCreatingSprint] = useState(false);
   const [dragOverSprintId, setDragOverSprintId] = useState<string | null>(null);
   const [dragOverBacklog, setDragOverBacklog] = useState(false);
+
+  // Linear-grade inline editable cells state
+  const [editingTitleKey, setEditingTitleKey] = useState<string | null>(null);
+  const [editingTitleValue, setEditingTitleValue] = useState<string>('');
+  const [editingPointsKey, setEditingPointsKey] = useState<string | null>(null);
+  const [editingPointsValue, setEditingPointsValue] = useState<string>('');
 
   // Determine sprint statuses
   const { activeSprint, plannedSprints, closedSprints } = useMemo(() => {
@@ -362,9 +370,52 @@ export function BacklogView({
               Blocked
             </span>
           )}
-          <span className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate flex-1">
-            {issue.title}
-          </span>
+          {editingTitleKey === issue.key ? (
+            <input
+              type="text"
+              autoFocus
+              value={editingTitleValue}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setEditingTitleValue(e.target.value)}
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter') {
+                  const newT = editingTitleValue.trim() || issue.title;
+                  setLocalIssues((prev) =>
+                    prev.map((i) => (i.key === issue.key ? { ...i, title: newT } : i))
+                  );
+                  setEditingTitleKey(null);
+                  await updateIssue(issue.key, { title: newT });
+                  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('kynov:issue-updated'));
+                } else if (e.key === 'Escape') {
+                  setEditingTitleKey(null);
+                }
+              }}
+              onBlur={async () => {
+                const newT = editingTitleValue.trim() || issue.title;
+                setLocalIssues((prev) =>
+                  prev.map((i) => (i.key === issue.key ? { ...i, title: newT } : i))
+                );
+                setEditingTitleKey(null);
+                await updateIssue(issue.key, { title: newT });
+                if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('kynov:issue-updated'));
+              }}
+              className="text-sm font-medium text-slate-800 dark:text-slate-100 bg-blue-50/50 dark:bg-blue-950/40 border border-blue-500 rounded px-2 py-0.5 flex-1 focus:outline-none"
+            />
+          ) : (
+            <span
+              onClick={(e) => {
+                if (!isViewer && !isReadOnly) {
+                  e.stopPropagation();
+                  setEditingTitleKey(issue.key);
+                  setEditingTitleValue(issue.title);
+                }
+              }}
+              title={!isViewer && !isReadOnly ? 'Click to edit title directly' : undefined}
+              className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate flex-1 hover:text-blue-600 dark:hover:text-blue-400 transition"
+            >
+              {issue.title}
+            </span>
+          )}
           {issue.labels?.map((lbl, idx) => (
             <span
               key={idx}
@@ -375,13 +426,37 @@ export function BacklogView({
           ))}
         </div>
 
-        <div className="flex items-center gap-4 flex-shrink-0">
-          <span
-            className={`text-[10px] px-2 py-0.5 rounded font-mono ${priorityCfg.color}`}
-          >
-            {issue.priority}
-          </span>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Inline Priority Quick Selector */}
+          {!isReadOnly ? (
+            <select
+              value={issue.priority}
+              disabled={isViewer}
+              onClick={(e) => e.stopPropagation()}
+              onChange={async (e) => {
+                const newP = e.target.value as any;
+                setLocalIssues((prev) =>
+                  prev.map((i) => (i.key === issue.key ? { ...i, priority: newP } : i))
+                );
+                await updateIssue(issue.key, { priority: newP });
+                if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('kynov:issue-updated'));
+              }}
+              className={`text-[10px] px-2 py-0.5 rounded font-mono font-semibold border border-transparent hover:border-slate-300 dark:hover:border-slate-600 transition cursor-pointer focus:outline-none ${priorityCfg.color}`}
+              title="Click to change priority"
+            >
+              <option value="Urgent">Urgent</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+              <option value="None">None</option>
+            </select>
+          ) : (
+            <span className={`text-[10px] px-2 py-0.5 rounded font-mono ${priorityCfg.color}`}>
+              {issue.priority}
+            </span>
+          )}
 
+          {/* Issue Status Selector */}
           {!isReadOnly ? (
             <select
               value={issue.status}
@@ -402,15 +477,88 @@ export function BacklogView({
             </span>
           )}
 
-          <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
-            {issue.storyPoints || 0} pts
-          </span>
+          {/* Inline Story Points Click-to-Edit */}
+          {editingPointsKey === issue.key ? (
+            <input
+              type="number"
+              min={0}
+              max={100}
+              autoFocus
+              value={editingPointsValue}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setEditingPointsValue(e.target.value)}
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter') {
+                  const pts = Math.max(0, parseInt(editingPointsValue, 10) || 0);
+                  setLocalIssues((prev) =>
+                    prev.map((i) => (i.key === issue.key ? { ...i, storyPoints: pts } : i))
+                  );
+                  setEditingPointsKey(null);
+                  await updateIssue(issue.key, { storyPoints: pts });
+                  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('kynov:issue-updated'));
+                } else if (e.key === 'Escape') {
+                  setEditingPointsKey(null);
+                }
+              }}
+              onBlur={async () => {
+                const pts = Math.max(0, parseInt(editingPointsValue, 10) || 0);
+                setLocalIssues((prev) =>
+                  prev.map((i) => (i.key === issue.key ? { ...i, storyPoints: pts } : i))
+                );
+                setEditingPointsKey(null);
+                await updateIssue(issue.key, { storyPoints: pts });
+                if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('kynov:issue-updated'));
+              }}
+              className="w-16 text-xs font-mono font-bold text-center text-slate-800 dark:text-slate-100 bg-blue-50/50 dark:bg-blue-950/40 border border-blue-500 rounded px-1 py-0.5 focus:outline-none"
+            />
+          ) : (
+            <span
+              onClick={(e) => {
+                if (!isViewer && !isReadOnly) {
+                  e.stopPropagation();
+                  setEditingPointsKey(issue.key);
+                  setEditingPointsValue(String(issue.storyPoints ?? 0));
+                }
+              }}
+              title={!isViewer && !isReadOnly ? 'Click to edit points directly' : undefined}
+              className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2 py-0.5 rounded cursor-pointer transition"
+            >
+              {issue.storyPoints || 0} pts
+            </span>
+          )}
 
-          <UserAvatar
-            user={assignee}
-            size="sm"
-            title={assignee ? assignee.name : 'Unassigned'}
-          />
+          {/* Inline Assignee Quick Reassign Dropdown */}
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <select
+              value={assignee?.id || ''}
+              disabled={isViewer || isReadOnly}
+              onChange={async (e) => {
+                const newUserId = e.target.value || null;
+                const newAssignee = (users || []).find((u) => u.id === newUserId) || null;
+                setLocalIssues((prev) =>
+                  prev.map((i) =>
+                    i.key === issue.key ? { ...i, assigneeId: newUserId, assignee: newAssignee } : i
+                  )
+                );
+                await updateIssue(issue.key, { assigneeId: newUserId });
+                if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('kynov:issue-updated'));
+              }}
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+              title="Click to reassign directly"
+            >
+              <option value="">Unassigned</option>
+              {(users || []).map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.role})
+                </option>
+              ))}
+            </select>
+            <UserAvatar
+              user={assignee}
+              size="sm"
+              title={assignee ? `${assignee.name} (Click to reassign)` : 'Unassigned (Click to assign)'}
+            />
+          </div>
         </div>
       </div>
     );

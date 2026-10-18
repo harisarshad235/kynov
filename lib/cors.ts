@@ -7,8 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export const ALLOWED_ORIGINS = [
   'https://kynov.harisarshad.site',
-  'https://apex.harisarshad.site',
-  'https://apextrack.harisarshad235.workers.dev',
+  'https://kynov.harisarshad235.workers.dev',
 ];
 
 export const DEV_ALLOWED_ORIGINS = [
@@ -27,7 +26,7 @@ export function isAllowedOrigin(origin: string | null | undefined): boolean {
     return true;
   }
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && process.env.AUTH_MODE !== 'production') {
     if (DEV_ALLOWED_ORIGINS.some((allowed) => allowed.toLowerCase() === cleanOrigin)) {
       return true;
     }

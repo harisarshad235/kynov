@@ -759,8 +759,8 @@ export function KanbanBoardView({
                         <motion.div
                           key={issue.key}
                           layout
-                          whileHover={{ y: -3, scale: 1.01 }}
-                          whileTap={{ scale: 0.99 }}
+                          whileHover={{ y: -2, scale: 1.01 }}
+                          whileTap={{ scale: 0.98, rotate: 1.2 }}
                           transition={{ duration: 0.15, ease: 'easeOut' }}
                           draggable={!isViewer}
                           onDragStart={(e) => handleDragStart(e as any, issue.key)}

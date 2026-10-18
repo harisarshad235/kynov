@@ -96,3 +96,64 @@ export interface WorkspaceMetrics {
   completionRate: number;
 }
 
+export type OrganizationRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
+
+export const ACTIVE_ORG_COOKIE = 'kynov_active_org';
+
+export interface OrgMemberRow {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: OrganizationRole;
+  userName: string;
+  userEmail: string;
+  userAvatarUrl: string | null;
+  department: string | null;
+  createdAt: number;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl?: string | null;
+  ownerId?: string | null;
+  plan?: string | null;
+  createdAt?: Date | number;
+  updatedAt?: Date | number;
+  memberCount?: number;
+  projectCount?: number;
+  userRole?: OrganizationRole;
+  allowedDomain?: string | null;
+  autoJoinEnabled?: boolean | number | null;
+}
+
+export interface OrganizationInvite {
+  id: string;
+  organizationId: string;
+  organizationName?: string;
+  token: string;
+  email?: string | null;
+  role: OrganizationRole;
+  invitedById?: string | null;
+  inviterName?: string | null;
+  expiresAt: number;
+  createdAt: number;
+  acceptedAt?: number | null;
+}
+
+export interface OrganizationActivity {
+  id: string;
+  organizationId: string;
+  actorId?: string | null;
+  actorName?: string | null;
+  actorAvatarUrl?: string | null;
+  action: string;
+  entityType: string;
+  entityId?: string | null;
+  details?: string | null;
+  createdAt: number;
+}
+
+
+

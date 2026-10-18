@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test:ranking": "npx tsx scripts/test-ranking.ts",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply apextrack_db --local",
@@ -23,7 +24,7 @@
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.8",
     "drizzle-orm": "^0.45.3",
-    "framer-motion": "^14.2.0",
+    "framer-motion": "^14.3.0",
     "lucide-react": "^1.52.0",
     "next": "16.3.8",
     "next-themes": "^0.4.6",

@@ -19,13 +19,46 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://kynov.io";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Kynov | Agile Velocity & Sprint Tracking",
+  title: {
+    default: "Kynov — Next-Gen Agile Engine & Modern Sprint Tracker | Fast Jira & Linear Alternative",
+    template: "%s | Kynov — Agile Project Management & Sprint Tracker",
+  },
   description:
-    "Next-generation Agile Velocity & Sprint Tracking engine for modern high-output teams. Kanban boards, sprint backlogs, velocity sparklines, and RBAC team collaboration.",
+    "Next-generation Agile Velocity & Sprint Tracking engine for modern high-output teams. Lightning-fast sub-50ms Kanban boards, live sprint backlogs, velocity sparklines, multi-tenant company governance, and Git PR tracking.",
+  keywords: [
+    "agile project management tool",
+    "jira alternative",
+    "linear alternative",
+    "sprint tracking software",
+    "kanban board",
+    "realtime agile velocity",
+    "engineering velocity tracker",
+    "multi-tenant workspace",
+    "scrum backlog management",
+    "fast agile engine",
+    "sprint burndown chart",
+  ],
+  authors: [{ name: "Kynov Engineering", url: siteUrl }],
+  creator: "Kynov",
+  publisher: "Kynov Technologies",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
-    title: "Kynov | Agile Velocity & Sprint Tracking",
+    title: "Kynov — Next-Gen Agile Engine & Modern Sprint Tracker",
     description:
-      "Next-generation Agile Velocity & Sprint Tracking engine for modern high-output teams. Kanban boards, sprint backlogs, velocity sparklines, and RBAC team collaboration.",
+      "Lightning-fast sub-50ms Kanban boards, live sprint backlogs, velocity sparklines, and multi-tenant organization workspaces.",
     url: siteUrl,
     siteName: "Kynov",
     images: [
@@ -37,12 +70,13 @@ export const metadata: Metadata = {
       },
     ],
     type: "website",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kynov | Agile Velocity & Sprint Tracking",
+    title: "Kynov — Next-Gen Agile Engine & Modern Sprint Tracker",
     description:
-      "Next-generation Agile Velocity & Sprint Tracking engine for modern high-output teams.",
+      "Lightning-fast sub-50ms Kanban boards, live sprint backlogs, and multi-tenant organization workspaces.",
     images: ["/og-image.png"],
   },
   icons: {
