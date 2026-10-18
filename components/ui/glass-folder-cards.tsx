@@ -652,14 +652,31 @@ export function GlassFolder({
 
   const addFile = () => {
     const made = onAdd?.(files)
-    const file: FolderFile = made || { name: "Untitled " + (files.length + 1), meta: "Just now" }
+    const file: FolderFile = made || { name: "New Sprint Doc " + (files.length + 1), meta: "Just now", art: "verdant" }
     const next = [...files, file]
     const id = nextId.current++
     ids.current = [...ids.current, id]
     setFiles(next)
     setDropped(id)
     setBump((b) => b + 1)
+    if (!open) {
+      setOpen(true)
+    }
     onFilesChange?.(next)
+  }
+
+  const handleFolderClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (
+      target.closest('.gf-key') ||
+      target.closest('.gf-menu') ||
+      target.closest('.gf-sheet') ||
+      target.closest('.gf-menu-item')
+    ) {
+      return
+    }
+    setMenuOpen(false)
+    setOpen(!open)
   }
 
   const menuItems: FolderMenuItem[] = [
@@ -697,7 +714,11 @@ export function GlassFolder({
       style={{ width, height: (H + HEADROOM) * k, ...style }}
     >
       <style>{GF_CSS}</style>
-      <div className="gf-stage" style={{ transform: "translateY(" + HEADROOM * k + "px) scale(" + k + ")" }}>
+      <div
+        className="gf-stage"
+        onClick={handleFolderClick}
+        style={{ transform: "translateY(" + HEADROOM * k + "px) scale(" + k + ")" }}
+      >
         <div className="gf-tilt">
           <div className="gf-shadow" aria-hidden="true" />
 
@@ -911,10 +932,12 @@ const GF_CSS = `
   width: 340px;
   height: 272px;
   transform-origin: 0 0;
+  cursor: pointer;
 }
 .gf-tilt {
   position: absolute;
   inset: 0;
+  cursor: pointer;
   transform: perspective(1400px) rotateX(calc(var(--gf-py) * -3deg)) rotateY(calc(var(--gf-px) * 4deg));
   transition: transform .9s var(--gf-ease);
 }

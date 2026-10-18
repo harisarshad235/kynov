@@ -210,9 +210,9 @@ export function BoardFilters({
   };
 
   return (
-    <div className="relative z-20 bg-white/95 dark:bg-[#0D121D]/95 backdrop-blur-md border-b border-slate-200/90 dark:border-slate-800/80 px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors">
-      <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
-        {/* Quick Filter Ribbon */}
+    <div className="relative z-20 bg-white/95 dark:bg-[#0D121D]/95 backdrop-blur-md border-b border-slate-200/90 dark:border-slate-800/80 px-4 py-2 flex flex-col gap-2 text-xs transition-colors">
+      {/* Tier 1: Quick Filter Ribbon (Scrollable without truncation or collision) */}
+      <div className="w-full min-w-0 overflow-x-auto scrollbar-none">
         <FilterRibbon
           filters={filters}
           onChangeFilters={onChangeFilters}
@@ -220,8 +220,12 @@ export function BoardFilters({
           allIssues={allIssues}
           currentUserId={currentUserId}
         />
+      </div>
 
-        {/* Priority Filter Dropdown */}
+      {/* Tier 2: Refined Controls (Priority Dropdown, JQL-lite, Epic selector) & Metrics Capsules */}
+      <div className="flex items-center justify-between gap-2.5 flex-wrap min-w-0 pt-1 border-t border-slate-100 dark:border-slate-800/50">
+        <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+          {/* Priority Filter Dropdown */}
         {!filters.isJqlMode && (
           <div className="relative z-30" ref={priorityDropdownRef}>
             <button
@@ -376,7 +380,7 @@ export function BoardFilters({
       </div>
 
       {/* Metrics Status Capsules */}
-      <div className="hidden lg:flex items-center gap-2 text-xs flex-shrink-0">
+      <div className="flex items-center gap-2 text-xs flex-shrink-0">
         <div className="px-2.5 py-1 rounded-xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-700/70 text-slate-600 dark:text-slate-300 flex items-center gap-1.5 font-mono text-[11px] shadow-2xs">
           <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
           <span>
@@ -397,6 +401,7 @@ export function BoardFilters({
         </div>
       </div>
     </div>
+  </div>
   );
 }
 

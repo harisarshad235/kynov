@@ -1229,12 +1229,12 @@ export function DocumentReaderModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 md:p-6 animate-fade-in overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-4 md:p-6 animate-fade-in overflow-y-auto">
       <div
-        className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] my-auto"
+        className="bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-zinc-800 rounded-2xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] my-auto"
       >
-        {/* Notion / Confluence Header Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/90 no-print flex-shrink-0">
+        {/* Notion / Confluence Header Bar — 100% Solid & Opaque */}
+        <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0F1524] no-print flex-shrink-0">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-xs bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-mono px-2.5 py-1 rounded-md font-bold uppercase tracking-wide flex items-center gap-1">
               <Tag className="w-3 h-3" /> {doc.category}

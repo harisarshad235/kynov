@@ -52,8 +52,97 @@ export function Header({
   users = [],
   daysRemaining = 6,
 }: HeaderProps) {
+  // Real-time Collaborative Presence Engine (Cross-Tab / Multi-Session)
+  const [onlineUserIds, setOnlineUserIds] = React.useState<Set<string>>(() => new Set([currentUser.id]));
+  const [presenceMode, setPresenceMode] = React.useState<'ONLINE' | 'AWAY'>('ONLINE');
+  const [isPresencePopoverOpen, setIsPresencePopoverOpen] = React.useState(false);
+  const presencePopoverRef = React.useRef<HTMLDivElement>(null);
+
+  // Close presence popover when clicking outside
+  React.useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (presencePopoverRef.current && !presencePopoverRef.current.contains(e.target as Node)) {
+        setIsPresencePopoverOpen(false);
+      }
+    };
+    if (isPresencePopoverOpen) {
+      document.addEventListener('mousedown', handleOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [isPresencePopoverOpen]);
+
+  // Real-time presence heartbeat across tabs & windows
+  React.useEffect(() => {
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('kynov:presence_channel');
+    } catch {
+      // Fallback if BroadcastChannel is unsupported
+    }
+
+    const broadcastHeartbeat = () => {
+      const payload = {
+        userId: currentUser.id,
+        name: currentUser.name,
+        status: presenceMode,
+        timestamp: Date.now(),
+      };
+      bc?.postMessage(payload);
+
+      // Also persist to localStorage registry for cross-tab sync
+      try {
+        const raw = localStorage.getItem('kynov:presence_registry');
+        const registry = raw ? JSON.parse(raw) : {};
+        registry[currentUser.id] = payload;
+
+        // Clean up stale sessions (> 90 seconds old)
+        const now = Date.now();
+        const activeIds = new Set<string>([currentUser.id]);
+        Object.entries(registry).forEach(([uId, data]: [string, any]) => {
+          if (now - data.timestamp < 90000 && data.status !== 'OFFLINE') {
+            activeIds.add(uId);
+          }
+        });
+        setOnlineUserIds(activeIds);
+        localStorage.setItem('kynov:presence_registry', JSON.stringify(registry));
+      } catch {
+        // storage fallback
+      }
+    };
+
+    // Broadcast immediately on mount & status change
+    broadcastHeartbeat();
+    const interval = setInterval(broadcastHeartbeat, 15000);
+
+    // Listen for incoming heartbeats from other active users/personas
+    if (bc) {
+      bc.onmessage = (event) => {
+        const data = event.data;
+        if (data && data.userId) {
+          setOnlineUserIds((prev) => {
+            const next = new Set(prev);
+            if (data.status === 'OFFLINE') {
+              next.delete(data.userId);
+            } else {
+              next.add(data.userId);
+            }
+            return next;
+          });
+        }
+      };
+    }
+
+    return () => {
+      clearInterval(interval);
+      try {
+        bc?.postMessage({ userId: currentUser.id, status: 'OFFLINE', timestamp: Date.now() });
+        bc?.close();
+      } catch {}
+    };
+  }, [currentUser.id, currentUser.name, presenceMode]);
+
   // Active approved members for the collaborative workspace facepile
-  const activeMembers = React.useMemo(() => {
+  const approvedMembers = React.useMemo(() => {
     return users.filter((u) => u.status === 'APPROVED');
   }, [users]);
   const getTabLabel = (tab: string) => {
@@ -147,50 +236,171 @@ export function Header({
           </div>
         </div>
 
-        {/* Active Workspace Members Facepile */}
-        {activeMembers.length > 0 && (
-          <div className="hidden lg:flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
-            <div className="flex items-center -space-x-2 overflow-visible">
-              {activeMembers.slice(0, 5).map((member) => (
-                <div
-                  key={member.id}
-                  className="relative group transition-transform hover:scale-110 hover:z-20 cursor-pointer"
-                  title={`${member.name} (${member.role || 'Member'}) • Active in Workspace`}
-                  onClick={onOpenProfileModal}
-                >
-                  <UserAvatar
-                    user={member}
-                    size="xs"
-                    className="ring-2 ring-white dark:ring-[#0D121D]"
-                  />
-                  {/* Live Online Status Dot */}
-                  <span
-                    className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-[#0D121D]"
-                    title="Active in workspace"
-                  />
-                </div>
-              ))}
-            </div>
+        {/* Real-Time Workspace Presence Facepile */}
+        {approvedMembers.length > 0 && (
+          <div className="relative" ref={presencePopoverRef}>
+            <button
+              onClick={() => setIsPresencePopoverOpen(!isPresencePopoverOpen)}
+              className="flex items-center gap-1.5 sm:gap-2 pl-2 pr-2.5 py-1 rounded-full bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 transition cursor-pointer"
+              title="Click to view real-time member presence"
+            >
+              <div className="flex items-center -space-x-2 overflow-visible">
+                {approvedMembers.slice(0, 4).map((member) => {
+                  const isOnline = onlineUserIds.has(member.id);
+                  return (
+                    <div
+                      key={member.id}
+                      className="relative group transition-transform hover:scale-110 hover:z-20"
+                    >
+                      <UserAvatar
+                        user={member}
+                        size="xs"
+                        className={`ring-2 ${
+                          isOnline
+                            ? 'ring-emerald-400 dark:ring-emerald-500'
+                            : 'ring-white dark:ring-[#0D121D] opacity-75'
+                        }`}
+                      />
+                      {/* Real-time Presence Beacon */}
+                      {isOnline ? (
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-[#0D121D] animate-pulse"
+                          title={`${member.name} • Active Online Now`}
+                        />
+                      ) : (
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600 ring-1 ring-white dark:ring-[#0D121D]"
+                          title={`${member.name} • Offline`}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
 
-            {activeMembers.length > 5 && (
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 pl-0.5 font-mono">
-                +{activeMembers.length - 5}
-              </span>
+              {approvedMembers.length > 4 && (
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 pl-0.5 font-mono">
+                  +{approvedMembers.length - 4}
+                </span>
+              )}
+
+              <div className="hidden sm:flex items-center gap-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>
+                  {approvedMembers.filter((m) => onlineUserIds.has(m.id)).length} online
+                </span>
+              </div>
+            </button>
+
+            {/* Real-time Presence Popover */}
+            {isPresencePopoverOpen && (
+              <div className="absolute right-0 top-11 z-50 w-72 bg-white dark:bg-[#0F1424] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl p-3 animate-scale-in text-xs">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    Live Workspace Presence
+                  </span>
+                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                    Real-time Sync
+                  </span>
+                </div>
+
+                {/* Current User Status Toggle */}
+                <div className="bg-slate-50 dark:bg-[#141B2D] p-2 rounded-xl mb-3 border border-slate-200/60 dark:border-slate-800">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                      Your Status
+                    </span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                      ● Active Now
+                    </span>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => setPresenceMode('ONLINE')}
+                      className={`flex-1 py-1 px-2 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                        presenceMode === 'ONLINE'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      Active
+                    </button>
+                    <button
+                      onClick={() => setPresenceMode('AWAY')}
+                      className={`flex-1 py-1 px-2 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                        presenceMode === 'AWAY'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      Away
+                    </button>
+                  </div>
+                </div>
+
+                {/* Member Roster List */}
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  {approvedMembers.map((member) => {
+                    const isOnline = onlineUserIds.has(member.id);
+                    const isSelf = member.id === currentUser.id;
+
+                    return (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition text-xs"
+                      >
+                        <div className="flex items-center gap-2 truncate min-w-0">
+                          <div className="relative flex-shrink-0">
+                            <UserAvatar user={member} size="xs" />
+                            {isOnline ? (
+                              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white dark:ring-slate-900" />
+                            ) : (
+                              <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-slate-400 ring-1 ring-white dark:ring-slate-900" />
+                            )}
+                          </div>
+                          <div className="truncate min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                {member.name}
+                              </span>
+                              {isSelf && (
+                                <span className="text-[9px] px-1 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 block truncate">
+                              {member.role || 'Member'} • {member.department || 'Engineering'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+                            isOnline
+                              ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50'
+                              : 'text-slate-400'
+                          }`}
+                        >
+                          {isOnline ? 'Online' : 'Offline'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
-            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hidden xl:inline">
-              {activeMembers.length} active
-            </span>
           </div>
         )}
 
         {/* Go to Landing / Feature Page Link */}
         <a
           href="/landing"
-          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100/80 hover:bg-slate-200/80 dark:bg-[#161C2E] dark:hover:bg-[#1E2538] border border-slate-200/80 dark:border-slate-800 transition shadow-2xs active:scale-95"
+          className="hidden sm:inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100/80 hover:bg-slate-200/80 dark:bg-[#161C2E] dark:hover:bg-[#1E2538] border border-slate-200/80 dark:border-slate-800 transition shadow-2xs active:scale-95 flex-shrink-0"
           title="Visit Public Landing & Features"
         >
           <Globe className="w-3.5 h-3.5 text-indigo-500" />
-          <span>Landing Page</span>
+          <span className="hidden xl:inline">Landing Page</span>
         </a>
 
         {/* Quick Issue Creation Button */}

@@ -150,7 +150,7 @@ export function FilterRibbon({
     (filters.isJqlMode && Boolean(filters.jqlQuery.trim()));
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 text-xs">
+    <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 text-xs w-full max-w-full min-w-0 pr-4">
       {/* Quick "My Issues" Filter */}
       <button
         onClick={toggleOnlyMine}
