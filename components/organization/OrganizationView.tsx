@@ -264,50 +264,51 @@ export function OrganizationView({
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-5">
       {/* Top Organization Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 md:p-8 rounded-3xl border border-indigo-500/20 shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#0c1220] via-[#111836] to-[#0e1428] text-white p-6 md:p-8 rounded-3xl border border-indigo-500/15 shadow-2xl shadow-indigo-950/20 relative overflow-hidden">
         {/* Glow Effects */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[32rem] h-[32rem] bg-indigo-500/8 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute -bottom-20 -left-10 w-80 h-80 bg-blue-500/6 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-10 left-1/3 w-40 h-40 bg-violet-500/5 rounded-full blur-[80px] pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-400">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-6">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-indigo-500/15 border border-indigo-500/20 text-indigo-400 backdrop-blur-sm">
                 <Building2 className="w-5 h-5" />
               </span>
-              <span className="text-xs font-mono font-semibold text-indigo-400 uppercase tracking-widest">
+              <span className="text-[10px] font-mono font-semibold text-indigo-400/80 uppercase tracking-[0.2em]">
                 Tenant: {activeOrg.slug}
               </span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold uppercase">
+              <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wide">
                 {activeOrg.plan || 'team'}
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
                 {activeOrg.name}
               </h1>
               {isOrgAdminOrOwner && (
                 <button
                   onClick={() => setIsEditOrgOpen(true)}
-                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition cursor-pointer"
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all duration-150 cursor-pointer"
                   title="Edit Organization Name & Settings"
                 >
                   <Edit3 className="w-4 h-4" />
                 </button>
               )}
             </div>
-            <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Multi-tenant organization workspace. Configure projects, assign team members, and manage access permissions specifically within {activeOrg.name}.
+            <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+              Configure projects, assign team members, and manage access permissions within {activeOrg.name}.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             {isOrgAdminOrOwner && onOpenCreateProject && (
               <button
                 onClick={onOpenCreateProject}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition active:scale-98"
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-all duration-150 active:scale-[0.98] cursor-pointer"
               >
                 <Plus className="w-4 h-4" /> New Project
               </button>
@@ -316,7 +317,7 @@ export function OrganizationView({
             {onOpenCreateOrganization && (
               <button
                 onClick={onOpenCreateOrganization}
-                className="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700/80 px-4 py-2.5 rounded-xl text-xs font-semibold transition"
+                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer"
               >
                 <Building2 className="w-4 h-4" /> New Organization
               </button>
@@ -325,82 +326,89 @@ export function OrganizationView({
         </div>
 
         {/* Executive KPI Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800/80 text-left">
-          <div className="p-3 bg-slate-900/60 rounded-2xl border border-slate-800/60">
-            <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-7 pt-6 border-t border-white/5 text-left">
+          <div className="p-3.5 bg-white/[0.03] rounded-2xl border border-white/[0.06] backdrop-blur-sm">
+            <div className="text-[10px] font-medium text-slate-500 flex items-center gap-1.5 uppercase tracking-wider">
               <FolderKanban className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Projects in Org</span>
+              <span>Projects</span>
             </div>
-            <div className="text-xl font-bold text-white mt-1">{orgProjects.length}</div>
+            <div className="text-2xl font-bold text-white mt-1.5 font-mono">{orgProjects.length}</div>
           </div>
 
-          <div className="p-3 bg-slate-900/60 rounded-2xl border border-slate-800/60">
-            <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+          <div className="p-3.5 bg-white/[0.03] rounded-2xl border border-white/[0.06] backdrop-blur-sm">
+            <div className="text-[10px] font-medium text-slate-500 flex items-center gap-1.5 uppercase tracking-wider">
               <Users className="w-3.5 h-3.5 text-blue-400" />
-              <span>Org Members</span>
+              <span>Members</span>
             </div>
-            <div className="text-xl font-bold text-white mt-1">{filteredMembers.length}</div>
+            <div className="text-2xl font-bold text-white mt-1.5 font-mono">{filteredMembers.length}</div>
           </div>
 
-          <div className="p-3 bg-slate-900/60 rounded-2xl border border-slate-800/60">
-            <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+          <div className="p-3.5 bg-white/[0.03] rounded-2xl border border-white/[0.06] backdrop-blur-sm">
+            <div className="text-[10px] font-medium text-slate-500 flex items-center gap-1.5 uppercase tracking-wider">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>Your Role</span>
             </div>
-            <div className="text-xs font-bold text-emerald-400 mt-2 truncate">
+            <div className="text-sm font-bold text-emerald-400 mt-2.5 tracking-wide">
               {activeOrg.userRole || 'MEMBER'}
             </div>
           </div>
 
-          <div className="p-3 bg-slate-900/60 rounded-2xl border border-slate-800/60">
-            <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+          <div className="p-3.5 bg-white/[0.03] rounded-2xl border border-white/[0.06] backdrop-blur-sm">
+            <div className="text-[10px] font-medium text-slate-500 flex items-center gap-1.5 uppercase tracking-wider">
               <BadgeAlert className="w-3.5 h-3.5 text-amber-400" />
-              <span>Unassigned Seats</span>
+              <span>Unassigned</span>
             </div>
-            <div className="text-xl font-bold text-amber-400 mt-1">{unassignedUsersCount}</div>
+            <div className="text-2xl font-bold text-amber-400 mt-1.5 font-mono">{unassignedUsersCount}</div>
           </div>
         </div>
       </div>
 
       {/* Navigation Sub-Tabs & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-2">
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+        <div className="flex items-center gap-1 p-1 bg-slate-100/80 dark:bg-slate-900/80 rounded-2xl border border-slate-200/50 dark:border-slate-800/50">
           <button
             onClick={() => setActiveTab('projects')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${activeTab === 'projects'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-150 cursor-pointer ${
+              activeTab === 'projects'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            }`}
           >
-            <FolderKanban className="w-4 h-4" />
+            <FolderKanban className="w-3.5 h-3.5" />
             <span>Projects & Access Matrix</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/20 font-mono">
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+              activeTab === 'projects' ? 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+            }`}>
               {orgProjects.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveTab('members')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${activeTab === 'members'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-150 cursor-pointer ${
+              activeTab === 'members'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            }`}
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-3.5 h-3.5" />
             <span>Organization Members</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/20 font-mono">
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+              activeTab === 'members' ? 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+            }`}>
               {filteredMembers.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveTab('governance')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${activeTab === 'governance'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-150 cursor-pointer ${
+              activeTab === 'governance'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            }`}
           >
-            <Shield className="w-4 h-4" />
+            <Shield className="w-3.5 h-3.5" />
             <span>Multi-Tenant Policies</span>
           </button>
 
@@ -409,12 +417,13 @@ export function OrganizationView({
               setActiveTab('activity');
               getOrganizationActivityAction(activeOrg.id).then(setActivities);
             }}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${activeTab === 'activity'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-150 cursor-pointer ${
+              activeTab === 'activity'
+                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            }`}
           >
-            <History className="w-4 h-4" />
+            <History className="w-3.5 h-3.5" />
             <span>Activity Audit Log</span>
           </button>
         </div>
@@ -427,7 +436,7 @@ export function OrganizationView({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={activeTab === 'projects' ? 'Filter projects...' : 'Filter members...'}
-              className="w-full pl-9 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-indigo-500 transition"
+              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition placeholder:text-slate-400"
             />
           </div>
         )}
@@ -435,7 +444,7 @@ export function OrganizationView({
 
       {/* TAB 1: PROJECTS & ACCESS MATRIX */}
       {activeTab === 'projects' && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {filteredProjects.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-4">
               <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center">
@@ -459,48 +468,48 @@ export function OrganizationView({
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredProjects.map((project) => {
                 const leadUser = initialUsers.find((u) => u.id === project.leadId);
                 return (
                   <div
                     key={project.id}
-                    className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between group"
+                    className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-200/80 dark:border-slate-800/60 p-5 shadow-xs hover:shadow-lg hover:border-indigo-500/30 dark:hover:border-indigo-500/20 transition-all duration-200 flex flex-col justify-between group"
                   >
                     <div>
                       {/* Project Header */}
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono font-bold text-xs">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/15 to-indigo-600/10 border border-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono font-bold text-[11px]">
                             {project.key}
                           </div>
                           <div>
-                            <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                            <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-150">
                               {project.name}
                             </h3>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                               {project.category || 'Software'}
                             </span>
                           </div>
                         </div>
 
-                        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/40">
                           {project.memberCount} {project.memberCount === 1 ? 'member' : 'members'}
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
                         {project.description || 'Enterprise project workspace for tracking tasks and workflows.'}
                       </p>
 
                       {/* Lead Information */}
-                      <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80 mb-4">
+                      <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/50 mb-4">
                         {leadUser ? (
                           <>
                             <UserAvatar user={leadUser} size="xs" />
-                            <div className="text-[11px] text-slate-600 dark:text-slate-400">
-                              <span className="text-slate-400">Lead: </span>
-                              <span className="font-semibold text-slate-800 dark:text-slate-200">{leadUser.name}</span>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                              <span className="text-slate-400 dark:text-slate-500">Lead: </span>
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">{leadUser.name}</span>
                             </div>
                           </>
                         ) : (
@@ -512,12 +521,12 @@ export function OrganizationView({
                     </div>
 
                     {/* Actions Bar */}
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/50">
                       <button
                         onClick={() => setSelectedProjectForMembers(project)}
-                        className="w-full flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-2 rounded-xl text-xs font-semibold transition"
+                        className="w-full flex items-center justify-center gap-1.5 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer"
                       >
-                        <Users className="w-3.5 h-3.5" /> Manage Members
+                        <Users className="w-3.5 h-3.5" /> Members
                       </button>
 
                       <button
@@ -525,9 +534,9 @@ export function OrganizationView({
                           onSelectProject(project.id);
                           onNavigateTab('board');
                         }}
-                        className="w-full flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 py-2 rounded-xl text-xs font-semibold border border-indigo-200/60 dark:border-indigo-800/60 transition"
+                        className="w-full flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 py-2 rounded-xl text-xs font-semibold border border-indigo-200/40 dark:border-indigo-800/40 transition-all duration-150 cursor-pointer"
                       >
-                        <Kanban className="w-3.5 h-3.5" /> View Board
+                        <Kanban className="w-3.5 h-3.5" /> Board
                       </button>
                     </div>
                   </div>
@@ -540,7 +549,7 @@ export function OrganizationView({
 
       {/* TAB 2: MEMBER PROJECT ROSTER */}
       {activeTab === 'members' && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-200/80 dark:border-slate-800/60 overflow-hidden shadow-xs">
           <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="font-bold text-sm text-slate-900 dark:text-white">
@@ -579,7 +588,7 @@ export function OrganizationView({
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-950/60 text-slate-500 uppercase tracking-wider font-mono text-[10px] border-b border-slate-100 dark:border-slate-800">
+              <thead className="bg-slate-50/80 dark:bg-slate-950/40 text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono text-[10px] border-b border-slate-100 dark:border-slate-800/60">
                 <tr>
                   <th className="py-3 px-4">Member</th>
                   <th className="py-3 px-4">Organization Role</th>

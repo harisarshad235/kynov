@@ -375,21 +375,10 @@ export function IssueDetailDrawer({
   const doneSubtasks = localSubtasks.filter((s) => s.completed).length;
   const subtaskPct = localSubtasks.length ? Math.round((doneSubtasks / localSubtasks.length) * 100) : 0;
 
-  // Real-time collaborative presence: Teammates currently viewing this ticket
-  const activeViewers = useMemo(() => {
-    const otherUsers = (users || []).filter((u) => u.id !== currentUser.id);
-    if (otherUsers.length === 0) return [];
-    const seed = issue.key.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const count = (seed % Math.min(3, otherUsers.length)) + 1;
-    const picked: User[] = [];
-    for (let i = 0; i < count; i++) {
-      const idx = (seed + i * 3) % otherUsers.length;
-      if (!picked.some((p) => p.id === otherUsers[idx].id)) {
-        picked.push(otherUsers[idx]);
-      }
-    }
-    return picked;
-  }, [users, currentUser.id, issue.key]);
+  // Real-time collaborative presence placeholder
+  // NOTE: Real-time presence requires a WebSocket/SSE backend (e.g. Liveblocks, Supabase Realtime).
+  // Until integrated, this returns an empty array — no fake viewers are shown.
+  const activeViewers: User[] = [];
 
   const insertSlashTemplateIntoDesc = (type: 'todo' | 'table' | 'code' | 'quote') => {
     let snippet = '';
@@ -719,9 +708,9 @@ export function IssueDetailDrawer({
     (currentUser as any).role === 'PROJECT_MANAGER';
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-fade-in">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-black/50 backdrop-blur-sm flex justify-end animate-fade-in">
       <div
-        className="w-full max-w-4xl bg-[#0b0f17] text-slate-200 border-l border-[#263348] flex flex-col h-full shadow-2xl relative animate-slide-in"
+        className="w-full max-w-[56rem] bg-gradient-to-b from-[#0b0f17] to-[#0a0e15] text-slate-200 border-l border-[#1e293b]/80 flex flex-col h-full shadow-[0_0_80px_rgba(0,0,0,0.6)] relative animate-slide-in"
         role="dialog"
         aria-modal="true"
         aria-labelledby="issue-drawer-title"
@@ -743,7 +732,7 @@ export function IssueDetailDrawer({
         )}
 
         {/* Top Header Bar */}
-        <div className="px-6 py-4 border-b border-[#1e293b] flex items-center justify-between bg-[#0f172a]/60">
+        <div className="px-6 py-3.5 border-b border-[#1e293b]/80 flex items-center justify-between bg-[#0d1424]/80 backdrop-blur-sm">
           <div className="flex items-center gap-3 flex-wrap">
             {/* Parent Epic Breadcrumb Tag */}
             {parentEpic ? (
@@ -764,19 +753,19 @@ export function IssueDetailDrawer({
             ) : null}
 
             {/* Issue Key Pill */}
-            <span className="px-2 py-0.5 rounded text-xs font-mono font-bold bg-slate-800 text-blue-400 border border-slate-700">
+            <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-xs">
               {issue.key}
             </span>
 
             {/* Issue Type Badge */}
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800/80 text-slate-300 border border-slate-700">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800/80 text-slate-300 border border-slate-700/80 shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
               {resolvedType}
             </span>
 
             {/* Live vs Demo Badge */}
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border shadow-xs ${
                 selectedEnvironment === 'LIVE'
                   ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
                   : 'bg-purple-500/15 border-purple-500/40 text-purple-400'
@@ -799,9 +788,9 @@ export function IssueDetailDrawer({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Real-time Teammate Presence Stack */}
-            {activeViewers.length > 0 && (
+          <div className="flex items-center gap-2.5">
+            {/* Real-time Teammate Presence — requires WebSocket backend */}
+            {activeViewers.length > 0 ? (
               <div
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs shadow-xs"
                 title={`${activeViewers.map((v) => v.name).join(', ')} currently viewing this ticket`}
@@ -817,7 +806,7 @@ export function IssueDetailDrawer({
                   {activeViewers.length > 1 ? ` +${activeViewers.length - 1} viewing` : ' viewing'}
                 </span>
               </div>
-            )}
+            ) : null}
 
             {/* Primary Save Button */}
             {!isViewer && (
@@ -947,13 +936,13 @@ export function IssueDetailDrawer({
         </div>
 
         {/* 2-Column Responsive Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Left Column: Context & Work Area (7 cols) */}
-          <div className="md:col-span-8 space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-5 grid grid-cols-1 md:grid-cols-12 gap-5">
+          {/* Left Column: Context & Work Area */}
+          <div className="md:col-span-8 space-y-4">
             {/* Description Block */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-4">
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Description</span>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Description</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsPreviewDesc(!isPreviewDesc)}
@@ -1043,7 +1032,7 @@ export function IssueDetailDrawer({
             </div>
 
             {/* Subtasks Checklist Block */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-4">
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <ListChecks className="w-4 h-4 text-blue-400" />
@@ -1110,12 +1099,12 @@ export function IssueDetailDrawer({
                     onChange={(e) => setNewSubtask(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddSubtask()}
                     placeholder="+ Add a subtask..."
-                    className="flex-1 bg-[#090d16] border border-[#263348] rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    className="flex-1 bg-[#0c121e] border border-[#1e293b] rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition"
                   />
                   <button
                     onClick={handleAddSubtask}
                     disabled={!newSubtask.trim()}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition"
+                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs transition-all duration-150 active:scale-95 cursor-pointer"
                   >
                     Add
                   </button>
@@ -1124,7 +1113,7 @@ export function IssueDetailDrawer({
             </div>
 
             {/* Issue Links / Relationships Block */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-4">
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Link2 className="w-4 h-4 text-blue-400" />
@@ -1142,12 +1131,12 @@ export function IssueDetailDrawer({
 
               {/* Link Creator Form */}
               {isAddingLink && (
-                <div className="mb-4 p-3 rounded-lg bg-[#090d16] border border-[#263348] space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="mb-4 p-3.5 rounded-xl bg-[#0a0f1d] border border-[#1e293b] space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <select
                       value={linkType}
                       onChange={(e) => setLinkType(e.target.value as EnterpriseLinkType)}
-                      className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none"
+                      className="bg-[#0c121e] border border-[#1e293b] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 transition"
                     >
                       <option value="BLOCKS">blocks</option>
                       <option value="IS_BLOCKED_BY">is blocked by</option>
@@ -1160,7 +1149,7 @@ export function IssueDetailDrawer({
                       value={linkTarget}
                       onChange={(e) => setLinkTarget(e.target.value)}
                       placeholder="Target Key (e.g. KYN-102)"
-                      className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none font-mono"
+                      className="bg-[#0c121e] border border-[#1e293b] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 font-mono transition"
                     />
                   </div>
 
@@ -1169,7 +1158,7 @@ export function IssueDetailDrawer({
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={handleAddLink}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold"
+                      className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all duration-150 active:scale-95 cursor-pointer"
                     >
                       Create Link
                     </button>
@@ -1236,7 +1225,7 @@ export function IssueDetailDrawer({
             </div>
 
             {/* Development / Git Panel */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-4">
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <GitPullRequest className="w-4 h-4 text-emerald-400" />
@@ -1254,12 +1243,12 @@ export function IssueDetailDrawer({
 
               {/* Add Git Link Modal / Form */}
               {isAddingGit && (
-                <div className="mb-4 p-3 rounded-lg bg-[#090d16] border border-[#263348] space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="mb-4 p-3.5 rounded-xl bg-[#0a0f1d] border border-[#1e293b] space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <select
                       value={gitRefType}
                       onChange={(e) => setGitRefType(e.target.value as any)}
-                      className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none"
+                      className="bg-[#0c121e] border border-[#1e293b] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 transition"
                     >
                       <option value="BRANCH">Branch</option>
                       <option value="PULL_REQUEST">Pull Request</option>
@@ -1271,7 +1260,7 @@ export function IssueDetailDrawer({
                       value={gitRefName}
                       onChange={(e) => setGitRefName(e.target.value)}
                       placeholder={gitRefType === 'BRANCH' ? 'feat/kyn-101-upgrade' : gitRefType === 'PULL_REQUEST' ? '#42 PR Title' : 'a1b2c3d'}
-                      className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none font-mono"
+                      className="bg-[#0c121e] border border-[#1e293b] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 font-mono transition"
                     />
 
                     <input
@@ -1279,14 +1268,14 @@ export function IssueDetailDrawer({
                       value={gitUrl}
                       onChange={(e) => setGitUrl(e.target.value)}
                       placeholder="https://github.com/..."
-                      className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none font-mono"
+                      className="bg-[#0c121e] border border-[#1e293b] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 font-mono transition"
                     />
                   </div>
 
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={handleAddGitRef}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold"
+                      className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all duration-150 active:scale-95 cursor-pointer"
                     >
                       Link Reference
                     </button>
@@ -1354,13 +1343,13 @@ export function IssueDetailDrawer({
             </div>
 
             {/* Activity Streams Tabs: Comments, History (Audit Log), Work Log */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-4">
-              <div className="flex items-center gap-4 border-b border-[#263348] pb-2 mb-4">
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-5 space-y-4">
+              <div className="flex items-center gap-5 border-b border-[#1e293b]/80 pb-3">
                 <button
                   onClick={() => setActiveTab('comments')}
-                  className={`text-xs font-bold uppercase tracking-wider pb-1 transition border-b-2 ${
+                  className={`text-xs font-bold uppercase tracking-wider pb-2 transition border-b-2 cursor-pointer ${
                     activeTab === 'comments'
-                      ? 'text-blue-400 border-blue-500'
+                      ? 'text-indigo-400 border-indigo-500'
                       : 'text-slate-400 border-transparent hover:text-slate-200'
                   }`}
                 >
@@ -1368,9 +1357,9 @@ export function IssueDetailDrawer({
                 </button>
                 <button
                   onClick={() => setActiveTab('history')}
-                  className={`text-xs font-bold uppercase tracking-wider pb-1 transition border-b-2 ${
+                  className={`text-xs font-bold uppercase tracking-wider pb-2 transition border-b-2 cursor-pointer ${
                     activeTab === 'history'
-                      ? 'text-blue-400 border-blue-500'
+                      ? 'text-indigo-400 border-indigo-500'
                       : 'text-slate-400 border-transparent hover:text-slate-200'
                   }`}
                 >
@@ -1378,9 +1367,9 @@ export function IssueDetailDrawer({
                 </button>
                 <button
                   onClick={() => setActiveTab('worklog')}
-                  className={`text-xs font-bold uppercase tracking-wider pb-1 transition border-b-2 ${
+                  className={`text-xs font-bold uppercase tracking-wider pb-2 transition border-b-2 cursor-pointer ${
                     activeTab === 'worklog'
-                      ? 'text-blue-400 border-blue-500'
+                      ? 'text-indigo-400 border-indigo-500'
                       : 'text-slate-400 border-transparent hover:text-slate-200'
                   }`}
                 >
@@ -1393,7 +1382,7 @@ export function IssueDetailDrawer({
                 <div className="space-y-4">
                   {/* Add comment box */}
                   {!isViewer && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="relative">
                         <textarea
                           ref={commentTextareaRef}
@@ -1402,7 +1391,7 @@ export function IssueDetailDrawer({
                           onKeyDown={handleCommentKeyDown}
                           placeholder="Add a comment... (Type @ to tag a user, Markdown supported)"
                           rows={3}
-                          className="w-full bg-[#090d16] border border-[#263348] rounded-lg p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 leading-relaxed font-sans"
+                          className="w-full bg-[#0a0f1d] border border-[#1e293b] rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 leading-relaxed font-sans transition"
                         />
 
                         {/* User Mention Autocomplete Popup */}
@@ -1458,35 +1447,35 @@ export function IssueDetailDrawer({
                           <button
                             type="button"
                             onClick={triggerMention}
-                            className="flex items-center gap-1 px-2 py-1 rounded bg-[#151c28] hover:bg-slate-800 border border-[#263348] text-xs text-blue-400 hover:text-blue-300 font-medium transition cursor-pointer"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0c121e] hover:bg-slate-800 border border-[#1e293b] text-xs text-indigo-400 hover:text-indigo-300 font-medium transition cursor-pointer"
                             title="Tag a team member"
                           >
-                            <AtSign className="w-3 h-3" /> Tag User
+                            <AtSign className="w-3.5 h-3.5" /> Tag User
                           </button>
 
                           <button
                             type="button"
                             onClick={() => insertSlashTemplateIntoComment('todo')}
-                            className="flex items-center gap-1 px-2 py-1 rounded bg-[#151c28] hover:bg-slate-800 border border-[#263348] text-[11px] font-mono text-emerald-400 hover:text-emerald-300 transition cursor-pointer"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0c121e] hover:bg-slate-800 border border-[#1e293b] text-[11px] font-mono text-emerald-400 hover:text-emerald-300 transition cursor-pointer"
                             title="Insert checklist"
                           >
-                            <CheckSquare className="w-3 h-3" /> /todo
+                            <CheckSquare className="w-3.5 h-3.5" /> /todo
                           </button>
                           <button
                             type="button"
                             onClick={() => insertSlashTemplateIntoComment('code')}
-                            className="flex items-center gap-1 px-2 py-1 rounded bg-[#151c28] hover:bg-slate-800 border border-[#263348] text-[11px] font-mono text-purple-400 hover:text-purple-300 transition cursor-pointer"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0c121e] hover:bg-slate-800 border border-[#1e293b] text-[11px] font-mono text-purple-400 hover:text-purple-300 transition cursor-pointer"
                             title="Insert code snippet"
                           >
-                            <Code className="w-3 h-3" /> /code
+                            <Code className="w-3.5 h-3.5" /> /code
                           </button>
                           <button
                             type="button"
                             onClick={() => insertSlashTemplateIntoComment('table')}
-                            className="flex items-center gap-1 px-2 py-1 rounded bg-[#151c28] hover:bg-slate-800 border border-[#263348] text-[11px] font-mono text-blue-400 hover:text-blue-300 transition cursor-pointer"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0c121e] hover:bg-slate-800 border border-[#1e293b] text-[11px] font-mono text-blue-400 hover:text-blue-300 transition cursor-pointer"
                             title="Insert table"
                           >
-                            <Table className="w-3 h-3" /> /table
+                            <Table className="w-3.5 h-3.5" /> /table
                           </button>
 
                           {detectedMentions.length > 0 && (
@@ -1502,9 +1491,9 @@ export function IssueDetailDrawer({
                                 return (
                                   <span
                                     key={handle}
-                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[11px] font-semibold"
+                                    className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/25 text-[11px] font-semibold"
                                   >
-                                    <span className="text-blue-400 font-bold">@</span>
+                                    <span className="text-indigo-400 font-bold">@</span>
                                     <span>{u ? u.name : handle}</span>
                                   </span>
                                 );
@@ -1522,7 +1511,7 @@ export function IssueDetailDrawer({
                             showToast('Comment posted');
                           }}
                           disabled={!commentText.trim()}
-                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition shadow-sm cursor-pointer"
+                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all duration-150 active:scale-95 cursor-pointer"
                         >
                           Post Comment
                         </button>
@@ -1679,16 +1668,16 @@ export function IssueDetailDrawer({
             </div>
           </div>
 
-          {/* Right Column: Metadata Sidebar (4 cols) */}
-          <div className="md:col-span-4 space-y-4">
+          {/* Right Column: Metadata Sidebar */}
+          <div className="md:col-span-4 space-y-3">
             {/* Status Selector with Workflow Rules */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5 space-y-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Status</span>
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Status</span>
               <select
                 value={issue.status}
                 onChange={(e) => handleTransitionStatus(e.target.value)}
                 disabled={isViewer}
-                className="w-full bg-[#0c121e] border border-[#263348] rounded-lg p-2 text-xs font-semibold text-white focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs font-semibold text-white focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition"
               >
                 {swimlanes.length > 0 ? (
                   swimlanes.map((s) => (
@@ -1708,13 +1697,13 @@ export function IssueDetailDrawer({
 
             {/* Parent Epic Selector */}
             {resolvedType !== 'EPIC' && (
-              <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5 space-y-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Parent Epic</span>
+              <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Parent Epic</span>
                 <select
                   value={selectedParentId || ''}
                   onChange={(e) => setSelectedParentId(e.target.value || null)}
                   disabled={isViewer}
-                  className="w-full bg-[#0c121e] border border-[#263348] rounded-lg p-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                  className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/60 transition"
                 >
                   <option value="">None (No Epic)</option>
                   {availableEpics.map((ep) => (
@@ -1727,13 +1716,16 @@ export function IssueDetailDrawer({
             )}
 
             {/* Issue Type Selector */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5 space-y-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Issue Type</span>
+            {/* Divider */}
+            <div className="border-t border-[#1e293b]/40" />
+
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Issue Type</span>
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
                 disabled={isViewer}
-                className="w-full bg-[#0c121e] border border-[#263348] rounded-lg p-2 text-xs text-white focus:outline-none"
+                className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/60 transition"
               >
                 <option value="STORY">Story</option>
                 <option value="TASK">Task</option>
@@ -1744,13 +1736,13 @@ export function IssueDetailDrawer({
             </div>
 
             {/* Issue Classification: Live vs Demo */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5 space-y-2">
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
                   Classification
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">
-                  {selectedEnvironment === 'LIVE' ? 'Production' : 'Sandbox / Demo'}
+                <span className="text-[9px] text-slate-500 font-mono px-1.5 py-0.5 rounded bg-[#0c121e]">
+                  {selectedEnvironment === 'LIVE' ? 'Production' : 'Sandbox'}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -1758,26 +1750,26 @@ export function IssueDetailDrawer({
                   type="button"
                   disabled={isViewer}
                   onClick={() => setSelectedEnvironment('LIVE')}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border text-xs font-semibold transition active:scale-95 cursor-pointer ${
+                  className={`flex items-center justify-center gap-1.5 py-2.5 px-2.5 rounded-xl border text-xs font-semibold transition-all duration-150 active:scale-95 cursor-pointer ${
                     selectedEnvironment === 'LIVE'
-                      ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500/40 font-bold'
-                      : 'bg-[#0c121e] border-[#263348] text-slate-400 hover:text-slate-200'
+                      ? 'bg-emerald-500/15 border-emerald-500/60 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
+                      : 'bg-[#0c121e] border-[#1e293b] text-slate-500 hover:text-slate-300 hover:border-slate-600'
                   }`}
                 >
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className={`w-2 h-2 rounded-full bg-emerald-400 ${selectedEnvironment === 'LIVE' ? 'animate-pulse' : 'opacity-40'}`} />
                   <span>Live Issue</span>
                 </button>
                 <button
                   type="button"
                   disabled={isViewer}
                   onClick={() => setSelectedEnvironment('DEMO')}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border text-xs font-semibold transition active:scale-95 cursor-pointer ${
+                  className={`flex items-center justify-center gap-1.5 py-2.5 px-2.5 rounded-xl border text-xs font-semibold transition-all duration-150 active:scale-95 cursor-pointer ${
                     selectedEnvironment === 'DEMO'
-                      ? 'bg-purple-500/20 border-purple-500 text-purple-300 ring-1 ring-purple-500/40 font-bold'
-                      : 'bg-[#0c121e] border-[#263348] text-slate-400 hover:text-slate-200'
+                      ? 'bg-purple-500/15 border-purple-500/60 text-purple-300 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
+                      : 'bg-[#0c121e] border-[#1e293b] text-slate-500 hover:text-slate-300 hover:border-slate-600'
                   }`}
                 >
-                  <span className="w-2 h-2 rounded-full bg-purple-400" />
+                  <span className={`w-2 h-2 rounded-full bg-purple-400 ${selectedEnvironment === 'DEMO' ? '' : 'opacity-40'}`} />
                   <span>Demo</span>
                 </button>
               </div>
@@ -1838,15 +1830,18 @@ export function IssueDetailDrawer({
             )}
 
             {/* Assignee Selector */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5 space-y-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Assignee</span>
-              <div className="flex items-center gap-2">
+            {/* Divider */}
+            <div className="border-t border-[#1e293b]/40" />
+
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Assignee</span>
+              <div className="flex items-center gap-2.5">
                 {issue.assignee && <UserAvatar user={issue.assignee} size="sm" />}
                 <select
                   value={selectedAssigneeId || ''}
                   onChange={(e) => setSelectedAssigneeId(e.target.value || null)}
                   disabled={isViewer}
-                  className="flex-1 bg-[#0c121e] border border-[#263348] rounded-lg p-2 text-xs text-white focus:outline-none"
+                  className="flex-1 bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/60 transition"
                 >
                   <option value="">Unassigned</option>
                   {users.map((u) => (
@@ -1859,8 +1854,8 @@ export function IssueDetailDrawer({
             </div>
 
             {/* Story Points */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5 space-y-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Story Points</span>
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Story Points</span>
               <input
                 type="number"
                 min="0"
@@ -1868,18 +1863,18 @@ export function IssueDetailDrawer({
                 value={selectedPoints}
                 onChange={(e) => setSelectedPoints(parseInt(e.target.value) || 0)}
                 disabled={isViewer}
-                className="w-full bg-[#0c121e] border border-[#263348] rounded-lg p-2 text-xs text-white font-mono focus:outline-none"
+                className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500/60 transition"
               />
             </div>
 
             {/* Priority */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5 space-y-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Priority</span>
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Priority</span>
               <select
                 value={selectedPriority}
                 onChange={(e) => setSelectedPriority(e.target.value as IssuePriority)}
                 disabled={isViewer}
-                className="w-full bg-[#0c121e] border border-[#263348] rounded-lg p-2 text-xs text-white focus:outline-none"
+                className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/60 transition"
               >
                 {['Critical', 'High', 'Medium', 'Low', 'Lowest'].map((p) => (
                   <option key={p} value={p}>
@@ -1890,15 +1885,15 @@ export function IssueDetailDrawer({
             </div>
 
             {/* Sprint Assignment */}
-            <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5 space-y-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Sprint</span>
+            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Sprint</span>
               <select
                 value={selectedSprintId || 'Backlog'}
                 onChange={(e) =>
                   setSelectedSprintId(e.target.value === 'Backlog' ? null : e.target.value)
                 }
                 disabled={isViewer}
-                className="w-full bg-[#0c121e] border border-[#263348] rounded-lg p-2 text-xs text-white focus:outline-none"
+                className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/60 transition"
               >
                 {availableSprints.map((s) => {
                   const stateStr = ((s as any).status || s.state || '').toUpperCase();
@@ -1919,8 +1914,11 @@ export function IssueDetailDrawer({
             </div>
 
             {/* Impediment Flag Button */}
+            {/* Divider */}
+            <div className="border-t border-[#1e293b]/40" />
+
             {!isViewer && (
-              <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5">
+              <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5">
                 <button
                   onClick={() => {
                     startTransition(async () => {
@@ -1930,10 +1928,10 @@ export function IssueDetailDrawer({
                       }
                     });
                   }}
-                  className={`w-full flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-semibold transition border ${
+                  className={`w-full flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-semibold transition-all duration-150 border ${
                     issue.isFlagged
-                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
-                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                      ? 'bg-rose-500/15 text-rose-300 border-rose-500/40 hover:bg-rose-500/25 shadow-[0_0_12px_rgba(239,68,68,0.1)]'
+                      : 'bg-[#0c121e] text-slate-400 border-[#1e293b] hover:text-slate-200 hover:border-slate-600'
                   }`}
                 >
                   <Flag className={`w-3.5 h-3.5 ${issue.isFlagged ? 'fill-rose-400' : ''}`} />

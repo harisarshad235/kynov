@@ -348,9 +348,9 @@
     "semantic_hash": "3c31c3b13711729362afaf4cbe697311"
   },
   "components/issues/IssueDetailDrawer.tsx": {
-    "mtime": 1792267500.3708942,
-    "seen": 1792267803.7626944,
-    "ast_hash": "f59ea99e3c92ded18ac7eb0ba7e79f6e",
+    "mtime": 1792327747.6920714,
+    "seen": 1792327882.2439902,
+    "ast_hash": "f9a7ffd9ba1a136faf2136586ff474db",
     "semantic_hash": ""
   },
   "components/landing/FeatureGrid.tsx": {
@@ -714,9 +714,9 @@
     "semantic_hash": ""
   },
   "docs/USER_OPERATIONS_MANUAL.md": {
-    "mtime": 1792267733.743537,
-    "seen": 1792267803.782539,
-    "ast_hash": "7d2840e19c7ada620cf559c339419990",
+    "mtime": 1792327802.743571,
+    "seen": 1792327882.262571,
+    "ast_hash": "a525beb39e64bbbe4d4df7eaa4592f97",
     "semantic_hash": ""
   },
   "docs/assets/screenshots/README.md": {
@@ -894,9 +894,9 @@
     "semantic_hash": ""
   },
   "components/organization/OrganizationView.tsx": {
-    "mtime": 1792305957.8367765,
-    "seen": 1792306097.5165467,
-    "ast_hash": "5bafbd7295898b59ebe4406a00c97269",
+    "mtime": 1792327787.0210242,
+    "seen": 1792327882.2475893,
+    "ast_hash": "64837e0c82c494de5ec58c347d5cff02",
     "semantic_hash": ""
   },
   "app/actions/org.ts": {
