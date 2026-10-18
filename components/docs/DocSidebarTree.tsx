@@ -111,7 +111,7 @@ export function DocSidebarTree({
               <Folder className="w-4 h-4 text-blue-500 fill-blue-500/20 flex-shrink-0" />
             )}
 
-            <span className="truncate">{folder.name}</span>
+            <span className="truncate" title={folder.name}>{folder.name}</span>
           </div>
 
           <span

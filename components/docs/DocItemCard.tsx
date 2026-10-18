@@ -128,38 +128,38 @@ export function DocItemCard({
     switch (item.type) {
       case 'folder':
         return (
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/80">
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/80 whitespace-nowrap shrink-0">
             {item.itemCount !== undefined ? `${item.itemCount} items` : 'Folder'}
           </span>
         );
       case 'google_sheet':
         return (
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 flex items-center gap-1">
-            <FileSpreadsheet className="w-3 h-3" />
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 flex items-center gap-1 whitespace-nowrap shrink-0">
+            <FileSpreadsheet className="w-3 h-3 shrink-0" />
             <span>Google Sheet</span>
           </span>
         );
       case 'file_pdf':
         return (
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/80">
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/80 whitespace-nowrap shrink-0">
             PDF {item.fileMetadata?.fileSize ? `• ${formatFileSize(item.fileMetadata.fileSize)}` : ''}
           </span>
         );
       case 'file_image':
         return (
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-200/80 dark:border-purple-800/80">
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-200/80 dark:border-purple-800/80 whitespace-nowrap shrink-0">
             IMAGE {item.fileMetadata?.fileSize ? `• ${formatFileSize(item.fileMetadata.fileSize)}` : ''}
           </span>
         );
       case 'markdown':
         return (
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80">
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/80 whitespace-nowrap shrink-0">
             Markdown Spec
           </span>
         );
       default:
         return (
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 whitespace-nowrap shrink-0">
             Attachment
           </span>
         );
@@ -284,10 +284,10 @@ export function DocItemCard({
       className="group relative bg-white dark:bg-[#0D121F] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 sm:p-5 hover:border-indigo-400 dark:hover:border-indigo-500/80 hover:shadow-xl dark:hover:shadow-indigo-950/20 transition-all duration-200 cursor-pointer flex flex-col justify-between overflow-hidden"
     >
       {/* Top Row: Icon + Badge + Action Menu */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2.5 min-w-0">
           {renderIcon()}
-          <div>{renderBadge()}</div>
+          <div className="shrink-0">{renderBadge()}</div>
         </div>
 
         {/* Action Menu (Three dots) */}
@@ -397,8 +397,11 @@ export function DocItemCard({
       )}
 
       {/* Middle: Title & Description */}
-      <div className="mb-4">
-        <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition mb-1">
+      <div className="mb-3">
+        <h3
+          title={item.name}
+          className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition mb-1.5 min-h-[2.5rem]"
+        >
           {item.name}
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[32px]">
