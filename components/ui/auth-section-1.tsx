@@ -10,10 +10,13 @@ import {
   Loader2,
   AlertCircle,
   ArrowLeft,
-  CheckCircle2,
+  Check,
   LogIn,
   UserPlus,
   Sparkles,
+  Zap,
+  Shield,
+  Layers,
 } from "lucide-react";
 import { loginAction, registerUser } from "@/app/actions/auth";
 import { KynovLogo } from "@/components/brand/KynovLogo";
@@ -30,7 +33,6 @@ export interface AuthSectionOneProps {
     department?: string;
   }) => Promise<void> | void;
   onGoogleSignIn?: () => void;
-  onAppleSignIn?: () => void;
   title?: string;
   subtitle?: string;
   marketingHeading?: ReactNode;
@@ -42,7 +44,6 @@ export default function AuthSectionOne({
   initialMode = "signin",
   onSubmit,
   onGoogleSignIn,
-  onAppleSignIn,
   title,
   subtitle,
   marketingHeading,
@@ -64,7 +65,6 @@ export default function AuthSectionOne({
 
   // UI state
   const [internalError, setInternalError] = useState<string | null>(null);
-  const [appleNotice, setAppleNotice] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const activeError = externalError ?? internalError;
@@ -168,15 +168,6 @@ export default function AuthSectionOne({
     }
   };
 
-  const handleAppleClick = () => {
-    if (onAppleSignIn) {
-      onAppleSignIn();
-    } else {
-      setAppleNotice(true);
-      setTimeout(() => setAppleNotice(false), 4000);
-    }
-  };
-
   const resolvedTitle =
     title ?? (mode === "signin" ? "Sign in to Kynov" : "Create an account");
   const resolvedSubtitle =
@@ -186,9 +177,9 @@ export default function AuthSectionOne({
       : "Brainstorm in chat, build with agile sprint velocity.");
 
   return (
-    <section className="min-h-screen bg-slate-50 p-3 text-slate-900 antialiased [font-synthesis:none] dark:bg-[#050505] dark:text-white transition-colors">
+    <section className="min-h-screen bg-slate-100/70 p-3 sm:p-5 text-slate-900 antialiased [font-synthesis:none] dark:bg-[#07090e] dark:text-white transition-colors flex flex-col justify-between">
       {/* Top Utility Bar */}
-      <div className="flex items-center justify-between px-3 py-2 sm:px-6">
+      <div className="flex items-center justify-between px-3 py-2 sm:px-6 mb-2">
         <Link
           href={overviewHref}
           className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition"
@@ -198,40 +189,35 @@ export default function AuthSectionOne({
         <ThemeToggle />
       </div>
 
-      <div className="grid min-h-[calc(100vh-4rem)] gap-6 lg:grid-cols-[0.96fr_1.04fr]">
-        {/* Left Interactive Form Column */}
-        <div className="flex min-h-[760px] items-start rounded-2xl border border-slate-200/80 bg-white px-6 py-10 shadow-xl dark:border-white/10 dark:bg-[#0a0a0a] sm:px-10 lg:min-h-0 lg:px-14 lg:py-14 xl:px-18">
-          <div className="mx-auto w-full max-w-[560px]">
+      <div className="grid flex-1 gap-6 lg:grid-cols-[1fr_1fr] max-w-7xl mx-auto w-full items-stretch">
+        {/* Left Form Column */}
+        <div className="flex flex-col justify-center rounded-3xl border border-slate-200/90 bg-white/95 px-6 py-10 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-[#0c1017] dark:shadow-none sm:px-10 lg:px-12 xl:px-16 transition-colors">
+          <div className="mx-auto w-full max-w-[460px]">
             {/* Brand Logo & Heading */}
-            <div>
+            <div className="mb-6">
               <Link href="/" className="inline-block mb-3 hover:opacity-90 transition">
-                <KynovLogo size={42} variant="full" />
+                <KynovLogo size={40} variant="full" />
               </Link>
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-[38px] lg:leading-[1.1]">
-                  {resolvedTitle}
-                </h1>
-                <span className="text-[10px] font-mono font-bold bg-cyan-500/15 text-cyan-500 border border-cyan-500/30 px-2 py-0.5 rounded">
-                  v1.0
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-slate-500 dark:text-white/60 sm:text-base">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                {resolvedTitle}
+              </h1>
+              <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                 {resolvedSubtitle}
               </p>
             </div>
 
             {/* Mode Tab Switcher */}
-            <div className="mt-6 grid grid-cols-2 p-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-semibold">
+            <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-xl text-xs font-semibold mb-5">
               <button
                 type="button"
                 onClick={() => {
                   setMode("signin");
                   setInternalError(null);
                 }}
-                className={`py-2.5 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer ${
+                className={`py-2 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer ${
                   mode === "signin"
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-xs font-bold"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 <LogIn className="w-3.5 h-3.5" /> Sign In
@@ -242,74 +228,57 @@ export default function AuthSectionOne({
                   setMode("signup");
                   setInternalError(null);
                 }}
-                className={`py-2.5 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer ${
+                className={`py-2 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer ${
                   mode === "signup"
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-xs font-bold"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 <UserPlus className="w-3.5 h-3.5" /> Create Account
               </button>
             </div>
 
-            {/* Social Auth Providers */}
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={handleGoogleClick}
-                className="flex h-11 items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/70 px-4 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 hover:border-slate-300 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 active:scale-98 cursor-pointer"
-              >
-                <GoogleIcon />
-                <span>Continue with Google</span>
-              </button>
+            {/* Google OAuth - Clean, Full-Width */}
+            <button
+              type="button"
+              onClick={handleGoogleClick}
+              className="w-full flex h-11 items-center justify-center gap-3 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-850 px-4 text-xs font-semibold text-slate-700 dark:text-slate-200 transition shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 active:scale-98 cursor-pointer"
+            >
+              <GoogleIcon />
+              <span>Continue with Google</span>
+            </button>
 
-              <button
-                type="button"
-                onClick={handleAppleClick}
-                className="flex h-11 items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/70 px-4 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 hover:border-slate-300 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 active:scale-98 cursor-pointer"
-              >
-                <AppleIcon />
-                <span>Continue with Apple</span>
-              </button>
-            </div>
-
-            {appleNotice && (
-              <div className="mt-3 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-[11px] text-blue-700 dark:text-blue-300 text-center animate-in fade-in">
-                Apple OAuth is in preview. Please use Google or your work email credentials below.
-              </div>
-            )}
-
-            <div className="my-6 flex items-center gap-3">
-              <div className="h-[1px] flex-1 bg-slate-200 dark:bg-white/10" />
-              <span className="text-xs uppercase font-medium tracking-wider text-slate-400 dark:text-white/40">
-                or continue with email
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800" />
+              <span className="text-[11px] uppercase font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+                or with work email
               </span>
-              <div className="h-[1px] flex-1 bg-slate-200 dark:bg-white/10" />
+              <div className="h-[1px] flex-1 bg-slate-200 dark:bg-slate-800" />
             </div>
 
             {/* Active Error Alert */}
             {activeError && (
-              <div className="mb-5 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/80 text-red-700 dark:text-red-300 text-xs flex items-center gap-2.5 animate-in fade-in">
+              <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs flex items-center gap-2.5 animate-in fade-in">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{activeError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               {/* If Signup: First & Last Name */}
               {mode === "signup" && (
                 <div className="grid gap-3 sm:grid-cols-2 animate-in fade-in">
                   <FloatingField
                     label="First Name"
                     value={firstName}
-                    placeholder="e.g. Jordan"
+                    placeholder="Jordan"
                     onChange={setFirstName}
                     required
                   />
                   <FloatingField
                     label="Last Name"
                     value={lastName}
-                    placeholder="e.g. Vance"
+                    placeholder="Vance"
                     onChange={setLastName}
                   />
                 </div>
@@ -320,13 +289,13 @@ export default function AuthSectionOne({
                 label="Work Email Address"
                 value={email}
                 type="email"
-                placeholder="harisarshad235@gmail.com"
+                placeholder="name@company.com"
                 onChange={setEmail}
                 required
               />
 
               {/* Password with Eye Toggle & Forgot Link */}
-              <div className="relative">
+              <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Password <span className="text-red-500">*</span>
@@ -347,12 +316,12 @@ export default function AuthSectionOne({
                     value={password}
                     placeholder={mode === "signup" ? "At least 6 characters" : "••••••••••••"}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full text-sm bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/15 rounded-xl px-4 py-2.5 pr-11 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+                    className="w-full text-sm bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 pr-10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/40 dark:hover:text-white/70 transition"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 transition"
                     aria-label="Toggle password visibility"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -362,23 +331,23 @@ export default function AuthSectionOne({
 
               {/* If Signup: Department & Checkboxes */}
               {mode === "signup" && (
-                <div className="space-y-4 animate-in fade-in">
+                <div className="space-y-3 pt-1 animate-in fade-in">
                   <FloatingField
                     label="Department"
                     value={department}
-                    placeholder="Engineering, Product, Design, QA, DevOps"
+                    placeholder="Engineering, Product, Design, QA"
                     onChange={setDepartment}
                   />
 
-                  <div className="space-y-3 pt-1 text-xs leading-5 text-slate-600 dark:text-white/60">
+                  <div className="space-y-2 pt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                     <label className="flex items-start gap-2.5 cursor-pointer select-none">
                       <input
                         type="checkbox"
                         checked={receiveUpdates}
                         onChange={(e) => setReceiveUpdates(e.target.checked)}
-                        className="mt-0.5 size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-white/20 dark:bg-white/5"
+                        className="mt-0.5 size-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900"
                       />
-                      <span>Send me product announcements and weekly sprint velocity digests.</span>
+                      <span>Receive product announcements and weekly sprint velocity reports.</span>
                     </label>
 
                     <label className="flex items-start gap-2.5 cursor-pointer select-none">
@@ -386,24 +355,20 @@ export default function AuthSectionOne({
                         type="checkbox"
                         checked={agreeTerms}
                         onChange={(e) => setAgreeTerms(e.target.checked)}
-                        className="mt-0.5 size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-white/20 dark:bg-white/5"
+                        className="mt-0.5 size-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900"
                       />
                       <span>
-                        By creating an account, you agree to our{" "}
-                        <a href="#" className="font-semibold text-slate-900 underline underline-offset-2 dark:text-white">
+                        I agree to the{" "}
+                        <a href="#" className="font-semibold text-slate-800 underline underline-offset-2 dark:text-slate-200">
                           Terms of Service
                         </a>{" "}
                         and{" "}
-                        <a href="#" className="font-semibold text-slate-900 underline underline-offset-2 dark:text-white">
+                        <a href="#" className="font-semibold text-slate-800 underline underline-offset-2 dark:text-slate-200">
                           Privacy Policy
                         </a>
                         .
                       </span>
                     </label>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                    🔒 <strong>Zero-Trust Access:</strong> Self-registered members receive immediate workspace viewer permissions until granted project write privileges.
                   </div>
                 </div>
               )}
@@ -412,7 +377,7 @@ export default function AuthSectionOne({
               <button
                 type="submit"
                 disabled={isPending}
-                className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-600 text-base font-semibold text-white shadow-md transition hover:bg-blue-700 active:scale-98 disabled:opacity-60 cursor-pointer"
+                className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-semibold text-white shadow-md shadow-blue-600/25 transition-all active:scale-98 disabled:opacity-60 cursor-pointer"
               >
                 {isPending ? (
                   <>
@@ -427,21 +392,23 @@ export default function AuthSectionOne({
               </button>
             </form>
 
-            {/* Fast Switch (Shown in non-production) */}
+            {/* Fast Dev Switch */}
             {process.env.NODE_ENV !== "production" && (
-              <div className="mt-7 pt-5 border-t border-slate-200/80 dark:border-white/10">
-                <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-2.5 tracking-wider flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-amber-500" /> Fast Switch (Dev Only)
-                </p>
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80">
+                <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider mb-2">
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-500" /> Fast Switch (Dev Only)
+                  </span>
+                </div>
                 <button
                   type="button"
                   disabled={isPending}
                   onClick={() => handleQuickSignIn("harisarshad235@gmail.com")}
-                  className="w-full p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 flex items-center justify-between transition disabled:opacity-50 cursor-pointer"
+                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-850 border border-slate-200/80 dark:border-slate-800 text-xs flex items-center justify-between transition cursor-pointer text-slate-700 dark:text-slate-300"
                 >
                   <div className="text-left">
                     <div className="font-semibold text-slate-900 dark:text-white">Haris Arshad</div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400">harisarshad235@gmail.com</div>
+                    <div className="text-[10px] text-slate-400">harisarshad235@gmail.com</div>
                   </div>
                   <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-mono font-medium">
                     Super Admin
@@ -452,73 +419,80 @@ export default function AuthSectionOne({
           </div>
         </div>
 
-        {/* Right Visual Shader Column */}
-        <div className="relative flex min-h-[640px] flex-col justify-between overflow-hidden rounded-2xl bg-black p-8 text-white shadow-xl sm:p-12 lg:min-h-0 lg:p-14">
+        {/* Right Harmonious Shader & Brand Showcase Column */}
+        <div className="relative flex min-h-[560px] flex-col justify-between overflow-hidden rounded-3xl bg-[#070b14] p-8 text-white shadow-2xl border border-slate-800 sm:p-10 lg:p-12">
+          {/* Aligned, cohesive blue/indigo/cyan shader (no harsh orange clash) */}
           <GrainGradient
-            speed={1}
-            scale={1}
-            rotation={0}
+            speed={0.6}
+            scale={1.1}
+            rotation={45}
             offsetX={0}
             offsetY={0}
-            softness={0.5}
-            intensity={0.5}
-            noise={0.25}
+            softness={0.75}
+            intensity={0.35}
+            noise={0.12}
             shape="corners"
-            frame={2854.5}
-            colors={["#FFFFFF", "#0284C7", "#FC7819", "#FFFFFF"]}
-            colorBack="#00000000"
-            className="absolute inset-0 bg-black"
+            frame={1200}
+            colors={["#050811", "#1E3A8A", "#2563EB", "#0EA5E9"]}
+            colorBack="#070b14"
+            className="absolute inset-0 bg-[#070b14]"
           />
 
+          {/* Atmospheric Brand Glows */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-80 h-80 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-10 right-10 w-60 h-60 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+
           <div className="relative z-10 flex h-full w-full flex-col justify-between">
-            {/* Top Tagline */}
+            {/* Top Brand Pill */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-mono font-bold text-white mb-6">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>KYNOV SAAS WORKSPACE</span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold text-slate-200 mb-6">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                <span>Next-Gen Agile Engine</span>
               </div>
 
               {marketingHeading ?? (
-                <h2 className="max-w-[620px] text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-[56px] lg:leading-[1.02] xl:text-[64px]">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-[1.12]">
                   Think fast,
                   <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-amber-200">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-cyan-300">
                     Build faster.
                   </span>
                 </h2>
               )}
 
-              <p className="mt-4 max-w-lg text-sm text-white/80 leading-relaxed sm:text-base">
-                Unified sprint planning, real-time developer activity signals, and enterprise-grade workspace permissions designed for modern engineering teams.
+              <p className="mt-3.5 max-w-md text-xs sm:text-sm text-slate-300/90 leading-relaxed font-normal">
+                Sub-50ms Kanban boards, live sprint backlogs, and multi-tenant company governance engineered for high-output engineering teams.
               </p>
             </div>
 
-            {/* Bottom Actions */}
-            <div className="pt-10 flex flex-wrap items-center gap-3">
-              <a
-                href="/api/docs/prd"
-                target="_blank"
-                rel="noreferrer"
-                download="KYNOV-PRD.md"
-                className="inline-flex h-11 items-center gap-2.5 rounded-xl border border-white/25 bg-white/10 px-5 text-xs font-semibold text-white backdrop-blur-md transition hover:border-white/50 hover:bg-white/20 active:scale-98"
-              >
-                <span>Download Live PRD.md</span>
-              </a>
-
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert("Kynov Desktop for Windows is in closed preview. Web app is currently live!");
-                }}
-                className="inline-flex h-11 items-center gap-2.5 rounded-xl border border-white/20 bg-black/40 px-5 text-xs font-semibold text-white/85 backdrop-blur-md transition hover:border-white/40 hover:text-white active:scale-98"
-              >
-                <WindowsIcon className="w-4 h-4 shrink-0" />
-                <span className="truncate">Download for Windows</span>
-              </a>
+            {/* Value Pillars List */}
+            <div className="space-y-3 pt-8 pb-4">
+              <div className="flex items-center gap-3 text-xs text-slate-200 font-medium">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-500/20 border border-blue-400/30 text-blue-300">
+                  <Zap className="w-3.5 h-3.5" />
+                </div>
+                <span>Sub-50ms instantaneous drag-and-drop board execution</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-slate-200 font-medium">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-500/20 border border-indigo-400/30 text-indigo-300">
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+                <span>Automated sprint burndown trajectories &amp; point velocity</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-slate-200 font-medium">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-emerald-300">
+                  <Shield className="w-3.5 h-3.5" />
+                </div>
+                <span>Zero-trust multi-tenant project and member isolation</span>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Subtle Bottom Copyright */}
+      <div className="text-center text-[11px] text-slate-400 dark:text-slate-600 mt-4">
+        © 2026 Kynov Inc. Agile Velocity &amp; Sprint Tracking.
       </div>
     </section>
   );
@@ -550,7 +524,7 @@ function FloatingField({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full text-sm bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/15 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+        className="w-full text-sm bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
       />
     </div>
   );
@@ -575,22 +549,6 @@ function GoogleIcon() {
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z"
         fill="#EB4335"
       />
-    </svg>
-  );
-}
-
-function AppleIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="shrink-0">
-      <path d="M17.05 12.54c-.03-3.02 2.47-4.47 2.58-4.54-1.41-2.06-3.6-2.34-4.38-2.37-1.86-.19-3.64 1.1-4.58 1.1-.95 0-2.42-1.07-3.98-1.04-2.05.03-3.94 1.19-4.99 3.02-2.13 3.69-.54 9.16 1.53 12.15 1.01 1.46 2.22 3.1 3.81 3.04 1.53-.06 2.11-.99 3.96-.99s2.37.99 3.99.96c1.65-.03 2.69-1.49 3.69-2.96 1.16-1.69 1.64-3.33 1.66-3.41-.04-.02-3.2-1.23-3.24-4.87ZM14.03 3.66c.84-1.02 1.41-2.43 1.25-3.84-1.21.05-2.68.81-3.55 1.83-.78.9-1.46 2.34-1.28 3.72 1.35.1 2.73-.69 3.58-1.71Z" />
-    </svg>
-  );
-}
-
-function WindowsIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M3 4.7 10.7 3.6v7.7H3V4.7Zm8.8-1.25L21 2.1v9.2h-9.2V3.45ZM3 12.7h7.7v7.7L3 19.3v-6.6Zm8.8 0H21v9.2l-9.2-1.3v-7.9Z" />
     </svg>
   );
 }
