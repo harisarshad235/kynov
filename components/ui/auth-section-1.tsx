@@ -4,17 +4,29 @@ import React, { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GrainGradient } from "@paper-design/shaders-react";
-import { Eye, EyeOff, Loader2, AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
-import { registerUser } from "@/app/actions/auth";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  LogIn,
+  UserPlus,
+  Sparkles,
+} from "lucide-react";
+import { loginAction, registerUser } from "@/app/actions/auth";
 import { KynovLogo } from "@/components/brand/KynovLogo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export interface AuthSectionOneProps {
+  initialMode?: "signin" | "signup";
   onSubmit?: (data: {
-    firstName: string;
-    lastName: string;
+    mode: "signin" | "signup";
     email: string;
     password: string;
+    firstName?: string;
+    lastName?: string;
     department?: string;
   }) => Promise<void> | void;
   onGoogleSignIn?: () => void;
@@ -22,25 +34,25 @@ export interface AuthSectionOneProps {
   title?: string;
   subtitle?: string;
   marketingHeading?: ReactNode;
-  isSubmitting?: boolean;
   errorMessage?: string | null;
-  loginHref?: string;
   overviewHref?: string;
 }
 
 export default function AuthSectionOne({
+  initialMode = "signin",
   onSubmit,
   onGoogleSignIn,
   onAppleSignIn,
-  title = "Create an account",
-  subtitle = "Brainstorm in chat, build with agile sprint velocity",
+  title,
+  subtitle,
   marketingHeading,
-  isSubmitting: externalSubmitting,
   errorMessage: externalError,
-  loginHref = "/login",
   overviewHref = "/",
 }: AuthSectionOneProps) {
   const router = useRouter();
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
+
+  // Form fields
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -49,55 +61,101 @@ export default function AuthSectionOne({
   const [showPassword, setShowPassword] = useState(false);
   const [receiveUpdates, setReceiveUpdates] = useState(true);
   const [agreeTerms, setAgreeTerms] = useState(true);
+
+  // UI state
   const [internalError, setInternalError] = useState<string | null>(null);
   const [appleNotice, setAppleNotice] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const isSubmitting = externalSubmitting ?? isPending;
   const activeError = externalError ?? internalError;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setInternalError(null);
 
-    if (!firstName.trim() || !email.trim()) {
-      setInternalError("Please provide your first name and work email address.");
+    if (!email.trim() || !password) {
+      setInternalError("Please provide your email address and password.");
       return;
     }
 
-    if (!password || password.length < 6) {
-      setInternalError("Password must be at least 6 characters.");
-      return;
-    }
-
-    if (!agreeTerms) {
-      setInternalError("You must agree to the Terms of Service to continue.");
-      return;
+    if (mode === "signup") {
+      if (!firstName.trim()) {
+        setInternalError("Please provide your first name.");
+        return;
+      }
+      if (password.length < 6) {
+        setInternalError("Password must be at least 6 characters.");
+        return;
+      }
+      if (!agreeTerms) {
+        setInternalError("You must agree to the Terms of Service to continue.");
+        return;
+      }
     }
 
     if (onSubmit) {
-      void onSubmit({ firstName, lastName, email, password, department });
+      void onSubmit({
+        mode,
+        email,
+        password,
+        firstName,
+        lastName,
+        department,
+      });
       return;
     }
 
     startTransition(async () => {
       try {
-        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
-        const res = await registerUser({
-          name: fullName,
-          email: email.trim(),
-          password,
-          department: department.trim() || "Engineering",
-        });
-
-        if (res?.error || !res?.success) {
-          setInternalError(res?.error || "Registration failed. Please try again.");
+        if (mode === "signin") {
+          const res = await loginAction({ email: email.trim(), password });
+          if (!res?.success) {
+            if (res?.error === "PENDING_APPROVAL") {
+              window.location.href = "/awaiting-approval";
+              return;
+            }
+            setInternalError(res?.error || "Invalid email or password.");
+            return;
+          }
+          window.location.href = "/dashboard";
         } else {
+          const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+          const res = await registerUser({
+            name: fullName,
+            email: email.trim(),
+            password,
+            department: department.trim() || "Engineering",
+          });
+
+          if (res?.error || !res?.success) {
+            setInternalError(res?.error || "Registration failed. Please try again.");
+            return;
+          }
           window.location.href = res?.redirect || "/dashboard";
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "An unexpected registration error occurred.";
+        const msg = err instanceof Error ? err.message : "Authentication error occurred.";
         setInternalError(msg);
+      }
+    });
+  };
+
+  const handleQuickSignIn = (targetEmail: string) => {
+    setInternalError(null);
+    startTransition(async () => {
+      try {
+        const res = await loginAction({ email: targetEmail, password: "Kynov2026!" });
+        if (!res?.success) {
+          if (res?.error === "PENDING_APPROVAL") {
+            window.location.href = "/awaiting-approval";
+            return;
+          }
+          setInternalError(res?.error || "Persona sign-in failed.");
+          return;
+        }
+        window.location.href = "/dashboard";
+      } catch {
+        setInternalError("Network error occurred during persona sign-in.");
       }
     });
   };
@@ -119,6 +177,14 @@ export default function AuthSectionOne({
     }
   };
 
+  const resolvedTitle =
+    title ?? (mode === "signin" ? "Sign in to Kynov" : "Create an account");
+  const resolvedSubtitle =
+    subtitle ??
+    (mode === "signin"
+      ? "Welcome back to your high-velocity engineering workspace."
+      : "Brainstorm in chat, build with agile sprint velocity.");
+
   return (
     <section className="min-h-screen bg-slate-50 p-3 text-slate-900 antialiased [font-synthesis:none] dark:bg-[#050505] dark:text-white transition-colors">
       {/* Top Utility Bar */}
@@ -134,52 +200,89 @@ export default function AuthSectionOne({
 
       <div className="grid min-h-[calc(100vh-4rem)] gap-6 lg:grid-cols-[0.96fr_1.04fr]">
         {/* Left Interactive Form Column */}
-        <div className="flex min-h-[760px] items-start rounded-2xl border border-slate-200/80 bg-white px-6 py-10 shadow-xl dark:border-white/10 dark:bg-[#0a0a0a] sm:px-10 lg:min-h-0 lg:px-14 lg:py-16 xl:px-18">
+        <div className="flex min-h-[760px] items-start rounded-2xl border border-slate-200/80 bg-white px-6 py-10 shadow-xl dark:border-white/10 dark:bg-[#0a0a0a] sm:px-10 lg:min-h-0 lg:px-14 lg:py-14 xl:px-18">
           <div className="mx-auto w-full max-w-[560px]">
             {/* Brand Logo & Heading */}
             <div>
-              <Link href="/" className="inline-block mb-4 hover:opacity-90 transition">
+              <Link href="/" className="inline-block mb-3 hover:opacity-90 transition">
                 <KynovLogo size={42} variant="full" />
               </Link>
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-[40px] lg:leading-[1.1]">
-                {title}
-              </h1>
-              <p className="mt-2 text-base text-slate-500 dark:text-white/60 sm:text-lg">
-                {subtitle}
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-[38px] lg:leading-[1.1]">
+                  {resolvedTitle}
+                </h1>
+                <span className="text-[10px] font-mono font-bold bg-cyan-500/15 text-cyan-500 border border-cyan-500/30 px-2 py-0.5 rounded">
+                  v1.0
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-slate-500 dark:text-white/60 sm:text-base">
+                {resolvedSubtitle}
               </p>
             </div>
 
+            {/* Mode Tab Switcher */}
+            <div className="mt-6 grid grid-cols-2 p-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("signin");
+                  setInternalError(null);
+                }}
+                className={`py-2.5 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer ${
+                  mode === "signin"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <LogIn className="w-3.5 h-3.5" /> Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("signup");
+                  setInternalError(null);
+                }}
+                className={`py-2.5 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer ${
+                  mode === "signup"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Create Account
+              </button>
+            </div>
+
             {/* Social Auth Providers */}
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={handleGoogleClick}
-                className="flex h-11 items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/70 px-4 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 hover:border-slate-300 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 active:scale-98"
+                className="flex h-11 items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/70 px-4 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 hover:border-slate-300 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 active:scale-98 cursor-pointer"
               >
                 <GoogleIcon />
-                <span>Sign up with Google</span>
+                <span>Continue with Google</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleAppleClick}
-                className="flex h-11 items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/70 px-4 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 hover:border-slate-300 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 active:scale-98"
+                className="flex h-11 items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/70 px-4 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 hover:border-slate-300 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 active:scale-98 cursor-pointer"
               >
                 <AppleIcon />
-                <span>Sign up with Apple</span>
+                <span>Continue with Apple</span>
               </button>
             </div>
 
             {appleNotice && (
               <div className="mt-3 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-[11px] text-blue-700 dark:text-blue-300 text-center animate-in fade-in">
-                Apple OAuth is currently rolling out. Please use Google or Email signup below.
+                Apple OAuth is in preview. Please use Google or your work email credentials below.
               </div>
             )}
 
-            <div className="my-7 flex items-center gap-3">
+            <div className="my-6 flex items-center gap-3">
               <div className="h-[1px] flex-1 bg-slate-200 dark:bg-white/10" />
               <span className="text-xs uppercase font-medium tracking-wider text-slate-400 dark:text-white/40">
-                or sign up with email
+                or continue with email
               </span>
               <div className="h-[1px] flex-1 bg-slate-200 dark:bg-white/10" />
             </div>
@@ -193,122 +296,159 @@ export default function AuthSectionOne({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* First Name & Last Name */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FloatingField
-                  label="First Name"
-                  value={firstName}
-                  placeholder="e.g. Jordan"
-                  onChange={setFirstName}
-                  required
-                />
-                <FloatingField
-                  label="Last Name"
-                  value={lastName}
-                  placeholder="e.g. Vance"
-                  onChange={setLastName}
-                />
-              </div>
+              {/* If Signup: First & Last Name */}
+              {mode === "signup" && (
+                <div className="grid gap-3 sm:grid-cols-2 animate-in fade-in">
+                  <FloatingField
+                    label="First Name"
+                    value={firstName}
+                    placeholder="e.g. Jordan"
+                    onChange={setFirstName}
+                    required
+                  />
+                  <FloatingField
+                    label="Last Name"
+                    value={lastName}
+                    placeholder="e.g. Vance"
+                    onChange={setLastName}
+                  />
+                </div>
+              )}
 
-              {/* Work Email */}
+              {/* Email */}
               <FloatingField
-                label="Work Email"
+                label="Work Email Address"
                 value={email}
                 type="email"
-                placeholder="jordan.vance@kynov.io"
+                placeholder="harisarshad235@gmail.com"
                 onChange={setEmail}
                 required
               />
 
-              {/* Password with Eye Toggle */}
+              {/* Password with Eye Toggle & Forgot Link */}
               <div className="relative">
-                <FloatingField
-                  label="Password"
-                  value={password}
-                  type={showPassword ? "text" : "password"}
-                  placeholder="At least 6 characters"
-                  onChange={setPassword}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/40 dark:hover:text-white/70 transition"
-                  aria-label="Toggle password visibility"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-
-              {/* Department */}
-              <FloatingField
-                label="Department"
-                value={department}
-                placeholder="Engineering, Product, Design, QA, DevOps"
-                onChange={setDepartment}
-              />
-
-              {/* Checkboxes & Gated Security Notice */}
-              <div className="space-y-3 pt-2 text-xs leading-5 text-slate-600 dark:text-white/60">
-                <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  {mode === "signin" && (
+                    <Link
+                      href="/forgot-password"
+                      className="text-[11px] font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition"
+                    >
+                      Forgot password?
+                    </Link>
+                  )}
+                </div>
+                <div className="relative">
                   <input
-                    type="checkbox"
-                    checked={receiveUpdates}
-                    onChange={(e) => setReceiveUpdates(e.target.checked)}
-                    className="mt-0.5 size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-white/20 dark:bg-white/5"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    placeholder={mode === "signup" ? "At least 6 characters" : "••••••••••••"}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full text-sm bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/15 rounded-xl px-4 py-2.5 pr-11 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
                   />
-                  <span>Send me product announcements and weekly sprint velocity digests.</span>
-                </label>
-
-                <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="mt-0.5 size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-white/20 dark:bg-white/5"
-                  />
-                  <span>
-                    By creating an account, you agree to our{" "}
-                    <a href="#" className="font-semibold text-slate-900 underline underline-offset-2 dark:text-white">
-                      Terms of Service
-                    </a>{" "}
-                    and{" "}
-                    <a href="#" className="font-semibold text-slate-900 underline underline-offset-2 dark:text-white">
-                      Privacy Policy
-                    </a>
-                    .
-                  </span>
-                </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/40 dark:hover:text-white/70 transition"
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                🔒 <strong>Zero-Trust Access:</strong> Self-registered members receive immediate workspace viewer permissions until granted project write privileges.
-              </div>
+              {/* If Signup: Department & Checkboxes */}
+              {mode === "signup" && (
+                <div className="space-y-4 animate-in fade-in">
+                  <FloatingField
+                    label="Department"
+                    value={department}
+                    placeholder="Engineering, Product, Design, QA, DevOps"
+                    onChange={setDepartment}
+                  />
+
+                  <div className="space-y-3 pt-1 text-xs leading-5 text-slate-600 dark:text-white/60">
+                    <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={receiveUpdates}
+                        onChange={(e) => setReceiveUpdates(e.target.checked)}
+                        className="mt-0.5 size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-white/20 dark:bg-white/5"
+                      />
+                      <span>Send me product announcements and weekly sprint velocity digests.</span>
+                    </label>
+
+                    <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={agreeTerms}
+                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                        className="mt-0.5 size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-white/20 dark:bg-white/5"
+                      />
+                      <span>
+                        By creating an account, you agree to our{" "}
+                        <a href="#" className="font-semibold text-slate-900 underline underline-offset-2 dark:text-white">
+                          Terms of Service
+                        </a>{" "}
+                        and{" "}
+                        <a href="#" className="font-semibold text-slate-900 underline underline-offset-2 dark:text-white">
+                          Privacy Policy
+                        </a>
+                        .
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                    🔒 <strong>Zero-Trust Access:</strong> Self-registered members receive immediate workspace viewer permissions until granted project write privileges.
+                  </div>
+                </div>
+              )}
 
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-900 bg-slate-900 text-base font-semibold text-white shadow-md transition hover:bg-slate-800 active:scale-98 disabled:opacity-60 dark:border-white/20 dark:bg-white dark:text-black dark:hover:bg-white/90 cursor-pointer"
+                disabled={isPending}
+                className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-600 text-base font-semibold text-white shadow-md transition hover:bg-blue-700 active:scale-98 disabled:opacity-60 cursor-pointer"
               >
-                {isSubmitting ? (
+                {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Creating account...</span>
+                    <span>{mode === "signin" ? "Signing in..." : "Creating account..."}</span>
                   </>
                 ) : (
-                  <span>Create Account & Join Workspace</span>
+                  <span>
+                    {mode === "signin" ? "Sign In to Workspace" : "Create Account & Join Workspace"}
+                  </span>
                 )}
               </button>
             </form>
 
-            {/* Existing Member Footer */}
-            <div className="mt-8 pt-5 border-t border-slate-200/80 dark:border-white/10 text-center text-xs text-slate-500 dark:text-white/60">
-              Already have a Kynov account?{" "}
-              <Link href={loginHref} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-                Sign in here
-              </Link>
-            </div>
+            {/* Fast Switch (Shown in non-production) */}
+            {process.env.NODE_ENV !== "production" && (
+              <div className="mt-7 pt-5 border-t border-slate-200/80 dark:border-white/10">
+                <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-2.5 tracking-wider flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-500" /> Fast Switch (Dev Only)
+                </p>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => handleQuickSignIn("harisarshad235@gmail.com")}
+                  className="w-full p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 flex items-center justify-between transition disabled:opacity-50 cursor-pointer"
+                >
+                  <div className="text-left">
+                    <div className="font-semibold text-slate-900 dark:text-white">Haris Arshad</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">harisarshad235@gmail.com</div>
+                  </div>
+                  <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-mono font-medium">
+                    Super Admin
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

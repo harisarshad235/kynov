@@ -17,10 +17,10 @@ function SignupContent() {
 
   return (
     <AuthSectionOne
+      initialMode="signup"
       errorMessage={errorMessage}
       title="Create your Kynov account"
       subtitle="High-velocity sprint tracking and zero-overhead backlog management."
-      loginHref="/login"
       overviewHref="/"
     />
   );
