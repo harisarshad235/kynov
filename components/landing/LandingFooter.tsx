@@ -35,73 +35,76 @@ export function LandingFooter() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="#sprints" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  Agile Sprints
+                <a href="#features" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                  Agile Sprints & Kanban
                 </a>
               </li>
               <li>
-                <a href="#features" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  Kanban Board
+                <a href="#features" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                  Multi-Tenant Governance
                 </a>
               </li>
               <li>
-                <a href="#docs" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  Knowledge Base
+                <a href="#features" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                  Velocity Sparklines
                 </a>
               </li>
               <li>
-                <a href="#features" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  Burndown Reports
+                <a href="#features" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                  Markdown Tech Specs
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Column: Security */}
+          {/* Column: Comparisons */}
           <div className="space-y-3">
             <h4 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-[11px]">
-              Security
+              Comparisons
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="#security" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  Project Isolation
-                </a>
-              </li>
-              <li>
-                <a href="#security" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  Role-Based Access
-                </a>
-              </li>
-              <li>
-                <Link href="/login" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  OAuth SSO (Google/GitHub)
+                <Link href="/compare/kynov-vs-jira" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition font-medium">
+                  Kynov vs. Jira
                 </Link>
               </li>
               <li>
-                <span className="text-slate-400 dark:text-slate-500">Audit Trails</span>
+                <Link href="/compare/kynov-vs-linear" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition font-medium">
+                  Kynov vs. Linear
+                </Link>
+              </li>
+              <li>
+                <a href="/llms.txt" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1">
+                  <span>llms.txt</span>
+                  <span className="text-[10px] text-cyan-500 font-mono">GEO</span>
+                </a>
+              </li>
+              <li>
+                <a href="/sitemap.xml" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition text-[11px]">
+                  XML Sitemap
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Column: Account */}
+          {/* Column: Access */}
           <div className="space-y-3">
             <h4 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-[11px]">
               Access
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/login" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+                <Link href="/login" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
                   Sign In
                 </Link>
               </li>
               <li>
-                <Link href="/signup" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  Create Account
+                <Link href="/signup" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                  Create Free Account
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+                <Link href="/dashboard" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">
                   Open Workspace
                 </Link>
               </li>

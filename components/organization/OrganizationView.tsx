@@ -161,23 +161,23 @@ export function OrganizationView({
 
   const filteredMembers = orgMembers.length > 0
     ? orgMembers.filter((m) => {
-        const q = searchQuery.toLowerCase();
-        return m.userName.toLowerCase().includes(q) || m.userEmail.toLowerCase().includes(q) || (m.department || '').toLowerCase().includes(q);
-      })
+      const q = searchQuery.toLowerCase();
+      return m.userName.toLowerCase().includes(q) || m.userEmail.toLowerCase().includes(q) || (m.department || '').toLowerCase().includes(q);
+    })
     : initialUsers.filter((u) => {
-        const q = searchQuery.toLowerCase();
-        return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.department || '').toLowerCase().includes(q);
-      }).map((u) => ({
-        id: `temp-${u.id}`,
-        organizationId: activeOrg.id,
-        userId: u.id,
-        role: (u.role === 'Admin' ? 'OWNER' : 'MEMBER') as OrganizationRole,
-        userName: u.name,
-        userEmail: u.email,
-        userAvatarUrl: u.avatarUrl,
-        department: u.department,
-        createdAt: Date.now(),
-      }));
+      const q = searchQuery.toLowerCase();
+      return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.department || '').toLowerCase().includes(q);
+    }).map((u) => ({
+      id: `temp-${u.id}`,
+      organizationId: activeOrg.id,
+      userId: u.id,
+      role: (u.role === 'Admin' ? 'OWNER' : 'MEMBER') as OrganizationRole,
+      userName: u.name,
+      userEmail: u.email,
+      userAvatarUrl: u.avatarUrl,
+      department: u.department,
+      createdAt: Date.now(),
+    }));
 
   const unassignedUsersCount = filteredMembers.filter((m) => {
     const assigned = userAssignments[m.userId] || [];
@@ -304,7 +304,7 @@ export function OrganizationView({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {onOpenCreateProject && (
+            {isOrgAdminOrOwner && onOpenCreateProject && (
               <button
                 onClick={onOpenCreateProject}
                 className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition active:scale-98"
@@ -367,11 +367,10 @@ export function OrganizationView({
         <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('projects')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${
-              activeTab === 'projects'
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${activeTab === 'projects'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
+              }`}
           >
             <FolderKanban className="w-4 h-4" />
             <span>Projects & Access Matrix</span>
@@ -382,11 +381,10 @@ export function OrganizationView({
 
           <button
             onClick={() => setActiveTab('members')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${
-              activeTab === 'members'
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${activeTab === 'members'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
+              }`}
           >
             <Users className="w-4 h-4" />
             <span>Organization Members</span>
@@ -397,11 +395,10 @@ export function OrganizationView({
 
           <button
             onClick={() => setActiveTab('governance')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${
-              activeTab === 'governance'
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${activeTab === 'governance'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
+              }`}
           >
             <Shield className="w-4 h-4" />
             <span>Multi-Tenant Policies</span>
@@ -412,11 +409,10 @@ export function OrganizationView({
               setActiveTab('activity');
               getOrganizationActivityAction(activeOrg.id).then(setActivities);
             }}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${
-              activeTab === 'activity'
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition ${activeTab === 'activity'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
+              }`}
           >
             <History className="w-4 h-4" />
             <span>Activity Audit Log</span>
@@ -449,9 +445,11 @@ export function OrganizationView({
                 No Projects in {activeOrg.name}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                Create a dedicated project space for this organization to begin tracking issues, sprints, and roadmaps.
+                {isOrgAdminOrOwner
+                  ? `Create a dedicated project space for ${activeOrg.name} to begin tracking issues, sprints, and roadmaps.`
+                  : `No projects have been provisioned in ${activeOrg.name} yet. Organization administrators manage project creation.`}
               </p>
-              {onOpenCreateProject && (
+              {isOrgAdminOrOwner && onOpenCreateProject && (
                 <button
                   onClick={onOpenCreateProject}
                   className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition"
@@ -626,13 +624,12 @@ export function OrganizationView({
                       {/* Organization Role */}
                       <td className="py-3.5 px-4">
                         <span
-                          className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg ${
-                            member.role === 'OWNER'
+                          className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg ${member.role === 'OWNER'
                               ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
                               : member.role === 'ADMIN'
-                              ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                          }`}
+                                ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                            }`}
                         >
                           {(member.role === 'OWNER' || member.role === 'ADMIN') && <Shield className="w-3 h-3" />}
                           {member.role}

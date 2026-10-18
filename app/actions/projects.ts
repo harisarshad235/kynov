@@ -272,12 +272,35 @@ export async function createProject(data: {
   organizationId?: string;
 }) {
   try {
-    const currentUser = await requireRole(['Admin', 'Member']);
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'Unauthenticated: Please log in.' };
+    }
     const db = getDb();
     await ensureProjectRbacTables(db);
 
     const cookieStore = await cookies();
     const effectiveOrgId = data.organizationId || cookieStore.get('kynov_active_org')?.value || 'org-kynov';
+
+    const roleStr = String(currentUser.role || '');
+    const isGlobalAdmin = roleStr === 'Admin' || roleStr === 'ADMIN' || roleStr.toUpperCase() === 'ADMIN';
+
+    // Verify Organization-level Admin or Owner role in organization_members
+    const orgMembership = await db.all<{ role: string }>(sql`
+      SELECT role FROM organization_members
+      WHERE organization_id = ${effectiveOrgId} AND user_id = ${currentUser.id}
+      LIMIT 1
+    `).catch(() => []);
+
+    const orgRole = orgMembership[0]?.role ? String(orgMembership[0].role).toUpperCase() : '';
+    const isOrgAdminOrOwner = orgRole === 'OWNER' || orgRole === 'ADMIN';
+
+    if (!isGlobalAdmin && !isOrgAdminOrOwner) {
+      return {
+        success: false,
+        error: 'Unauthorized: Only an Organization Admin or Owner can create projects.',
+      };
+    }
 
     const cleanKey = data.key.trim().toUpperCase();
     const cleanName = sanitizePlainText(data.name.trim());
@@ -458,7 +481,10 @@ export async function updateProject(
 
 export async function deleteProject(projectId: string) {
   try {
-    await requireRole(['Admin']);
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'Unauthenticated: Please log in.' };
+    }
     const db = getDb();
     await ensureProjectRbacTables(db);
 
@@ -468,6 +494,26 @@ export async function deleteProject(projectId: string) {
 
     if (!existing) {
       return { success: false, error: 'Project not found.' };
+    }
+
+    const roleStr = String(currentUser.role || '');
+    const isGlobalAdmin = roleStr === 'Admin' || roleStr === 'ADMIN' || roleStr.toUpperCase() === 'ADMIN';
+
+    const orgId = existing.organizationId || 'org-kynov';
+    const orgMembership = await db.all<{ role: string }>(sql`
+      SELECT role FROM organization_members
+      WHERE organization_id = ${orgId} AND user_id = ${currentUser.id}
+      LIMIT 1
+    `).catch(() => []);
+
+    const orgRole = orgMembership[0]?.role ? String(orgMembership[0].role).toUpperCase() : '';
+    const isOrgAdminOrOwner = orgRole === 'OWNER' || orgRole === 'ADMIN';
+
+    if (!isGlobalAdmin && !isOrgAdminOrOwner) {
+      return {
+        success: false,
+        error: 'Unauthorized: Only an Organization Admin or Owner can archive projects.',
+      };
     }
 
     // Instead of destructive drop, archive the project

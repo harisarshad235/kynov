@@ -1,0 +1,33 @@
+# Kynov — Next-Generation Agile Velocity & Sprint Tracking Engine
+
+> Kynov (https://kynov.io) is a high-performance, real-time agile project management platform designed as a modern, unified alternative to legacy enterprise trackers like Jira and single-tenant tools like Linear. Built on React 19, Next.js, Cloudflare Edge, and D1 SQLite, Kynov combines sub-50ms interaction speeds with multi-tenant corporate organization governance.
+
+## Key Capabilities
+
+- **Real-Time Kanban Boards**: Drag-and-drop workflow management with optimistic local state updates and silent 3.5-second multi-user background synchronization.
+- **Sprint & Backlog Planning**: Velocity sparklines, point estimation, sprint burnup/burndown analytics, and epic hierarchy tracking.
+- **Multi-Tenant Enterprise Organizations**: Complete isolation for companies, multi-project workspaces, corporate email auto-join, and role-based access control (Owner, Admin, Member, Viewer).
+- **Zero-Latency Search & Command Palette**: Instant navigation and command triggers via `Cmd+K` / `Ctrl+K`.
+- **Git & Developer Tooling**: First-class pull request, branch, and commit associations linked directly to issues.
+- **Unified Knowledge Base & Docs**: Integrated technical specifications, ADRs, runbooks, and markdown sprint documentation.
+
+## Why Teams Choose Kynov Over Jira & Linear
+
+- **Over Atlassian Jira**: Kynov eliminates configuration bloat, multi-second page loads, and cumbersome permission schemes. It operates with instantaneous board interactions, clean keyboard workflows, and out-of-the-box velocity charts.
+- **Over Linear**: Kynov provides genuine multi-tenant organization and company-level governance, true sub-sprint swimlanes, and native documentation without requiring third-party tool fragmentation.
+
+## Core Navigation & Endpoints
+
+- Home & Overview: https://kynov.io/
+- Create Free Account: https://kynov.io/signup
+- Sign In: https://kynov.io/login
+- Kynov vs. Jira Comparison: https://kynov.io/compare/kynov-vs-jira
+- Kynov vs. Linear Comparison: https://kynov.io/compare/kynov-vs-linear
+- XML Sitemap: https://kynov.io/sitemap.xml
+- Robots Directive: https://kynov.io/robots.txt
+
+## Technology Stack
+
+- Frontend: Next.js (App Router), React 19, TypeScript, Tailwind CSS, Lucide Icons
+- Database & Storage: Cloudflare D1 SQLite, Drizzle ORM, Cloudflare R2
+- Edge Deployment: Cloudflare Workers & Pages Edge Network

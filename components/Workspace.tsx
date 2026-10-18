@@ -311,6 +311,10 @@ export function Workspace({
   const isAdmin = currentUser.role === 'Admin';
   const isViewer = currentUser.role === 'Viewer';
   const isPending = currentUser.status === 'PENDING';
+  const isOrgAdminOrOwner =
+    isAdmin ||
+    currentOrganization?.userRole === 'OWNER' ||
+    currentOrganization?.userRole === 'ADMIN';
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type });
@@ -1079,8 +1083,8 @@ export function Workspace({
               onOpenCreateOrganization={() => setIsCreateOrgModalOpen(true)}
               onNavigateTab={(tab) => setActiveTab(tab)}
               onOpenCreateProject={() => {
-                if (isViewer) {
-                  showToast('Viewers cannot create projects.', 'error');
+                if (!isOrgAdminOrOwner) {
+                  showToast('Only organization administrators and owners can create projects.', 'error');
                   return;
                 }
                 setIsProjectsModalOpen(true);
@@ -1213,7 +1217,9 @@ export function Workspace({
           projects={initialProjects}
           activeProjectId={activeProjectId}
           users={initialUsers}
+          currentUser={currentUser}
           isViewer={isViewer}
+          canCreateProject={isOrgAdminOrOwner}
           onSelectProject={(projId) => {
             setActiveProjectId(projId);
             setIsProjectsModalOpen(false);
