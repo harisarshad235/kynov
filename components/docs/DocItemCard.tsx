@@ -241,6 +241,17 @@ export function DocItemCard({
               </a>
             )}
 
+            {item.fileMetadata?.fileUrl && (
+              <a
+                href={item.fileMetadata.fileUrl}
+                download={item.name}
+                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition"
+                title="Download Document"
+              >
+                <Download className="w-4 h-4" />
+              </a>
+            )}
+
             <button
               onClick={() => onPreviewItem(item)}
               className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition"
@@ -311,6 +322,17 @@ export function DocItemCard({
                 >
                   <ExternalLink className="w-3.5 h-3.5 text-emerald-500" />
                   <span>Open in Sheets</span>
+                </a>
+              )}
+
+              {item.fileMetadata?.fileUrl && (
+                <a
+                  href={item.fileMetadata.fileUrl}
+                  download={item.name}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-left transition"
+                >
+                  <Download className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Download Document</span>
                 </a>
               )}
 

@@ -11,6 +11,7 @@ import {
   Layers,
   Sparkles,
   BookOpen,
+  Download,
 } from 'lucide-react';
 import { FullDocument, User } from '@/lib/types';
 import { DocExplorer } from './DocExplorer';
@@ -63,6 +64,15 @@ export function DocumentsView({
                 <FileSpreadsheet className="w-3 h-3" />
                 <span>Google Sheets Live</span>
               </span>
+              <a
+                href="/api/docs/prd"
+                download="KYNOV_PRD.md"
+                className="text-[10px] font-semibold bg-indigo-500/25 hover:bg-indigo-500/40 text-indigo-200 border border-indigo-400/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 transition active:scale-95 shadow-xs cursor-pointer"
+                title="Download living, continuously updated PRD.md specification"
+              >
+                <Download className="w-3 h-3 text-indigo-300" />
+                <span>Download Living PRD.md</span>
+              </a>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               Documentation & Asset Directory

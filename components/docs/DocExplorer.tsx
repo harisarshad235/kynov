@@ -154,6 +154,62 @@ const INITIAL_DOC_ITEMS: DocItem[] = [
 
   // MARKDOWN DOCUMENTS
   {
+    id: 'doc-living-prd',
+    name: 'KYNOV Master Product Requirements Document (PRD.md)',
+    description: 'Living architecture specification, RBAC matrix, and sprint roadmap. Synchronized with every feature update in the app.',
+    type: 'markdown',
+    parentId: null,
+    createdAt: new Date(Date.now() - 86400000 * 20).toISOString(),
+    updatedAt: new Date().toISOString(),
+    createdBy: {
+      id: 'usr-haris',
+      name: 'Haris Arshad',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+    },
+    tags: ['PRD', 'Specification', 'Living Doc'],
+    fileMetadata: {
+      fileUrl: '/api/docs/prd',
+      fileSize: 19800,
+      mimeType: 'text/markdown',
+    },
+    content: `# Product Requirements Document (PRD) — KYNOV
+
+**Document Version**: 2.0.0
+**Status**: Living Master Specification (Source of Truth)
+**Product**: Kynov — Edge-Native Agile Velocity, Sprint Tracking & Knowledge Platform
+
+> [!TIP]
+> **Live Download**: This document is continuously synchronized with the application codebase. You can download the latest offline markdown bundle anytime using the **Download Living PRD.md** action or via \`/api/docs/prd\`.
+
+---
+
+## 1. Executive Summary & Value Proposition
+Kynov is a zero-per-seat-cost, high-performance agile management and engineering intelligence platform built on serverless edge primitives (Cloudflare D1 distributed SQLite, Next.js 16 Edge runtime, and Cloudflare R2 zero-egress object storage).
+
+### Core Differentiators
+- **Sub-25ms Global Edge Latency**: Direct edge query execution with zero Cold Start penalty.
+- **Unified Engineering Hub**: Combines an ultra-responsive Kanban workflow engine, Confluence-style living architecture documentation, 3D interactive glass folders, live Google Sheets embeds, and real-time multi-browser presence.
+- **Zero Seat Penalties**: Unlimited contractors, engineers, and stakeholders without per-seat SaaS taxation.
+
+---
+
+## 2. Core User Journeys
+1. **New User Onboarding & Gated Approval**: New registrations enter \`status: PENDING\` in a secure holding room until elevated by an administrator.
+2. **Sub-16ms Drag-and-Drop Sprint Board**: Dragging issue cards across swimlanes (\`To Do\` -> \`In Progress\` -> \`In Review\` -> \`Done\`) with optimistic client transitions and automatic rollbacks.
+3. **Compound JQL-lite Filtering**: Instant compound queries supporting priority, issue type, currentUser(), story points, and epics.
+4. **Living Architecture & Google Sheets**: Direct integration of living RFCs, Google Sheets capacity burndown models, and 3D glass folders.
+5. **Real-Time Cross-Browser Presence**: Server-side presence heartbeat tracking active users with pulsating beacons.
+
+---
+
+## 3. RBAC & Access Matrix
+- **Super Admin**: Full platform ownership, database governance, organization settings.
+- **Admin**: User approval gates, team member elevation, sprint management.
+- **Member**: Create, edit, and transition sprint issues, create documents, upload assets.
+- **Viewer**: Read-only stakeholder access without licensing cost.
+- **Pending**: Gated holding room with restricted access pending approval.`,
+  },
+  {
     id: 'doc-adr-004',
     name: 'ADR-004: Multi-Tenant Schema Isolation via SQLite & D1',
     description: 'Architecture decision regarding organization data isolation, cross-tenant leaks, and SQLite foreign keys',
