@@ -1,16 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2, LogIn } from 'lucide-react';
 import { loginAction } from '@/app/actions/auth';
 
 export default function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    router.prefetch('/dashboard');
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,7 +35,7 @@ export default function LoginForm() {
 
       if (!res?.success) {
         if (res?.error === 'PENDING_APPROVAL') {
-          window.location.href = '/awaiting-approval';
+          router.push('/awaiting-approval');
           return;
         }
         setError(res?.error || 'Invalid email or password');
@@ -37,8 +43,8 @@ export default function LoginForm() {
         return;
       }
 
-      // Hard redirect to load session cookie into workspace layout
-      window.location.href = '/dashboard';
+      router.replace('/dashboard');
+      router.refresh();
     } catch (err: unknown) {
       console.error('Login action error:', err);
       const msg = err instanceof Error ? err.message : 'Authentication failed. Please try again.';

@@ -48,32 +48,31 @@ export function LandingFooter() {
             </ul>
           </div>
 
-          {/* Column: Comparisons */}
+          {/* Column: Legal & Compliance */}
           <div className="space-y-3">
             <h4 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-[11px]">
-              Comparisons
+              Legal
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/compare/kynov-vs-jira" className="hover:text-blue-600 dark:hover:text-blue-400 transition font-medium">
+                <Link href="/terms" className="hover:text-blue-600 dark:hover:text-blue-400 transition font-medium">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-blue-600 dark:hover:text-blue-400 transition font-medium">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/compare/kynov-vs-jira" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
                   Kynov vs. Jira
                 </Link>
               </li>
               <li>
-                <Link href="/compare/kynov-vs-linear" className="hover:text-blue-600 dark:hover:text-blue-400 transition font-medium">
+                <Link href="/compare/kynov-vs-linear" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
                   Kynov vs. Linear
                 </Link>
-              </li>
-              <li>
-                <a href="/llms.txt" target="_blank" className="hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-1">
-                  <span>llms.txt</span>
-                  <span className="text-[10px] text-cyan-500 font-mono">GEO</span>
-                </a>
-              </li>
-              <li>
-                <a href="/sitemap.xml" target="_blank" className="hover:text-blue-600 dark:hover:text-blue-400 transition text-[11px]">
-                  XML Sitemap
-                </a>
               </li>
             </ul>
           </div>
@@ -99,16 +98,29 @@ export function LandingFooter() {
                   Open Workspace
                 </Link>
               </li>
+              <li>
+                <a href="/sitemap.xml" target="_blank" className="hover:text-blue-600 dark:hover:text-blue-400 transition text-[11px]">
+                  XML Sitemap
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom Copyright */}
+        {/* Bottom Copyright with Direct Terms & Privacy Links */}
         <div className="pt-8 border-t border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 dark:text-slate-400">
           <p>© 2026 Kynov Inc. All rights reserved.</p>
-          <p className="text-slate-400 dark:text-slate-500">
-            Enterprise Agile Velocity &amp; Sprint Management.
-          </p>
+          <div className="flex items-center gap-4">
+            <Link href="/terms" className="hover:text-slate-900 dark:hover:text-white transition">
+              Terms of Service
+            </Link>
+            <span>•</span>
+            <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white transition">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <span>Enterprise Agile Velocity</span>
+          </div>
         </div>
       </div>
     </footer>

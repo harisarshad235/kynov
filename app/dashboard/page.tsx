@@ -38,14 +38,40 @@ function DashboardContent({ initialOrgSlug }: DashboardContentProps) {
   const searchParams = useSearchParams();
   const orgSlug = initialOrgSlug || searchParams.get('org') || searchParams.get('orgSlug') || null;
 
-  const [data, setData] = useState<WorkspaceData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const cacheKey = `kynov_cached_workspace_${orgSlug || 'default'}`;
+
+  const [data, setData] = useState<WorkspaceData | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached =
+          localStorage.getItem(cacheKey) ||
+          localStorage.getItem('kynov_cached_workspace_default');
+        if (cached) {
+          return JSON.parse(cached) as WorkspaceData;
+        }
+      } catch {}
+    }
+    return null;
+  });
+
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached =
+          localStorage.getItem(cacheKey) ||
+          localStorage.getItem('kynov_cached_workspace_default');
+        if (cached) return false;
+      } catch {}
+    }
+    return true;
+  });
+
   const [error, setError] = useState<string | null>(null);
   const [isOffline, setIsOffline] = useState<boolean>(false);
 
   const fetchData = useCallback(
     async (isBackground = false) => {
-      if (!isBackground) {
+      if (!isBackground && !data) {
         setIsLoading(true);
         setError(null);
       }
@@ -120,7 +146,7 @@ function DashboardContent({ initialOrgSlug }: DashboardContentProps) {
   );
 
   useEffect(() => {
-    fetchData();
+    fetchData(!!data);
 
     // Re-sync on window focus after idle
     const handleFocus = () => fetchData(true);
