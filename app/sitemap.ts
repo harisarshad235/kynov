@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kynov.io';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kynov.harisarshad.site';
   const now = new Date();
 
   return [

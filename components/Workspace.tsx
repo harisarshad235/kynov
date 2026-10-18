@@ -616,11 +616,20 @@ export function Workspace({
   };
 
   const handleUpdateProfile = (data: { name: string; department: string; avatarUrl?: string | null }) => {
+    // 1. Instant optimistic local UI update for current user and user roster
+    setLiveCurrentUser((prev) => ({ ...prev, ...data }));
+    setLiveUsers((prev) =>
+      prev.map((u) => (u.id === liveCurrentUser.id ? { ...u, ...data } : u))
+    );
+
     startTransition(async () => {
       const res = await updateUserProfile(data);
       if (res.success) {
         setIsProfileModalOpen(false);
-        showToast(res.message || 'Profile updated successfully');
+        showToast(res.message || 'Profile updated successfully', 'success');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kynov:refresh-data'));
+        }
       } else {
         showToast(res.error || 'Failed to update profile', 'error');
       }

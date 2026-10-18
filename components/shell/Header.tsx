@@ -49,8 +49,13 @@ export function Header({
   onOpenShortcuts,
   activeProjectName = 'Core Engine',
   activeTab = 'dashboard',
+  users = [],
   daysRemaining = 6,
 }: HeaderProps) {
+  // Active approved members for the collaborative workspace facepile
+  const activeMembers = React.useMemo(() => {
+    return users.filter((u) => u.status === 'APPROVED');
+  }, [users]);
   const getTabLabel = (tab: string) => {
     switch (tab) {
       case 'dashboard':
@@ -141,6 +146,42 @@ export function Header({
             )}
           </div>
         </div>
+
+        {/* Active Workspace Members Facepile */}
+        {activeMembers.length > 0 && (
+          <div className="hidden lg:flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800">
+            <div className="flex items-center -space-x-2 overflow-visible">
+              {activeMembers.slice(0, 5).map((member) => (
+                <div
+                  key={member.id}
+                  className="relative group transition-transform hover:scale-110 hover:z-20 cursor-pointer"
+                  title={`${member.name} (${member.role || 'Member'}) • Active in Workspace`}
+                  onClick={onOpenProfileModal}
+                >
+                  <UserAvatar
+                    user={member}
+                    size="xs"
+                    className="ring-2 ring-white dark:ring-[#0D121D]"
+                  />
+                  {/* Live Online Status Dot */}
+                  <span
+                    className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-[#0D121D]"
+                    title="Active in workspace"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {activeMembers.length > 5 && (
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 pl-0.5 font-mono">
+                +{activeMembers.length - 5}
+              </span>
+            )}
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hidden xl:inline">
+              {activeMembers.length} active
+            </span>
+          </div>
+        )}
 
         {/* Go to Landing / Feature Page Link */}
         <a

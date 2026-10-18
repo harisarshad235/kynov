@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://kynov.io";
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://kynov.harisarshad.site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

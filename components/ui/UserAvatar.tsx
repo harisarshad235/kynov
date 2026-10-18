@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface UserAvatarProps {
   user?: {
@@ -61,6 +61,10 @@ export function UserAvatar({
   title,
 }: UserAvatarProps) {
   const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [user?.avatarUrl]);
 
   const name = user?.name || 'User';
   const initials = getInitials(user?.name, user?.email);
