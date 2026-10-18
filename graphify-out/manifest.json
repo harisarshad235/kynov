@@ -330,10 +330,10 @@
     "semantic_hash": "aeadc57bf434669188d2118890710b30"
   },
   "components/docs/DocumentsView.tsx": {
-    "mtime": 1791321048.0681934,
-    "seen": 1792183026.6777773,
-    "ast_hash": "b371573ef741ce873611762b130c8feb",
-    "semantic_hash": "b371573ef741ce873611762b130c8feb"
+    "mtime": 1792343643.7932668,
+    "seen": 1792343731.3999772,
+    "ast_hash": "e1dccc07b72e1e44ba516331b3703ba8",
+    "semantic_hash": ""
   },
   "components/drawer/IssueDetailDrawer.tsx": {
     "mtime": 1791487695.4045339,
@@ -714,9 +714,9 @@
     "semantic_hash": ""
   },
   "docs/USER_OPERATIONS_MANUAL.md": {
-    "mtime": 1792342779.4640708,
-    "seen": 1792342849.664469,
-    "ast_hash": "147ca25d379e7cb9bc74d8f477811151",
+    "mtime": 1792343662.0175595,
+    "seen": 1792343731.4197047,
+    "ast_hash": "7464ade5f314fb05f0f842316a9b0d4c",
     "semantic_hash": ""
   },
   "docs/assets/screenshots/README.md": {
@@ -999,6 +999,66 @@
     "mtime": 1792342447.904,
     "seen": 1792342849.6664362,
     "ast_hash": "e33250c834aa836c9d3c41e066371983",
+    "semantic_hash": ""
+  },
+  "components/docs/DocExplorer.tsx": {
+    "mtime": 1792343589.753771,
+    "seen": 1792343731.3999772,
+    "ast_hash": "d3dee9e6afe2afcd776bb27a6f8ff1f1",
+    "semantic_hash": ""
+  },
+  "components/docs/DocItemCard.tsx": {
+    "mtime": 1792343482.0378935,
+    "seen": 1792343731.3999772,
+    "ast_hash": "0fb28e86a58757941788de4262651dc9",
+    "semantic_hash": ""
+  },
+  "components/docs/DocItemPreviewModal.tsx": {
+    "mtime": 1792343534.4794693,
+    "seen": 1792343731.3999772,
+    "ast_hash": "cd1f5c8ed3977b848c0e8b63dcb4f64b",
+    "semantic_hash": ""
+  },
+  "components/docs/DocSidebarTree.tsx": {
+    "mtime": 1792343509.745605,
+    "seen": 1792343731.3999772,
+    "ast_hash": "acc95557d3e6ab6d27ae0ef6b43ba5c4",
+    "semantic_hash": ""
+  },
+  "components/docs/GoogleSheetEmbedModal.tsx": {
+    "mtime": 1792343393.3579376,
+    "seen": 1792343731.3999772,
+    "ast_hash": "a52ee4afeaa08cee7c5c386ef350644a",
+    "semantic_hash": ""
+  },
+  "components/docs/UploadDropzoneModal.tsx": {
+    "mtime": 1792343441.2678952,
+    "seen": 1792343731.3999772,
+    "ast_hash": "9d5aec3c8eb871093f339b8eb50c56fa",
+    "semantic_hash": ""
+  },
+  "components/ui/glass-folder-cards.tsx": {
+    "mtime": 1792343339.9350493,
+    "seen": 1792343731.4100103,
+    "ast_hash": "4d2bbee212134f881e80ba18c86828ca",
+    "semantic_hash": ""
+  },
+  "components/ui/glass-folder-demo.tsx": {
+    "mtime": 1792343611.717523,
+    "seen": 1792343731.4100103,
+    "ast_hash": "0ae1fe47bbaeefed7f04f616e5d0e1f8",
+    "semantic_hash": ""
+  },
+  "types/documentation.ts": {
+    "mtime": 1792343353.0346253,
+    "seen": 1792343731.418703,
+    "ast_hash": "7a1011f7b4cb579c8ffda757391da93e",
+    "semantic_hash": ""
+  },
+  "utils/googleSheets.ts": {
+    "mtime": 1792343368.3403153,
+    "seen": 1792343731.418703,
+    "ast_hash": "40e9fca2477141a42578e997ecceddc8",
     "semantic_hash": ""
   }
 }
