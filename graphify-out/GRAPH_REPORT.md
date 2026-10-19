@@ -11,26 +11,26 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `fa357c6a`
+- Built from commit: `a299497e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - cloudflare-env.d.ts
-- DocExplorer.tsx
+- glass-folder-cards.tsx
 - schema.ts
 - ServiceWorkerGlobalScope
 - Event
 - KeyboardShortcutsModal.tsx
 - getDb
-- KynovLogo
+- react
 - lib/auth.ts
 - issues/IssueDetailDrawer.tsx
 - User
 - Workspace.tsx
-- projects.ts
+- getCurrentUser
 - test-ranking.ts
-- app/dashboard/page.tsx
+- projects.ts
 - generate-docs-manifest.ts
 - Console
 - package.json
@@ -201,7 +201,7 @@
 - __WORKER_ENTRYPOINT_BRAND
 - __WORKFLOW_ENTRYPOINT_BRAND
 - app/layout.tsx
-- org.ts
+- ensureEnterpriseSchema
 - triage-labels.md
 - 3. Functional Requirements & Feature Specifications
 - queries.ts
@@ -214,9 +214,9 @@
 - screenshots/README.md
 - UserAvatar
 - auth-section-1.tsx
-- 2. Core User Journeys & User Stories
+- app/dashboard/page.tsx
 - EditSprintModal.tsx
-- ensureEnterpriseSchema
+- 2. Core User Journeys & User Stories
 - notifications.ts
 - schemas.ts
 - next
@@ -254,14 +254,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `3.4 Confluence-Style Documentation & Asset Directory` --references--> `GoogleSheetEmbedModal()`  [INFERRED]
   PRD.md → components/docs/GoogleSheetEmbedModal.tsx
+- `UpdateSprintResult` --references--> `Sprint`  [EXTRACTED]
+  app/actions/sprints.ts → db/schema.ts
+- `SprintHeaderProps` --references--> `Sprint`  [EXTRACTED]
+  components/backlog/SprintHeader.tsx → db/schema.ts
 - `LandingHeroProps` --references--> `User`  [EXTRACTED]
   components/landing/LandingHero.tsx → db/schema.ts
 - `LandingNavbarProps` --references--> `User`  [EXTRACTED]
   components/landing/LandingNavbar.tsx → db/schema.ts
-- `LandingPageProps` --references--> `User`  [EXTRACTED]
-  components/landing/LandingPage.tsx → db/schema.ts
-- `UserProfileModalProps` --references--> `User`  [EXTRACTED]
-  components/profile/UserProfileModal.tsx → db/schema.ts
 
 ## Import Cycles
 - None detected.
@@ -272,7 +272,7 @@
 Cohesion: 0.00
 Nodes (931): AgentMemoryGetSummaryOptions, AgentMemoryGetSummaryResponse, AgentMemoryIncomingMemory, AgentMemoryIngestOptions, AgentMemoryListMemoriesOptions, AgentMemoryListMemoriesResult, AgentMemoryMemory, AgentMemoryMemoryListEntry (+923 more)
 
-### Community 1 - "DocExplorer.tsx"
+### Community 1 - "glass-folder-cards.tsx"
 Cohesion: 0.06
 Nodes (57): DocExplorer(), DocExplorerProps, INITIAL_DOC_ITEMS, DocItemCard(), DocItemCardProps, DocItemPreviewModal(), DocItemPreviewModalProps, DocSidebarTree() (+49 more)
 
@@ -296,7 +296,7 @@ Nodes (3): KeyboardShortcutsModalProps, ShortcutItem, SHORTCUTS
 Cohesion: 0.12
 Nodes (42): getIssueGitLinksAction(), GitRefInput, linkGitRefAction(), syncGithubWebhookAction(), unlinkGitRefAction(), addIssueLink(), addSubtask(), createIssue() (+34 more)
 
-### Community 7 - "KynovLogo"
+### Community 7 - "react"
 Cohesion: 0.13
 Nodes (31): logoutUser(), getOrgInviteInfoAction(), AwaitingApprovalPage(), dynamic, KynovVsJiraPage(), metadata, KynovVsLinearPage(), metadata (+23 more)
 
@@ -316,17 +316,17 @@ Nodes (18): WorkspaceData, BacklogViewProps, KanbanBoardProps, CommandPalettePro
 Cohesion: 0.12
 Nodes (27): createDocument(), deleteDocument(), updateDocument(), addComment(), setActiveOrganizationAction(), approveUser(), inviteUser(), removeUser() (+19 more)
 
-### Community 12 - "projects.ts"
-Cohesion: 0.20
-Nodes (20): assignUserToProject(), canManageProjectMembersAction(), deleteProject(), getProjectMembersAction(), getUserProjectsAction(), OrganizationProjectSummary, removeUserFromProject(), updateProject() (+12 more)
+### Community 12 - "getCurrentUser"
+Cohesion: 0.16
+Nodes (26): acceptOrgInviteAction(), addOrganizationMemberAction(), createOrgInviteLinkAction(), getActiveOrganizationAction(), getOrganizationActivityAction(), getOrganizationMembersAction(), getUserOrganizationsAction(), logOrgActivityAction() (+18 more)
 
 ### Community 13 - "test-ranking.ts"
 Cohesion: 0.08
 Nodes (29): BASE_62, decrementInteger(), DEFAULT_NUMERIC_STEP, generateKeyBetween(), generateNKeysBetween(), getIntegerLength(), getIntegerPart(), incrementInteger() (+21 more)
 
-### Community 14 - "app/dashboard/page.tsx"
-Cohesion: 0.22
-Nodes (10): DashboardContent(), DashboardContentProps, DashboardPage(), OrgDashboardPage(), DashboardSkeleton(), CreateDocModalProps, DocumentReaderModalProps, DocumentsViewProps (+2 more)
+### Community 14 - "projects.ts"
+Cohesion: 0.20
+Nodes (20): assignUserToProject(), canManageProjectMembersAction(), deleteProject(), getProjectMembersAction(), getUserProjectsAction(), OrganizationProjectSummary, removeUserFromProject(), updateProject() (+12 more)
 
 ### Community 15 - "generate-docs-manifest.ts"
 Cohesion: 0.07
@@ -424,9 +424,9 @@ Nodes (3): RequestInitCfPropertiesVaryAcceptHeader, RequestInitCfPropertiesVaryA
 Cohesion: 0.24
 Nodes (7): geistMono, inter, jsonLd, metadata, RootLayout(), ThemeProvider(), next-themes
 
-### Community 185 - "org.ts"
-Cohesion: 0.16
-Nodes (26): acceptOrgInviteAction(), addOrganizationMemberAction(), createOrgInviteLinkAction(), getActiveOrganizationAction(), getOrganizationActivityAction(), getOrganizationMembersAction(), getUserOrganizationsAction(), logOrgActivityAction() (+18 more)
+### Community 185 - "ensureEnterpriseSchema"
+Cohesion: 0.14
+Nodes (20): addCommentAction(), extractAndFilterMentionTargets(), BurndownDay, CFDDayMetric, getCumulativeFlowDiagramAction(), getSprintBurndownAction(), getVelocityReportAction(), VelocitySprintMetric (+12 more)
 
 ### Community 187 - "3. Functional Requirements & Feature Specifications"
 Cohesion: 0.29
@@ -468,17 +468,17 @@ Nodes (21): BoardFiltersProps, BoardFiltersState, PRIORITIES, FilterRibbon(), Fi
 Cohesion: 0.28
 Nodes (9): LoginContent(), LoginPage(), SignupContent(), SignupPage(), AuthSectionOne(), AuthSectionOneProps, Default(), FloatingField() (+1 more)
 
-### Community 199 - "2. Core User Journeys & User Stories"
-Cohesion: 0.40
-Nodes (5): 2. Core User Journeys & User Stories, Journey 1: New Employee Onboarding & Admin Approval Gate, Journey 2: Sprint Execution & Drag-and-Drop Kanban Flow, Journey 3: Living Knowledge & Architecture Decision Records (ADRs), Journey 4: Real-Time Cross-Browser Team Presence
+### Community 199 - "app/dashboard/page.tsx"
+Cohesion: 0.22
+Nodes (10): DashboardContent(), DashboardContentProps, DashboardPage(), OrgDashboardPage(), DashboardSkeleton(), CreateDocModalProps, DocumentReaderModalProps, DocumentsViewProps (+2 more)
 
 ### Community 200 - "EditSprintModal.tsx"
 Cohesion: 0.35
 Nodes (10): addDaysToDate(), calculateDayDiff(), detectPreset(), DURATION_DAYS_MAP, DurationPreset, EditSprintModal(), EditSprintModalProps, formatYMD() (+2 more)
 
-### Community 201 - "ensureEnterpriseSchema"
-Cohesion: 0.14
-Nodes (20): addCommentAction(), extractAndFilterMentionTargets(), BurndownDay, CFDDayMetric, getCumulativeFlowDiagramAction(), getSprintBurndownAction(), getVelocityReportAction(), VelocitySprintMetric (+12 more)
+### Community 201 - "2. Core User Journeys & User Stories"
+Cohesion: 0.40
+Nodes (5): 2. Core User Journeys & User Stories, Journey 1: New Employee Onboarding & Admin Approval Gate, Journey 2: Sprint Execution & Drag-and-Drop Kanban Flow, Journey 3: Living Knowledge & Architecture Decision Records (ADRs), Journey 4: Real-Time Cross-Browser Team Presence
 
 ### Community 202 - "notifications.ts"
 Cohesion: 0.42
@@ -553,22 +553,22 @@ Cohesion: 0.47
 Nodes (5): dynamic, GET(), POST(), PresenceRecord, pruneStaleEntries()
 
 ## Knowledge Gaps
-- **19 isolated node(s):** `react-dom`, `@tailwindcss/postcss`, `@types/node`, `@types/react`, `@types/react-dom` (+14 more)
+- **19 isolated node(s):** `RFC-5246`, `RFC-2253`, `RFC-9440`, `RFC-3339`, `RFC-2046` (+14 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2057 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **153 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `3. Functional Requirements & Feature Specifications` connect `3. Functional Requirements & Feature Specifications` to `DocExplorer.tsx`, `Product Requirements Document (PRD) — KYNOV`?**
-  _High betweenness centrality (0.390) - this node is a cross-community bridge._
-- **What connects `react-dom`, `@tailwindcss/postcss`, `@types/node` to the rest of the system?**
+- **Why does `3. Functional Requirements & Feature Specifications` connect `3. Functional Requirements & Feature Specifications` to `glass-folder-cards.tsx`, `Product Requirements Document (PRD) — KYNOV`?**
+  _High betweenness centrality (0.371) - this node is a cross-community bridge._
+- **What connects `RFC-5246`, `RFC-2253`, `RFC-9440` to the rest of the system?**
   _19 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `cloudflare-env.d.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.0021390374331550803 - nodes in this community are weakly interconnected._
-- **Why does `3.4 Confluence-Style Documentation & Asset Directory` connect `DocExplorer.tsx` to `3. Functional Requirements & Feature Specifications`?**
-  _High betweenness centrality (0.386) - this node is a cross-community bridge._
-- **Should `DocExplorer.tsx` be split into smaller, more focused modules?**
+- **Why does `3.4 Confluence-Style Documentation & Asset Directory` connect `glass-folder-cards.tsx` to `3. Functional Requirements & Feature Specifications`?**
+  _High betweenness centrality (0.367) - this node is a cross-community bridge._
+- **Should `glass-folder-cards.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.058823529411764705 - nodes in this community are weakly interconnected._
 - **Should `schema.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.033866057838660577 - nodes in this community are weakly interconnected._
