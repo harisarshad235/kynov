@@ -348,9 +348,9 @@
     "semantic_hash": "76cc0014099f6330058a9d099cad5bd6"
   },
   "components/landing/LandingFooter.tsx": {
-    "mtime": 1792400267.021215,
-    "seen": 1792400274.866967,
-    "ast_hash": "26e7ec130abc08623464388c3bb4d663",
+    "mtime": 1792400751.4292076,
+    "seen": 1792400758.7691252,
+    "ast_hash": "c3fa740c1f4500cbe0ff1ed310d2ed6a",
     "semantic_hash": ""
   },
   "components/landing/LandingHero.tsx": {
@@ -678,9 +678,9 @@
     "semantic_hash": ""
   },
   "docs/USER_OPERATIONS_MANUAL.md": {
-    "mtime": 1792400267.0346124,
-    "seen": 1792400274.86921,
-    "ast_hash": "deecf20a04ca2607e2f9fe818ad8e493",
+    "mtime": 1792400770.4619288,
+    "seen": 1792400772.693234,
+    "ast_hash": "3c4610d3a97566572ba131ccbbd8a6b7",
     "semantic_hash": ""
   },
   "docs/assets/screenshots/README.md": {
@@ -1068,38 +1068,38 @@
     "semantic_hash": ""
   },
   "docs/api.md": {
-    "mtime": 1792400267.036911,
-    "seen": 1792400288.306803,
+    "mtime": 1792400771.389898,
+    "seen": 1792400772.693959,
     "ast_hash": "74c4cf39aad69f730f00000a292f99f9",
     "semantic_hash": ""
   },
   "docs/architecture.md": {
-    "mtime": 1792400267.0376716,
-    "seen": 1792400288.306805,
+    "mtime": 1792400771.389123,
+    "seen": 1792400772.693964,
     "ast_hash": "8bf7e868cb406c912723c487b076245d",
     "semantic_hash": ""
   },
   "docs/dashboard.md": {
-    "mtime": 1792400267.0383263,
-    "seen": 1792400288.306893,
+    "mtime": 1792400771.3876812,
+    "seen": 1792400772.6942642,
     "ast_hash": "c5876b27d1dfa7bacb9f3e3b44dcfab0",
     "semantic_hash": ""
   },
   "docs/index.md": {
-    "mtime": 1792400267.0390718,
-    "seen": 1792400288.306896,
+    "mtime": 1792400771.385307,
+    "seen": 1792400772.694268,
     "ast_hash": "77da5a90ad738eb4c796cfc37ae3d644",
     "semantic_hash": ""
   },
   "docs/landing.md": {
-    "mtime": 1792400267.0396183,
-    "seen": 1792400288.3068979,
+    "mtime": 1792400771.3858862,
+    "seen": 1792400772.694272,
     "ast_hash": "065e3a9c259483612b9a3f38cb5b1067",
     "semantic_hash": ""
   },
   "docs/skills.md": {
-    "mtime": 1792400267.0403743,
-    "seen": 1792400288.3068988,
+    "mtime": 1792400771.3907094,
+    "seen": 1792400772.694276,
     "ast_hash": "1b8c2cddd52ed4759857621a4b5026df",
     "semantic_hash": ""
   },
@@ -1116,38 +1116,38 @@
     "semantic_hash": ""
   },
   "public/docs/api.md": {
-    "mtime": 1792400267.1117418,
-    "seen": 1792400288.306915,
+    "mtime": 1792400771.3901935,
+    "seen": 1792400772.694591,
     "ast_hash": "74c4cf39aad69f730f00000a292f99f9",
     "semantic_hash": ""
   },
   "public/docs/architecture.md": {
-    "mtime": 1792400267.1138191,
-    "seen": 1792400288.3069172,
+    "mtime": 1792400771.3893585,
+    "seen": 1792400772.6945941,
     "ast_hash": "8bf7e868cb406c912723c487b076245d",
     "semantic_hash": ""
   },
   "public/docs/dashboard.md": {
-    "mtime": 1792400267.1158113,
-    "seen": 1792400288.3069189,
+    "mtime": 1792400771.3883646,
+    "seen": 1792400772.694598,
     "ast_hash": "c5876b27d1dfa7bacb9f3e3b44dcfab0",
     "semantic_hash": ""
   },
   "public/docs/index.md": {
-    "mtime": 1792400267.116355,
-    "seen": 1792400288.306921,
+    "mtime": 1792400771.3855326,
+    "seen": 1792400772.694601,
     "ast_hash": "77da5a90ad738eb4c796cfc37ae3d644",
     "semantic_hash": ""
   },
   "public/docs/landing.md": {
-    "mtime": 1792400267.1167912,
-    "seen": 1792400288.306922,
+    "mtime": 1792400771.3866553,
+    "seen": 1792400772.694604,
     "ast_hash": "065e3a9c259483612b9a3f38cb5b1067",
     "semantic_hash": ""
   },
   "public/docs/skills.md": {
-    "mtime": 1792400267.1172247,
-    "seen": 1792400288.306924,
+    "mtime": 1792400771.3908982,
+    "seen": 1792400772.694607,
     "ast_hash": "1b8c2cddd52ed4759857621a4b5026df",
     "semantic_hash": ""
   },
