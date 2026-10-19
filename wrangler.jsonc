@@ -53,7 +53,6 @@
     "AUTH_MODE": "production",
     "PROJECT_KEY": "KYN",
     "NEXT_PUBLIC_APP_URL": "https://kynov.harisarshad.site",
-    "SESSION_SECRET": "94ff1d86e72fbc99cfb602fc45fc6992b2dc3ef0a7b3fe95db8330d5e07e0153",
     "GOOGLE_CLIENT_ID": "893209126299-trrkjfrnomc60ljsfilc3orc6rph0vph.apps.googleusercontent.com"
   },
   "env": {
@@ -79,7 +78,6 @@
         "AUTH_MODE": "production",
         "PROJECT_KEY": "KYN",
         "NEXT_PUBLIC_APP_URL": "https://staging-kynov.harisarshad235.workers.dev",
-        "SESSION_SECRET": "94ff1d86e72fbc99cfb602fc45fc6992b2dc3ef0a7b3fe95db8330d5e07e0153",
         "GOOGLE_CLIENT_ID": "893209126299-trrkjfrnomc60ljsfilc3orc6rph0vph.apps.googleusercontent.com"
       }
     }
