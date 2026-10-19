@@ -3,7 +3,6 @@
 import React, { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { GrainGradient } from "@paper-design/shaders-react";
 import {
   Eye,
   EyeOff,
@@ -430,22 +429,9 @@ export default function AuthSectionOne({
 
         {/* Right Harmonious Shader & Brand Showcase Column */}
         <div className="relative flex min-h-[560px] flex-col justify-between overflow-hidden rounded-3xl bg-[#070b14] p-8 text-white shadow-2xl border border-slate-800 sm:p-10 lg:p-12">
-          {/* Aligned, cohesive blue/indigo/cyan shader (no harsh orange clash) */}
-          <GrainGradient
-            speed={0.6}
-            scale={1.1}
-            rotation={45}
-            offsetX={0}
-            offsetY={0}
-            softness={0.75}
-            intensity={0.35}
-            noise={0.12}
-            shape="corners"
-            frame={1200}
-            colors={["#050811", "#1E3A8A", "#2563EB", "#0EA5E9"]}
-            colorBack="#070b14"
-            className="absolute inset-0 bg-[#070b14]"
-          />
+          {/* Aligned, cohesive blue/indigo/cyan mesh gradient background */}
+          <div className="absolute inset-0 bg-[#070b14] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(37,99,235,0.28),rgba(255,255,255,0))] pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(14,165,233,0.18),transparent_50%)] pointer-events-none" />
 
           {/* Atmospheric Brand Glows */}
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-80 h-80 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
