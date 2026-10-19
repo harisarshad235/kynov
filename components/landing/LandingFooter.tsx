@@ -21,9 +21,9 @@ export function LandingFooter() {
 
           {/* Column: Product */}
           <div className="space-y-3">
-            <h4 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-[11px]">
+            <h3 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-[11px]">
               Product
-            </h4>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <a href="#features" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
@@ -50,9 +50,9 @@ export function LandingFooter() {
 
           {/* Column: Legal & Compliance */}
           <div className="space-y-3">
-            <h4 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-[11px]">
+            <h3 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-[11px]">
               Legal
-            </h4>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/terms" className="hover:text-blue-600 dark:hover:text-blue-400 transition font-medium">
@@ -77,33 +77,82 @@ export function LandingFooter() {
             </ul>
           </div>
 
-          {/* Column: Access */}
+          {/* Column: Access & AI Bridges */}
           <div className="space-y-3">
-            <h4 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-[11px]">
-              Access
-            </h4>
+            <h3 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-[11px]">
+              AI &amp; Developers
+            </h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/login" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  Sign In
+                <Link href="/llms.txt" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+                  llms.txt Index
                 </Link>
               </li>
               <li>
-                <Link href="/signup" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  Create Free Account
+                <Link href="/skill.md" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+                  Agent Skill (.md)
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
-                  Open Workspace
-                </Link>
-              </li>
-              <li>
-                <a href="/sitemap.xml" target="_blank" className="hover:text-blue-600 dark:hover:text-blue-400 transition text-[11px]">
-                  XML Sitemap
+                <a href="/docs/USER_OPERATIONS_MANUAL.md" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+                  View as Markdown
                 </a>
               </li>
+              <li>
+                <a href="/skill.md" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+                  View Raw Spec
+                </a>
+              </li>
+              <li className="pt-1">
+                <button
+                  type="button"
+                  data-copy-ai="kynov"
+                  data-clipboard-target="#ai-context"
+                  aria-label="Copy for AI Context"
+                  onClick={() => {
+                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                      navigator.clipboard.writeText(
+                        'Kynov is a modern sprint planner and task workspace designed for rapid product cycles, sprint swimlanes, and backlog issue filtering. Specification: /llms.txt'
+                      );
+                    }
+                  }}
+                  className="copy-button copy-code inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60 font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/50 transition cursor-pointer text-[11px]"
+                >
+                  <span>Copy for AI</span>
+                </button>
+              </li>
             </ul>
+          </div>
+        </div>
+
+        {/* Developer CLI & Agent Quick-Start Strip */}
+        <div className="rounded-2xl p-4 bg-slate-100/80 dark:bg-[#121722] border border-slate-200/90 dark:border-slate-800/80 flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-[12px] font-mono text-slate-700 dark:text-slate-300">
+            <span className="text-slate-400 dark:text-slate-500">$</span>
+            <pre className="highlight inline m-0 p-0 bg-transparent text-inherit font-mono">
+              <code className="language-bash">npx ctx7@latest docs /kynov "sprint management"</code>
+            </pre>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              data-copy="cli"
+              aria-label="Copy code block"
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                  navigator.clipboard.writeText('npx ctx7@latest docs /kynov "sprint management"');
+                }
+              }}
+              className="copy-button copy-code px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+            >
+              Copy Command
+            </button>
+            <a
+              href="/docs/USER_OPERATIONS_MANUAL.md"
+              className="px-2.5 py-1 text-[11px] font-medium rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 transition"
+            >
+              View Source (.md)
+            </a>
           </div>
         </div>
 
@@ -118,6 +167,10 @@ export function LandingFooter() {
             <Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white transition">
               Privacy Policy
             </Link>
+            <span>•</span>
+            <a href="/skill.md" className="hover:text-slate-900 dark:hover:text-white transition">
+              Agent Skill Spec
+            </a>
             <span>•</span>
             <span>Enterprise Agile Velocity</span>
           </div>

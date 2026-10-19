@@ -1,0 +1,15 @@
+# Kynov
+
+> Agile sprint tracking and workspace management web application.
+
+## Overview
+Kynov is a modern sprint planner and task workspace designed for rapid product cycles, sprint swimlanes, and backlog issue filtering.
+
+## Core Features
+- Sprint Planning and Kanban Swimlanes
+- Backlog Issue Filtering and Priority Management
+- Workspace Collaboration and Member Roles
+
+## Links & Endpoints
+- [Documentation](/docs): Project architecture and guides. (2K tokens)
+- [App Dashboard](/board): Interactive sprint board. (5K tokens)

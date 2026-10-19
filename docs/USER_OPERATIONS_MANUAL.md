@@ -9,7 +9,7 @@
 > **Release Version**: `v0.1.0`  
 > **Target Deployment Environment**: `Cloudflare Pages Edge (V8 Serverless Isolates)`  
 > **Database Engine**: `Cloudflare D1 Distributed SQLite`  
-> **Last Synchronized**: `2026-10-18 18:25:44 UTC`  
+> **Last Synchronized**: `2026-10-19 08:10:49 UTC`  
 
 ### Verified Active Route Inventory
 
@@ -26,12 +26,14 @@
 | `/join` | Core Application View | Authenticated User |
 | `/landing` | Core Application View | Authenticated User |
 | `/login` | User Sign-In & Authentication Form | Public / Anonymous |
+| `/privacy` | Core Application View | Authenticated User |
 | `/projects/[projectId]` | Core Application View | Authenticated User |
 | `/projects/[projectId]/reports` | Core Application View | Authenticated User |
 | `/projects/[projectId]/settings` | Project RBAC & Workflow Settings | Admin Only |
 | `/register` | Core Application View | Authenticated User |
 | `/reset-password` | Password Reset Credential Update | Token Holder (15-min TTL) |
 | `/signup` | New User Self-Registration Portal | Public / Anonymous |
+| `/terms` | Core Application View | Authenticated User |
 
 ---
 

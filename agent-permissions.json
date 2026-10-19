@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "description": "Agent access permissions for this site",
+  "interactions": {
+    "read": {
+      "allowed": true,
+      "paths": [
+        "/docs/*",
+        "/api/*"
+      ]
+    },
+    "api": {
+      "allowed": true,
+      "endpoints": [
+        "/api/v1/*"
+      ],
+      "rateLimit": "100/minute"
+    }
+  },
+  "rateLimits": {
+    "default": "100/minute",
+    "authenticated": "1000/minute"
+  },
+  "contact": "devrel@example.com"
+}

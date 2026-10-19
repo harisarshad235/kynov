@@ -499,9 +499,34 @@ export default function AuthSectionOne({
         </div>
       </div>
 
-      {/* Subtle Bottom Copyright */}
-      <div className="text-center text-[11px] text-slate-400 dark:text-slate-600 mt-4">
-        © 2026 Kynov Inc. Agile Velocity &amp; Sprint Tracking.
+      {/* Developer & Agent Affordance Footer Strip */}
+      <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] text-slate-500 dark:text-slate-500 mt-4">
+        <span>© 2026 Kynov Inc. Agile Velocity &amp; Sprint Tracking.</span>
+        <span>•</span>
+        <a href="/docs/USER_OPERATIONS_MANUAL.md" className="hover:text-blue-500 transition">
+          View as Markdown
+        </a>
+        <span>•</span>
+        <a href="/skill.md" className="hover:text-blue-500 transition">
+          View Raw Spec
+        </a>
+        <span>•</span>
+        <button
+          type="button"
+          data-copy-ai="kynov"
+          data-clipboard-target="#ai-context"
+          aria-label="Copy for AI Context"
+          onClick={() => {
+            if (typeof navigator !== 'undefined' && navigator.clipboard) {
+              navigator.clipboard.writeText(
+                'Kynov is an agile sprint and task management workspace with sub-50ms boards and multi-tenant governance.'
+              );
+            }
+          }}
+          className="copy-button copy-code inline-flex items-center gap-1 hover:text-blue-500 transition cursor-pointer"
+        >
+          <span>Copy for AI</span>
+        </button>
       </div>
     </section>
   );

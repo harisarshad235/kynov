@@ -151,6 +151,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <meta name="ai:token-count" content="2400" />
+        <meta name="ai:page-type" content="productivity-tool" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
         <link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png" />
         <link rel="icon" type="image/png" sizes="96x96" href="/icon-96.png" />

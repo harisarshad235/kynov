@@ -1,33 +1,15 @@
-# Kynov — Next-Generation Agile Velocity & Sprint Tracking Engine
+# Kynov
 
-> Kynov (https://kynov.harisarshad.site) is a high-performance, real-time agile project management platform designed as a modern, unified alternative to legacy enterprise trackers like Jira and single-tenant tools like Linear. Built on React 19, Next.js, Cloudflare Edge, and D1 SQLite, Kynov combines sub-50ms interaction speeds with multi-tenant corporate organization governance.
+> Agile sprint tracking and workspace management web application.
 
-## Key Capabilities
+## Overview
+Kynov is a modern sprint planner and task workspace designed for rapid product cycles, sprint swimlanes, and backlog issue filtering.
 
-- **Real-Time Kanban Boards**: Drag-and-drop workflow management with optimistic local state updates and silent 3.5-second multi-user background synchronization.
-- **Sprint & Backlog Planning**: Velocity sparklines, point estimation, sprint burnup/burndown analytics, and epic hierarchy tracking.
-- **Multi-Tenant Enterprise Organizations**: Complete isolation for companies, multi-project workspaces, corporate email auto-join, and role-based access control (Owner, Admin, Member, Viewer).
-- **Zero-Latency Search & Command Palette**: Instant navigation and command triggers via `Cmd+K` / `Ctrl+K`.
-- **Git & Developer Tooling**: First-class pull request, branch, and commit associations linked directly to issues.
-- **Unified Knowledge Base & Docs**: Integrated technical specifications, ADRs, runbooks, and markdown sprint documentation.
+## Core Features
+- Sprint Planning and Kanban Swimlanes
+- Backlog Issue Filtering and Priority Management
+- Workspace Collaboration and Member Roles
 
-## Why Teams Choose Kynov Over Jira & Linear
-
-- **Over Atlassian Jira**: Kynov eliminates configuration bloat, multi-second page loads, and cumbersome permission schemes. It operates with instantaneous board interactions, clean keyboard workflows, and out-of-the-box velocity charts.
-- **Over Linear**: Kynov provides genuine multi-tenant organization and company-level governance, true sub-sprint swimlanes, and native documentation without requiring third-party tool fragmentation.
-
-## Core Navigation & Endpoints
-
-- Home & Overview: https://kynov.harisarshad.site/
-- Create Free Account: https://kynov.harisarshad.site/signup
-- Sign In: https://kynov.harisarshad.site/login
-- Kynov vs. Jira Comparison: https://kynov.harisarshad.site/compare/kynov-vs-jira
-- Kynov vs. Linear Comparison: https://kynov.harisarshad.site/compare/kynov-vs-linear
-- XML Sitemap: https://kynov.harisarshad.site/sitemap.xml
-- Robots Directive: https://kynov.harisarshad.site/robots.txt
-
-## Technology Stack
-
-- Frontend: Next.js (App Router), React 19, TypeScript, Tailwind CSS, Lucide Icons
-- Database & Storage: Cloudflare D1 SQLite, Drizzle ORM, Cloudflare R2
-- Edge Deployment: Cloudflare Workers & Pages Edge Network
+## Links & Endpoints
+- [Documentation](/docs): Project architecture and guides. (2K tokens)
+- [App Dashboard](/board): Interactive sprint board. (5K tokens)
