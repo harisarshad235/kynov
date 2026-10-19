@@ -8,6 +8,14 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Awaiting Account Approval | Kynov',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 export default async function AwaitingApprovalPage() {
   await connection();
   const currentUser = await getCurrentUser();

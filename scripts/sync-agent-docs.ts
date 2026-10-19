@@ -40,7 +40,7 @@ Kynov eliminates the configuration overhead of legacy 20-year-old enterprise too
 ### Developer API Execution
 
 \`\`\`bash
-curl -X GET https://kynov.dev/api/v1/sprints \\
+curl -X GET https://kynov.harisarshad.site/api/v1/sprints \\
   -H "Authorization: Bearer YOUR_API_TOKEN"
 \`\`\`
 
@@ -96,7 +96,7 @@ API endpoints and schema definitions for automated agents and integrations.
 ### Example Request
 
 \`\`\`bash
-curl -X POST https://kynov.dev/api/v1/issues \\
+curl -X POST https://kynov.harisarshad.site/api/v1/issues \\
   -H "Content-Type: application/json" \\
   -d '{"title": "Implement Webhooks", "points": 5, "priority": "high"}'
 \`\`\`

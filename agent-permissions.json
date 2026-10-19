@@ -1,12 +1,17 @@
 {
   "version": "1.0",
-  "description": "Agent access permissions for this site",
+  "description": "Agent access permissions for Kynov",
   "interactions": {
     "read": {
       "allowed": true,
       "paths": [
+        "/",
+        "/compare/*",
         "/docs/*",
-        "/api/*"
+        "/terms",
+        "/privacy",
+        "/llms.txt",
+        "/skill.md"
       ]
     },
     "api": {
@@ -21,5 +26,5 @@
     "default": "100/minute",
     "authenticated": "1000/minute"
   },
-  "contact": "devrel@example.com"
+  "contact": "contact@harisarshad.site"
 }

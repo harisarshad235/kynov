@@ -9,7 +9,7 @@ Kynov eliminates the configuration overhead of legacy 20-year-old enterprise too
 ### Developer API Execution
 
 ```bash
-curl -X GET https://kynov.dev/api/v1/sprints \
+curl -X GET https://kynov.harisarshad.site/api/v1/sprints \
   -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 

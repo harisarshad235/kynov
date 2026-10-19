@@ -1,14 +1,49 @@
 User-agent: *
 Allow: /
+Allow: /compare/kynov-vs-jira
+Allow: /compare/kynov-vs-linear
+Allow: /login
+Allow: /signup
+Allow: /terms
+Allow: /privacy
+Allow: /llms.txt
+Allow: /skill.md
+Disallow: /dashboard
+Disallow: /dashboard/*
+Disallow: /api/*
+Disallow: /awaiting-approval
+Disallow: /awaiting-approval/*
+Disallow: /settings
+Disallow: /settings/*
 
-# Explicit rules for AI crawlers
+# Explicit rules for AI crawlers & LLM retrieval bots
 User-agent: GPTBot
 Allow: /
+Disallow: /api/*
+Disallow: /dashboard/*
+Disallow: /awaiting-approval/*
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /api/*
+Disallow: /dashboard/*
+Disallow: /awaiting-approval/*
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /api/*
+Disallow: /dashboard/*
+Disallow: /awaiting-approval/*
 
-Sitemap: https://kynov.dev/sitemap.xml
+User-agent: Applebot
+Allow: /
+Disallow: /api/*
+Disallow: /dashboard/*
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/*
+Disallow: /dashboard/*
+
+Sitemap: https://kynov.harisarshad.site/sitemap.xml
+Host: https://kynov.harisarshad.site

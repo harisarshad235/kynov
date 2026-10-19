@@ -19,4 +19,4 @@ description: Agile sprint and task management platform.
 - Maximum 50 issues per sprint batch mutation.
 
 ## Documentation
-- [Project Documentation](/docs): Full architecture and API guides.
+- [Project Documentation](/docs/USER_OPERATIONS_MANUAL.md): Full architecture, operations, and API guides.
