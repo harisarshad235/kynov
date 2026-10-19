@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Explicit rules for AI crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+Sitemap: https://kynov.dev/sitemap.xml

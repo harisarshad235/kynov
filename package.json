@@ -5,7 +5,7 @@
   "description": "Kynov | Agile Velocity & Sprint Tracking",
   "scripts": {
     "dev": "next dev",
-    "docs:sync": "npx tsx scripts/generate-docs-manifest.ts",
+    "docs:sync": "npx tsx scripts/generate-docs-manifest.ts && npx tsx scripts/sync-agent-docs.ts",
     "build": "npm run docs:sync && opennextjs-cloudflare build",
     "build:next": "npm run docs:sync && next build",
     "start": "next start",

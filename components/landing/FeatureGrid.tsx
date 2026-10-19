@@ -184,6 +184,48 @@ export function FeatureGrid() {
             </div>
           ))}
         </div>
+
+        {/* Architectural Comparison Table */}
+        <div className="pt-6 overflow-hidden">
+          <div className="max-w-4xl mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-[#0c1220]/70 backdrop-blur-sm overflow-x-auto shadow-xs">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50">
+                  <th className="p-3.5 font-bold text-slate-900 dark:text-white">Platform Benchmark</th>
+                  <th className="p-3.5 font-bold text-blue-600 dark:text-blue-400">Kynov Engine</th>
+                  <th className="p-3.5 font-semibold text-slate-500">Atlassian Jira</th>
+                  <th className="p-3.5 font-semibold text-slate-500">Linear</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200/60 dark:divide-slate-800/60 text-slate-600 dark:text-slate-300">
+                <tr>
+                  <td className="p-3.5 font-medium text-slate-900 dark:text-white">Board Latency</td>
+                  <td className="p-3.5 font-bold text-emerald-600 dark:text-emerald-400">&lt; 50ms (Edge Native)</td>
+                  <td className="p-3.5">1.8s – 4.5s</td>
+                  <td className="p-3.5">~120ms</td>
+                </tr>
+                <tr>
+                  <td className="p-3.5 font-medium text-slate-900 dark:text-white">Multi-Tenant Governance</td>
+                  <td className="p-3.5 font-bold text-emerald-600 dark:text-emerald-400">Native Corporate Orgs</td>
+                  <td className="p-3.5">Complex Add-ons</td>
+                  <td className="p-3.5">Single-Tenant Only</td>
+                </tr>
+                <tr>
+                  <td className="p-3.5 font-medium text-slate-900 dark:text-white">Velocity Sparklines</td>
+                  <td className="p-3.5 font-bold text-emerald-600 dark:text-emerald-400">Real-Time Sub-sprint</td>
+                  <td className="p-3.5">Delayed Reports</td>
+                  <td className="p-3.5">Cycle Charts</td>
+                </tr>
+                <tr>
+                  <td className="p-3.5 font-medium text-slate-900 dark:text-white">Agent &amp; LLM Context</td>
+                  <td className="p-3.5 font-bold text-emerald-600 dark:text-emerald-400">Native skill.md &amp; Context7</td>
+                  <td className="p-3.5">None</td>
+                  <td className="p-3.5">Webhook API</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
   );

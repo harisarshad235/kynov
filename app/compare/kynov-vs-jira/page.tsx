@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { KynovLogo } from '@/components/brand/KynovLogo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { LandingFooter } from '@/components/landing/LandingFooter';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kynov.io';
 
@@ -147,8 +148,10 @@ export default function KynovVsJiraPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="pt-16 pb-12 sm:pt-24 sm:pb-16 px-4 max-w-5xl mx-auto text-center space-y-6">
+      {/* Main Content */}
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="pt-16 pb-12 sm:pt-24 sm:pb-16 px-4 max-w-5xl mx-auto text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider">
           <Sparkles className="w-3.5 h-3.5" /> Direct Benchmark Comparison
         </div>
@@ -274,6 +277,8 @@ export default function KynovVsJiraPage() {
           </div>
         </div>
       </section>
+      </main>
+      <LandingFooter />
     </div>
   );
 }

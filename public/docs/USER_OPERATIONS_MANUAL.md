@@ -1,0 +1,404 @@
+<!-- ========================================================================= -->
+<!-- KYNOV LIVING DOCUMENTATION MANIFEST & OPERATIONS HANDBOOK                  -->
+<!-- Automatically generated and verified by scripts/generate-docs-manifest.ts -->
+<!-- ========================================================================= -->
+
+# Kynov User Operations Manual & Visual Handbook
+
+> **Living Documentation Status**: Active & Synchronized  
+> **Release Version**: `v0.1.0`  
+> **Target Deployment Environment**: `Cloudflare Pages Edge (V8 Serverless Isolates)`  
+> **Database Engine**: `Cloudflare D1 Distributed SQLite`  
+> **Last Synchronized**: `2026-10-18 18:25:44 UTC`  
+
+### Verified Active Route Inventory
+
+| Route Path | Scope / Purpose | Access Requirement |
+| :--- | :--- | :--- |
+| `/` | Public Landing & Feature Showcase | Public |
+| `/[orgSlug]` | Core Application View | Authenticated User |
+| `/[orgSlug]/dashboard` | Core Application View | Authenticated User |
+| `/awaiting-approval` | Pending Authorization Holding Room | Registered (Pending Status) |
+| `/compare/kynov-vs-jira` | Core Application View | Authenticated User |
+| `/compare/kynov-vs-linear` | Core Application View | Authenticated User |
+| `/dashboard` | Core Application View | Authenticated User |
+| `/forgot-password` | Tokenized Self-Service Password Recovery | Public / Anonymous |
+| `/join` | Core Application View | Authenticated User |
+| `/landing` | Core Application View | Authenticated User |
+| `/login` | User Sign-In & Authentication Form | Public / Anonymous |
+| `/projects/[projectId]` | Core Application View | Authenticated User |
+| `/projects/[projectId]/reports` | Core Application View | Authenticated User |
+| `/projects/[projectId]/settings` | Project RBAC & Workflow Settings | Admin Only |
+| `/register` | Core Application View | Authenticated User |
+| `/reset-password` | Password Reset Credential Update | Token Holder (15-min TTL) |
+| `/signup` | New User Self-Registration Portal | Public / Anonymous |
+
+---
+
+## 1. Welcome to Kynov (The 30-Second Overview)
+
+### What is Kynov?
+Kynov is your team's central workspace for managing agile software delivery, tracking tickets, and publishing architecture documentation. Built directly on Cloudflare's serverless edge network, Kynov delivers sub-20 millisecond response times globally and has zero per-user licensing fees.
+
+### The 3-Step Work Lifecycle
+
+```
+  +--------------------+        +---------------------+        +--------------------+
+  |  1. CAPTURE WORK   |  --->  |  2. MOVE ON BOARD   |  --->  | 3. MEASURE VELOCITY|
+  | Stories, Bugs, ADRs|        | To Do -> Done Lanes |        | Burndown & Health  |
+  +--------------------+        +---------------------+        +--------------------+
+```
+
+1. **Capture Work**: Log User Stories, Bugs, Epics, Tasks, and Knowledge Base documents with rich markdown and attachments.
+2. **Move on Board**: Drag cards across customizable Kanban swimlanes to provide instant visual transparency on active progress.
+3. **Measure Delivery**: Monitor automated completion metrics, story point burndown charts, and Work-In-Progress (WIP) safety caps in real time.
+
+---
+
+## 2. Getting Started & Authentication Flows (Step-by-Step with Visuals)
+
+```
++-------------------------------------------------------------------------------------------------------------+
+|                                    FLOW 2: AUTHENTICATION & ACCESS LIFECYCLE                                |
+|                                                                                                             |
+|  [ 2.1 Register ]  ----->  [ 2.2 Holding Room ]  ----->  [ 2.3 Sign In ]  ----->  [ 2.4 Password Reset ]    |
+|  Enter name, email          Status: PENDING               Session Cookie           15-min Tokenized Email   |
+|  & strong password          Awaiting Admin Review         Admin / Member / Viewer  via Resend Integration   |
++-------------------------------------------------------------------------------------------------------------+
+```
+
+### Flow 2.1: Creating Your Account
+1. Open the login portal and click the **Create Account** tab (or navigate directly to `/login?tab=register`).
+2. Fill in your details:
+   - **Full Name**: Your first and last name (e.g., `Jordan Vance`).
+   - **Work Email Address**: Your corporate email (e.g., `jordan.v@kynov.io`).
+   - **Password**: A secure password (minimum 6 characters).
+   - **Department**: Your team (e.g., `Frontend`, `Backend`, `QA`, `DevOps`, `Product`).
+3. Click **Create Account & Enter Approval Queue**.
+
+![Create Account - Registration Form](/docs/assets/screenshots/01-create-account.png)
+
+```
++----------------------------------------------------------------------+
+| [Kynov Logo]                                                         |
+| Sign In  |  [ Create Account ]                                       |
+|----------------------------------------------------------------------|
+| Full Name:         [ Jordan Vance                                  ] |
+| Work Email:        [ jordan.v@kynov.io                             ] |
+| Password:          [ ••••••••••••                               👁️ ] |
+| Department:        [ Frontend Engineering                          ] |
+| [🔒 Gated Security: New accounts require Administrator approval]     |
+| [  Create Account & Enter Approval Queue                           ] |
++----------------------------------------------------------------------+
+```
+
+---
+
+### Flow 2.2: The Holding Room (Awaiting Admin Approval)
+After registration, accounts are immediately quarantined in **PENDING** status to protect project integrity:
+- You will see the **Account Pending Approval** screen (`/awaiting-approval`).
+- An automated alert email is dispatched to the administrator.
+- Once approved, clicking **Check Status & Open Workspace** takes you directly to your project board.
+
+![Account Pending Approval Holding Room](/docs/assets/screenshots/02-awaiting-approval.png)
+
+```
++----------------------------------------------------------------------+
+|                           [⏳ HOLDING ROOM]                          |
+|                     Account Pending Approval                         |
+|                                                                      |
+|  Welcome Jordan Vance (jordan.v@kynov.io). Your registration is      |
+|  waiting for administrator authorization.                            |
+|                                                                      |
+|  Assigned Role: Viewer (Pending)                                     |
+|  Security Tier: Gated Isolation                                      |
+|                                                                      |
+|  [ 🔄 Check Status & Open Workspace ]         [ 🚪 Sign Out ]        |
++----------------------------------------------------------------------+
+```
+
+---
+
+### Flow 2.3: Signing In & Session Security
+1. Navigate to `/login`.
+2. Enter your work email and password.
+3. Or click **Continue with Google** / **GitHub** for one-click OAuth SSO.
+4. Kynov generates an encrypted session cookie and directs you to your active project board.
+
+![Sign In Portal](/docs/assets/screenshots/03-sign-in.png)
+
+```
++----------------------------------------------------------------------+
+| [Kynov Logo] Kynov [v1.0]                                            |
+| [ Sign In ]  |  Create Account                                       |
+|----------------------------------------------------------------------|
+| [ G Continue with Google ]           [ 🐙 Continue with GitHub ]     |
+| ------------------------ OR WORK EMAIL ----------------------------- |
+| Email:             [ alex.chen@kynov.io                            ] |
+| Password:          [ ••••••••••••                               👁️ ] |
+| [  Sign In to Workspace                                            ] |
+|                                              [ Forgot password? ]    |
++----------------------------------------------------------------------+
+```
+
+---
+
+### Flow 2.4: Self-Service Password Reset
+1. Click **Forgot password?** or visit `/forgot-password`.
+2. Enter your work email and click **Send Recovery Link**.
+3. Check your email inbox for a message from `Kynov <notifications@harisarshad.site>`.
+4. Click the tokenized reset button within **15 minutes**.
+5. Enter your new password and submit.
+
+![Password Reset Form](/docs/assets/screenshots/04-password-reset.png)
+
+```
++----------------------------------------------------------------------+
+| 1. Request Link:   Email: [ alex.chen@kynov.io ]  [ Send Reset Link ]|
+| 2. Check Inbox:    "Reset your Kynov password" (15 min link)         |
+| 3. Set Password:   New Password: [ •••••••••••• ] [ Update Password ]|
++----------------------------------------------------------------------+
+```
+
+---
+
+## 3. Daily Work & The Agile Board (For Team Members & Viewers)
+
+```
++-------------------------------------------------------------------------------------------------------------+
+|                                             KYNOV WORKSPACE HEADER                                          |
+| [Logo] Kynov      [Search: "KYN-101, bug, label..."]   [Theme]  [🔔 (2)]  [+ Create Issue]  [+ New Doc]  (Avatar) |
++------------------+------------------------------------------------------------------------------------------+
+| SIDEBAR          | TOP METRICS BAR                                                                          |
+|                  | [Completion Rate: 75%]  [Velocity: 28/35 pts]  [In Flight: 5]  [Open Defects: 2]           |
+| [Proj: KYN v]    +------------------------------------------------------------------------------------------+
+|                  | KANBAN QUICK FILTERS                                                                     |
+| > Board          | [⚡ Only My Issues]  [🚩 Flagged Blockers]  [⏳ Recently Updated]                           |
+| > Backlog        +------------------------------------------------------------------------------------------+
+| > Documents      | KANBAN BOARD                                                                             |
+| > Team & Access  | +-------------------+ +-------------------+ +-------------------+ +-------------------+ |
+| > Velocity Reports| | TO DO          [3]| | IN PROGRESS [WIP 5]| | IN REVIEW  [WIP 4]| | DONE           [8]| |
+|                  | | 0 pts             | | 12 pts            | | 7 pts             | | 28 pts            | |
+|                  | +-------------------+ +-------------------+ +-------------------+ +-------------------+ |
+| Sprint 24        | | [Story]  KYN-103  | | [Bug] 🚩 KYN-101  | | [Task]   KYN-102  | | [Story]  KYN-104  | |
+| 80% Complete     | | Knowledge Base    | | D1 Database schema| | Kanban drag fix   | | RBAC Auth logic   | |
+|                  | | 8 pts    (Assignee)| | 5 pts    (Assignee)| | 3 pts    (Assignee)| | 5 pts    (Assignee)| |
+| PERSONA SWITCH   | +-------------------+ +-------------------+ +-------------------+ +-------------------+ |
+| [ Alex Chen v ]  |                                                                                          |
++------------------+------------------------------------------------------------------------------------------+
+```
+
+### Flow 3.1: Understanding the Board Swimlanes
+Your project board is organized into four intuitive stages:
+1. **To Do**: Work scheduled for the current sprint that is ready for an engineer to pick up.
+2. **In Progress**: Tasks actively being coded or developed right now.
+3. **In Review**: Pull requests, quality assurance audits, and peer code reviews.
+4. **Done**: Tested, approved, and shipped functionality.
+
+---
+
+### Flow 3.2: Moving Cards & Drag-and-Drop Etiquette
+- **Drag a Card**: Click and hold any ticket card, then drag it across columns. When released, the issue status updates instantly across all connected clients.
+- **Keyboard Navigation**: Click a card and use arrow keys to navigate and reposition cards with full WCAG accessibility.
+- **Quick Filters**:
+  - **⚡ Only My Issues**: Filters the board to show only tickets assigned to your user account.
+  - **🚩 Flagged Blockers**: Highlights cards marked as impediments needing immediate team unblocking.
+  - **⏳ Recently Updated**: Sorts cards by latest activity timestamp.
+
+---
+
+### Flow 3.3: Understanding WIP (Work-In-Progress) Limits
+**Why does a column header turn red and pulse?**  
+Work-In-Progress (WIP) caps prevent teams from taking on too many parallel tasks at once, ensuring high quality and steady delivery.
+
+- In Progress is capped at **5 issues**.
+- In Review is capped at **4 issues**.
+- If a team member drags an extra ticket into a full column, the count badge turns **bold red with a pulsing alert** (`[WIP 6/5]`). This reminds the team to help review or finish existing cards before starting new work.
+
+![Kanban WIP Limit Alert - Red Pulsing Header](/docs/assets/screenshots/05-kanban-wip-alert.png)
+
+```
++-----------------------+   +-----------------------+
+| IN PROGRESS  [WIP 3/5]|   | IN REVIEW    [WIP 5/4]|  <-- Red Pulsing Header!
+| 12 pts                |   | 14 pts (WIP Exceeded) |
++-----------------------+   +-----------------------+
+```
+
+---
+
+### Flow 3.4: Working with the Issue Detail Drawer
+Click any ticket key (such as `KYN-101`) to slide out the comprehensive ticket drawer.
+
+![Issue Detail Drawer - Full Feature View](/docs/assets/screenshots/06-issue-drawer-full.png)
+
+```
++-----------------------------------------------------------------------------+
+| ISSUE DETAIL DRAWER                                                  [ X ]  |
+|-----------------------------------------------------------------------------|
+| [Type: Bug v]  KYN-101  [Status: In Progress v]   [🚩 Add Flag] [🗑️ Delete]  |
+| TITLE: Design and connect Cloudflare D1 distributed edge database schema    |
+| METADATA: Assignee: Marcus Brody | Reporter: Alex Chen | Points: [ 5 pts ]  |
+|-----------------------------------------------------------------------------|
+| DESCRIPTION                                                                 |
+| Integrate Cloudflare D1 with Drizzle ORM bindings for serverless caching.   |
+|-----------------------------------------------------------------------------|
+| SUBTASKS CHECKLIST                                       (2 of 3 completed) |
+| [===================---------] 66%                                          |
+| [x] Define Drizzle ORM SQLite tables in db/schema.ts                        |
+| [x] Generate D1 migration scripts via drizzle-kit                           |
+| [ ] Benchmark edge response times across Anycast PoPs                       |
+| [+ Add a subtask and press Enter...]                                        |
+|-----------------------------------------------------------------------------|
+| LINKED ISSUES (2)                                                           |
+| (blocks)    [● KYN-102] Kanban drag focus drops [In Review] [X]              |
+| (relates to)[● CORE-101] Anycast DNS failover [Dev Implementation] [X]      |
+| [Type: blocks v] [Select target issue v] [+ Link Issue]                     |
+|-----------------------------------------------------------------------------|
+| ATTACHMENTS (2)                                         [+ Attach File]     |
+| 📁 d1_schema_v2.sql (14.5 KB) [⬇️]  📁 latency_report.pdf (1.8 MB) [⬇️]     |
+|-----------------------------------------------------------------------------|
+| ACTIVITY: Comments (4) | History (6)                                        |
+| Alex Chen • 2 hours ago:                                                    |
+| "Ensure we test D1 local emulator in CI/CD pipeline. CC @marcus.b"          |
+| [+ Add a comment... (use @name to mention colleagues)]                      |
++-----------------------------------------------------------------------------+
+```
+
+- **Story Points**: Enter estimated complexity (e.g., 1, 2, 3, 5, 8, 13) to feed velocity burndown charts.
+- **Subtask Checklist**: Type an item name and hit Enter. Checking off boxes updates the live percentage progress bar.
+- **Flagging Impediments**: Click **🚩 Add Flag**. The card displays an amber badge on the board so leads can step in to unblock you.
+- **Linking Issues**: Relate dependencies using `blocks`, `is_blocked_by`, or `relates_to` relationships.
+- **Colleague Mentions & Notification Bell (🔔)**: Type `@name` (e.g. `@sarah`, `@marcus`) in comments. The tagged colleague receives an unread counter on their notification bell in the top navigation bar.
+
+---
+
+## 4. Sprint Planning & Delivery (For Project Managers & Leads)
+
+### Flow 4.1: Managing the Global Backlog vs. Active Sprint Pools
+1. Click **Backlog** in the left sidebar navigation.
+2. The backlog screen separates work into:
+   - **Active Sprint (Sprint 24)**: Committed tickets currently under execution.
+   - **Upcoming Sprint (Sprint 25)**: Scope staged for next sprint's kickoff.
+   - **Product Backlog Pool**: Unscheduled tickets, feature ideas, and technical debt.
+3. Drag tickets from the backlog pool into an upcoming sprint and verify total planned story points before starting the sprint.
+
+![Backlog & Sprint Planning View](/docs/assets/screenshots/07-backlog-sprint-planning.png)
+
+---
+
+### Flow 4.2: Reading Velocity Reports & Burndown Charts
+Click **Velocity Reports** in the left sidebar to access team analytics.
+
+![Velocity Reports & Sprint Burndown Chart](/docs/assets/screenshots/08-velocity-burndown.png)
+
+```
++-----------------------------------------------------------------------------+
+| SPRINT 24 BURNDOWN & VELOCITY DASHBOARD                                     |
+|-----------------------------------------------------------------------------|
+| [Completion Rate: 75%]  [Velocity: 28/35 pts]  [In Flight: 5] [Defects: 2]  |
+|                                                                             |
+| Story                                                                       |
+| Points                                                                      |
+|  35 | *                                                                     |
+|  28 |   *                                                                  |
+|  21 |     *   (Ideal Burn - Dashed Line)                                   |
+|  14 |       *=====                                                        |
+|   7 |         *     ===== (Actual Burn - Solid Blue Line)                  |
+|   0 +----------*-----------*---------------------------------------> Day    |
+|    Day 1      Day 5       Day 10                                  Day 14    |
++-----------------------------------------------------------------------------+
+```
+
+- **Metric Cards**:
+  - **Completion Rate**: Percentage of committed story points moved to Done.
+  - **Velocity**: Story points completed out of total sprint scope (e.g., 28 of 35 pts).
+  - **In Flight**: Count of issues currently undergoing active engineering.
+  - **Open Defects**: Active bug tickets requiring resolution before release.
+- **Burndown Chart Interpretation**:
+  - **Dashed Line (Ideal Burn)**: Linear guide showing where the team should be if work is completed evenly every day.
+  - **Solid Blue Line (Actual Burn)**: Real-time points remaining.
+  - **Trajectory Rule**: If the solid blue line is **below** the dashed line, the team is **ahead of schedule**; if **above**, the team is **behind schedule**.
+
+---
+
+## 5. Team Management & Governance (For Workspace Admins)
+
+### Flow 5.1: The In-App Approval Center (`/team`)
+Administrators have exclusive access to the **Team & Access** panel to oversee team membership:
+
+1. Click **Team & Access** in the left sidebar.
+2. Review new registrations in the **Pending User Approvals** table.
+3. Choose the appropriate role from the dropdown:
+   - **Admin**: Full access to settings, user approvals, and project configuration.
+   - **Member**: Standard team member who can create, edit, drag, and comment on tickets.
+   - **Viewer**: Read-only stakeholder who can inspect tickets, read documents, and comment.
+4. Click **Approve** to activate the user immediately.
+
+![Admin Team Approvals - Role Assignment](/docs/assets/screenshots/09-admin-team-approvals.png)
+
+---
+
+### Flow 5.2: Role Permission Matrix (Plain English Breakdown)
+
+| Feature / Action | Admin | Member | Viewer |
+| :--- | :---: | :---: | :---: |
+| **Sign In & View Kanban Board** | ✅ | ✅ | ✅ |
+| **Read Knowledge Base Documents** | ✅ | ✅ | ✅ |
+| **View Sprint Velocity Reports** | ✅ | ✅ | ✅ |
+| **Comment on Issues & Mention Colleagues** | ✅ | ✅ | ✅ |
+| **Create New Issues & User Stories** | ✅ | ✅ | ❌ |
+| **Drag & Drop Cards Across Swimlanes** | ✅ | ✅ | ❌ |
+| **Edit Story Points, Estimates & Subtasks** | ✅ | ✅ | ❌ |
+| **Create & Edit Knowledge Base Docs** | ✅ | ✅ | ❌ |
+| **Delete Issues or Documents** | ✅ | ❌ | ❌ |
+| **Approve Pending Users & Manage Roles** | ✅ | ❌ | ❌ |
+| **Configure Project Settings & WIP Caps** | ✅ | ❌ | ❌ |
+
+---
+
+### Flow 5.3: Emergency Access & Cloudflare D1 Console Recovery
+If an administrator is ever locked out of their account or requires CLI emergency access, they can directly approve and promote any account using Wrangler:
+
+```bash
+# Direct Administrator Promotion via Cloudflare D1
+npx wrangler d1 execute kynov_db --remote --command="UPDATE users SET status='APPROVED', role='Admin' WHERE email='harisarshad235@gmail.com';"
+```
+
+---
+
+## 6. Architecture Explained in 2 Minutes (Layman Edition)
+
+### What is "The Edge"?
+Traditional apps host their servers and databases in a single data center (such as Northern Virginia or Frankfurt). If a team member in London, Tokyo, or Sydney accesses the site, requests must travel thousands of miles across undersea cables, causing slow page loads.
+
+Kynov runs on **Cloudflare Pages and Workers**, which deploy your code to over **300 global data centers**. When you open Kynov, you connect to a server within a few miles of your physical location, resulting in instant page loads and zero lag.
+
+### Where Data and Files Live
+
+| Technology | What It Stores | Why It Matters |
+| :--- | :--- | :--- |
+| **Cloudflare D1 (SQLite)** | Issues, Sprints, Comments, User Profiles, Documents | Ultra-fast distributed database running queries in sub-15ms. |
+| **Cloudflare R2 Storage** | Attachments, PDFs, Image Screenshots, Log Files | High-speed file storage with **zero egress bandwidth fees**. |
+| **Resend API** | Transactional Password Reset & Admin Alert Emails | Reliable sub-second email delivery without managing SMTP servers. |
+
+---
+
+## 7. Visual Screenshot Asset Catalog & Placeholder Index
+
+The manual is pre-configured with standard visual placeholders. Team members capturing screenshots can save high-resolution PNGs to `/docs/assets/screenshots/` matching these exact slugs:
+
+| Slug | Image File Path | Target Interface View |
+| :--- | :--- | :--- |
+| `01-create-account` | `/docs/assets/screenshots/01-create-account.png` | Registration form with validation fields |
+| `02-awaiting-approval` | `/docs/assets/screenshots/02-awaiting-approval.png` | Holding page for PENDING users |
+| `03-sign-in` | `/docs/assets/screenshots/03-sign-in.png` | Sign-in dialog with email and password |
+| `04-password-reset` | `/docs/assets/screenshots/04-password-reset.png` | Password recovery request & new password form |
+| `05-kanban-wip-alert` | `/docs/assets/screenshots/05-kanban-wip-alert.png` | Kanban board with red pulsing WIP limit alert |
+| `06-issue-drawer-full` | `/docs/assets/screenshots/06-issue-drawer-full.png` | Slide-out drawer with subtasks and comments |
+| `07-backlog-sprint-planning` | `/docs/assets/screenshots/07-backlog-sprint-planning.png` | Backlog queue and sprint staging view |
+| `08-velocity-burndown` | `/docs/assets/screenshots/08-velocity-burndown.png` | Velocity report and sprint burndown chart |
+| `09-admin-team-approvals` | `/docs/assets/screenshots/09-admin-team-approvals.png` | Team management approval table with role selectors |
+
+---
+
+*© 2026 Kynov Systems. All rights reserved. Generated automatically via `npm run docs:sync`.*
