@@ -714,9 +714,9 @@
     "semantic_hash": ""
   },
   "docs/USER_OPERATIONS_MANUAL.md": {
-    "mtime": 1792387272.4420073,
-    "seen": 1792387283.593152,
-    "ast_hash": "c3b9e6d76995323118f5b9e75acab699",
+    "mtime": 1792397449.1066213,
+    "seen": 1792398035.3777092,
+    "ast_hash": "deecf20a04ca2607e2f9fe818ad8e493",
     "semantic_hash": ""
   },
   "docs/assets/screenshots/README.md": {
@@ -847,50 +847,50 @@
   },
   "db/seed.sql": {
     "mtime": 1792048827.4531503,
-    "seen": 1792393153.641504,
-    "ast_hash": "",
+    "seen": 1792398035.3776052,
+    "ast_hash": "94ed36aa302e401880695468b0940f9a",
     "semantic_hash": ""
   },
   "db/seed_manual_formatted.sql": {
     "mtime": 1792048827.4536562,
-    "seen": 1792393153.6415098,
-    "ast_hash": "",
+    "seen": 1792398035.3776069,
+    "ast_hash": "ed715d89b1f7b3850c0c3c0a67be8992",
     "semantic_hash": ""
   },
   "db/update_manual.sql": {
     "mtime": 1792048827.454246,
-    "seen": 1792393153.641514,
-    "ast_hash": "",
+    "seen": 1792398035.377609,
+    "ast_hash": "1bdb74298af9281af6ccc328ee90a8c8",
     "semantic_hash": ""
   },
   "drizzle/0000_friendly_marvel_boy.sql": {
     "mtime": 1792048827.4566896,
-    "seen": 1792393153.641523,
-    "ast_hash": "",
+    "seen": 1792398035.377613,
+    "ast_hash": "8393c6a2ce2101163296cc8ad05b6d66",
     "semantic_hash": ""
   },
   "drizzle/0001_rainy_miek.sql": {
     "mtime": 1792048827.4570768,
-    "seen": 1792393153.641527,
-    "ast_hash": "",
+    "seen": 1792398035.3776152,
+    "ast_hash": "7efbc1675c40e4244d1bf0177c2ba095",
     "semantic_hash": ""
   },
   "drizzle/0002_gifted_argent.sql": {
     "mtime": 1792048827.4573543,
-    "seen": 1792393153.641531,
-    "ast_hash": "",
+    "seen": 1792398035.377617,
+    "ast_hash": "f7f84bf9a0f830c900499746e32d68e0",
     "semantic_hash": ""
   },
   "drizzle/0003_bizarre_scalphunter.sql": {
     "mtime": 1792048827.4576306,
-    "seen": 1792393153.641535,
-    "ast_hash": "",
+    "seen": 1792398035.377619,
+    "ast_hash": "3a129ac8b07c16279a0836d9462699ca",
     "semantic_hash": ""
   },
   "drizzle/0004_jira_enterprise_upgrade.sql": {
     "mtime": 1792048827.4579084,
-    "seen": 1792393153.64154,
-    "ast_hash": "",
+    "seen": 1792398035.377621,
+    "ast_hash": "c3c67ba0e8efc06cc4ae36754277482c",
     "semantic_hash": ""
   },
   "components/organization/OrganizationView.tsx": {
@@ -1122,38 +1122,38 @@
     "semantic_hash": ""
   },
   "docs/api.md": {
-    "mtime": 1792390880.8321357,
-    "seen": 1792390968.801898,
+    "mtime": 1792397449.887497,
+    "seen": 1792398035.377717,
     "ast_hash": "74c4cf39aad69f730f00000a292f99f9",
     "semantic_hash": ""
   },
   "docs/architecture.md": {
-    "mtime": 1792390880.831625,
-    "seen": 1792390968.801901,
+    "mtime": 1792397449.8870234,
+    "seen": 1792398035.377719,
     "ast_hash": "8bf7e868cb406c912723c487b076245d",
     "semantic_hash": ""
   },
   "docs/dashboard.md": {
-    "mtime": 1792390880.8310056,
-    "seen": 1792390968.801985,
+    "mtime": 1792397449.8865647,
+    "seen": 1792398035.377723,
     "ast_hash": "c5876b27d1dfa7bacb9f3e3b44dcfab0",
     "semantic_hash": ""
   },
   "docs/index.md": {
-    "mtime": 1792390880.8298295,
-    "seen": 1792390968.8019872,
+    "mtime": 1792397449.88553,
+    "seen": 1792398035.377724,
     "ast_hash": "77da5a90ad738eb4c796cfc37ae3d644",
     "semantic_hash": ""
   },
   "docs/landing.md": {
-    "mtime": 1792390880.830459,
-    "seen": 1792390968.8019898,
+    "mtime": 1792397449.8861,
+    "seen": 1792398035.3777258,
     "ast_hash": "065e3a9c259483612b9a3f38cb5b1067",
     "semantic_hash": ""
   },
   "docs/skills.md": {
-    "mtime": 1792390880.8326702,
-    "seen": 1792390968.801991,
+    "mtime": 1792397449.8879788,
+    "seen": 1792398035.377728,
     "ast_hash": "1b8c2cddd52ed4759857621a4b5026df",
     "semantic_hash": ""
   },
@@ -1170,38 +1170,38 @@
     "semantic_hash": ""
   },
   "public/docs/api.md": {
-    "mtime": 1792390880.832309,
-    "seen": 1792390968.801997,
+    "mtime": 1792397449.8876514,
+    "seen": 1792398035.377734,
     "ast_hash": "74c4cf39aad69f730f00000a292f99f9",
     "semantic_hash": ""
   },
   "public/docs/architecture.md": {
-    "mtime": 1792390880.8318002,
-    "seen": 1792390968.801999,
+    "mtime": 1792397449.8871713,
+    "seen": 1792398035.3777359,
     "ast_hash": "8bf7e868cb406c912723c487b076245d",
     "semantic_hash": ""
   },
   "public/docs/dashboard.md": {
-    "mtime": 1792390880.8312035,
-    "seen": 1792390968.802001,
+    "mtime": 1792397449.886706,
+    "seen": 1792398035.377738,
     "ast_hash": "c5876b27d1dfa7bacb9f3e3b44dcfab0",
     "semantic_hash": ""
   },
   "public/docs/index.md": {
-    "mtime": 1792390880.8300588,
-    "seen": 1792390968.802003,
+    "mtime": 1792397449.885755,
+    "seen": 1792398035.3777401,
     "ast_hash": "77da5a90ad738eb4c796cfc37ae3d644",
     "semantic_hash": ""
   },
   "public/docs/landing.md": {
-    "mtime": 1792390880.8306305,
-    "seen": 1792390968.8020039,
+    "mtime": 1792397449.8862646,
+    "seen": 1792398035.377741,
     "ast_hash": "065e3a9c259483612b9a3f38cb5b1067",
     "semantic_hash": ""
   },
   "public/docs/skills.md": {
-    "mtime": 1792390880.8328469,
-    "seen": 1792390968.802006,
+    "mtime": 1792397449.8881283,
+    "seen": 1792398035.377743,
     "ast_hash": "1b8c2cddd52ed4759857621a4b5026df",
     "semantic_hash": ""
   },

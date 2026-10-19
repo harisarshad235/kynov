@@ -1,7 +1,7 @@
 # Graph Report - kynov  (2026-10-19)
 
 ## Corpus Check
-- 185 files · ~246,048 words
+- 185 files · ~246,068 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 8 file(s) not represented in the graph (top: (none) 2, .ico 2, .example 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6fcc7123`
+- Built from commit: `a57b4ac4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -251,14 +251,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `3.4 Confluence-Style Documentation & Asset Directory` --references--> `GoogleSheetEmbedModal()`  [INFERRED]
   PRD.md → components/docs/GoogleSheetEmbedModal.tsx
-- `UpdateSprintResult` --references--> `Sprint`  [EXTRACTED]
-  app/actions/sprints.ts → db/schema.ts
-- `DocumentReaderModalProps` --references--> `FullDocument`  [EXTRACTED]
-  components/docs/DocumentReaderModal.tsx → lib/types.ts
 - `LandingHeroProps` --references--> `User`  [EXTRACTED]
   components/landing/LandingHero.tsx → db/schema.ts
 - `LandingNavbarProps` --references--> `User`  [EXTRACTED]
   components/landing/LandingNavbar.tsx → db/schema.ts
+- `LandingPageProps` --references--> `User`  [EXTRACTED]
+  components/landing/LandingPage.tsx → db/schema.ts
+- `UserProfileModalProps` --references--> `User`  [EXTRACTED]
+  components/profile/UserProfileModal.tsx → db/schema.ts
 
 ## Import Cycles
 - None detected.
@@ -542,7 +542,7 @@ Cohesion: 0.50
 Nodes (3): Developer API Execution, High-Output Architecture, Kynov Architecture & Feature Showcase
 
 ## Knowledge Gaps
-- **19 isolated node(s):** `RFC-5246`, `RFC-2253`, `RFC-9440`, `RFC-3339`, `RFC-2046` (+14 more)
+- **19 isolated node(s):** `RFC-2253`, `RFC-3339`, `RFC-5246`, `RFC-9440`, `react-dom` (+14 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2056 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **151 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -550,16 +550,16 @@ Nodes (3): Developer API Execution, High-Output Architecture, Kynov Architecture
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `3. Functional Requirements & Feature Specifications` connect `3. Functional Requirements & Feature Specifications` to `Product Requirements Document (PRD) — KYNOV`?**
-  _High betweenness centrality (0.364) - this node is a cross-community bridge._
-- **What connects `RFC-5246`, `RFC-2253`, `RFC-9440` to the rest of the system?**
+  _High betweenness centrality (0.384) - this node is a cross-community bridge._
+- **What connects `RFC-2253`, `RFC-3339`, `RFC-5246` to the rest of the system?**
   _19 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `cloudflare-env.d.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.0021390374331550803 - nodes in this community are weakly interconnected._
 - **Why does `3.4 Confluence-Style Documentation & Asset Directory` connect `3. Functional Requirements & Feature Specifications` to `DocExplorer.tsx`?**
-  _High betweenness centrality (0.360) - this node is a cross-community bridge._
+  _High betweenness centrality (0.379) - this node is a cross-community bridge._
 - **Should `DocExplorer.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.12612612612612611 - nodes in this community are weakly interconnected._
 - **Why does `GoogleSheetEmbedModal()` connect `DocExplorer.tsx` to `3. Functional Requirements & Feature Specifications`?**
-  _High betweenness centrality (0.360) - this node is a cross-community bridge._
+  _High betweenness centrality (0.379) - this node is a cross-community bridge._
 - **Should `schema.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.03333333333333333 - nodes in this community are weakly interconnected._

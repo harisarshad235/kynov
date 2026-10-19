@@ -55,5 +55,33 @@
     "NEXT_PUBLIC_APP_URL": "https://kynov.harisarshad.site",
     "SESSION_SECRET": "94ff1d86e72fbc99cfb602fc45fc6992b2dc3ef0a7b3fe95db8330d5e07e0153",
     "GOOGLE_CLIENT_ID": "1042686254350-ksgmrb0he3dp90htllce2jp2lqhujcb1.apps.googleusercontent.com"
+  },
+  "env": {
+    "staging": {
+      "name": "staging-kynov",
+      "routes": [],
+      "workers_dev": true,
+      "d1_databases": [
+        {
+          "binding": "apextrack_db",
+          "database_name": "apextrack_db",
+          "database_id": "b92298b4-1644-491d-9aa1-70402d4a0881",
+          "migrations_dir": "drizzle"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "ATTACHMENTS",
+          "bucket_name": "apextrack-attachments"
+        }
+      ],
+      "vars": {
+        "AUTH_MODE": "production",
+        "PROJECT_KEY": "KYN",
+        "NEXT_PUBLIC_APP_URL": "https://staging-kynov.harisarshad235.workers.dev",
+        "SESSION_SECRET": "94ff1d86e72fbc99cfb602fc45fc6992b2dc3ef0a7b3fe95db8330d5e07e0153",
+        "GOOGLE_CLIENT_ID": "1042686254350-ksgmrb0he3dp90htllce2jp2lqhujcb1.apps.googleusercontent.com"
+      }
+    }
   }
 }
