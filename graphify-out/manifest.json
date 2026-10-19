@@ -312,9 +312,9 @@
     "semantic_hash": ""
   },
   "components/docs/DocumentsView.tsx": {
-    "mtime": 1792350776.7666216,
-    "seen": 1792427532.1070156,
-    "ast_hash": "6c9b469093d0d6c53e20b7b1e64ca450",
+    "mtime": 1792432438.9429164,
+    "seen": 1792432558.3731318,
+    "ast_hash": "a902170fd51a1f4468fd30d589350868",
     "semantic_hash": ""
   },
   "components/drawer/IssueDetailDrawer.tsx": {
@@ -630,9 +630,9 @@
     "semantic_hash": "bca48545b7119950a56f1d5c2524359f"
   },
   "package.json": {
-    "mtime": 1792431709.6197782,
-    "seen": 1792431742.3675387,
-    "ast_hash": "684977ed5c46acfc8128cbc9e2c253d6",
+    "mtime": 1792432473.686404,
+    "seen": 1792432558.3871315,
+    "ast_hash": "ddc3608aa0bd15e615b9c6b40dfccf90",
     "semantic_hash": ""
   },
   "postcss.config.mjs": {
@@ -969,18 +969,6 @@
     "mtime": 1792424533.5885513,
     "seen": 1792427532.1070156,
     "ast_hash": "846bcc708c3abe30c1b48553c2c9cd29",
-    "semantic_hash": ""
-  },
-  "components/ui/glass-folder-cards.tsx": {
-    "mtime": 1792345336.606024,
-    "seen": 1792427532.1070156,
-    "ast_hash": "9e8633ce4b1b03b70c13d2120b646440",
-    "semantic_hash": ""
-  },
-  "components/ui/glass-folder-demo.tsx": {
-    "mtime": 1792345410.1824994,
-    "seen": 1792427532.1070156,
-    "ast_hash": "bed41f70a7087ffc3149a1ab4ae4af64",
     "semantic_hash": ""
   },
   "lib/fractionalIndexing.ts": {
