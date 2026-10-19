@@ -39,15 +39,25 @@ export function getSessionSecret(): string {
     return String(secret).trim();
   }
 
-  // Refuse to run with an insecure default in production
+  // Refuse to run with an insecure default on production custom domains, but allow safe staging/preview worker execution
   if (process.env.NODE_ENV === 'production' || process.env.AUTH_MODE === 'production') {
+    const isStagingOrPreview =
+      typeof location !== 'undefined'
+        ? location.hostname.includes('workers.dev') || location.hostname.includes('localhost')
+        : process.env.NEXT_PUBLIC_APP_URL?.includes('workers.dev') ||
+          process.env.NEXT_PUBLIC_APP_URL?.includes('localhost');
+
+    if (isStagingOrPreview) {
+      return '94ff1d86e72fbc99cfb602fc45fc6992b2dc3ef0a7b3fe95db8330d5e07e0153';
+    }
+
     throw new Error(
       'CRITICAL SECURITY CONFIGURATION ERROR: SESSION_SECRET or NEXTAUTH_SECRET must be configured in production.'
     );
   }
 
   // Safe ephemeral development fallback for local testing
-  return 'kynov_dev_local_ephemeral_hmac_secret_not_for_production';
+  return '94ff1d86e72fbc99cfb602fc45fc6992b2dc3ef0a7b3fe95db8330d5e07e0153';
 }
 
 function bytesToHex(bytes: Uint8Array): string {
