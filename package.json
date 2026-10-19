@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "docs:sync": "npx tsx scripts/generate-docs-manifest.ts && npx tsx scripts/sync-agent-docs.ts",
-    "build": "npm run docs:sync && opennextjs-cloudflare build",
-    "build:next": "npm run docs:sync && next build",
+    "build": "npm run docs:sync && opennextjs-cloudflare build && npm run docs:sync",
+    "build:next": "npm run docs:sync && next build && npm run docs:sync",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",

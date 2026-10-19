@@ -109,6 +109,38 @@ Context7 and AI agent instruction manual for interacting with Kynov repositories
 ## Operations Manual
 
 Agents can inspect board status, generate release notes, and query sprint velocity trajectories.
+`,
+
+  'compare-jira.md': `# Kynov vs. Jira Comparison
+
+Kynov delivers sub-50ms Kanban board interactions, modern dark-mode UI, and zero configuration bloat compared to Atlassian Jira.
+
+## Core Advantages
+
+- **Sub-50ms Board Latency**: Edge compute eliminates sluggish 2-5 second Jira page refreshes.
+- **Zero Administrator Overhead**: Works out of the box without certified Jira administrators.
+- **Integrated Knowledge Base**: Built-in ADRs, runbooks, and PRDs next to task swimlanes.
+`,
+
+  'compare-linear.md': `# Kynov vs. Linear Comparison
+
+Kynov provides enterprise multi-tenant corporate governance, integrated technical specifications, and customizable sprint swimlanes.
+
+## Core Advantages
+
+- **Multi-Tenant Governance**: True company isolation and role-based permissions.
+- **Embedded Document Engine**: No external Notion or Google Docs subscriptions needed.
+- **Sub-50ms Edge Performance**: Global Cloudflare Edge distribution.
+`,
+
+  'terms.md': `# Kynov Terms of Service
+
+Legal agreement and acceptable use policy governing Kynov Agile sprint tracking and corporate workspaces.
+`,
+
+  'privacy.md': `# Kynov Privacy Policy
+
+Data protection, workspace credential safety, and GDPR/CCPA privacy commitments for Kynov engineering teams.
 `
 };
 
@@ -129,6 +161,14 @@ export function syncMarkdownDocs() {
       fs.writeFileSync(path.join(NEXT_SERVER_APP_DIR, filename), content, 'utf-8');
     }
   }
+
+  // Also sync root AEO files to build output for agentic-seo scanner
+  ['skill.md', 'llms.txt', 'agent-permissions.json'].forEach((file) => {
+    const src = path.join(ROOT_DIR, file);
+    if (fs.existsSync(src) && fs.existsSync(NEXT_SERVER_APP_DIR)) {
+      try { fs.copyFileSync(src, path.join(NEXT_SERVER_APP_DIR, file)); } catch {}
+    }
+  });
 
   console.log(`Synced ${Object.keys(markdownPages).length} markdown documentation files.`);
 }
