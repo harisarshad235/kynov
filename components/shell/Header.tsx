@@ -54,7 +54,8 @@ export function Header({
 }: HeaderProps) {
   // Real-time Collaborative Presence Engine (Cross-Browser, Cross-Device, Multi-Session)
   const [onlineUserIds, setOnlineUserIds] = React.useState<Set<string>>(() => new Set([currentUser.id]));
-  const [onlineEmails, setOnlineEmails] = React.useState<Set<string>>(() => new Set(currentUser.email ? [currentUser.email.toLowerCase()] : []));
+  const [onlineEmails, setOnlineEmails] = React.useState<Set<string>>(() => new Set(currentUser.email ? [currentUser.email.toLowerCase().trim()] : []));
+  const [onlineNames, setOnlineNames] = React.useState<Set<string>>(() => new Set(currentUser.name ? [currentUser.name.toLowerCase().trim()] : []));
   const [userStatuses, setUserStatuses] = React.useState<Record<string, 'ONLINE' | 'AWAY'>>({});
   const [presenceMode, setPresenceMode] = React.useState<'ONLINE' | 'AWAY'>('ONLINE');
   const [isPresencePopoverOpen, setIsPresencePopoverOpen] = React.useState(false);
@@ -73,7 +74,16 @@ export function Header({
     return () => document.removeEventListener('mousedown', handleOutside);
   }, [isPresencePopoverOpen]);
 
-  // Real-time cross-browser presence heartbeat via server API + BroadcastChannel
+  // ---------------------------------------------------------------------------
+  // Real-time Collaborative Presence Engine
+  //
+  // Architecture (Cloudflare Workers + D1-backed):
+  //   • POST heartbeat every 4 s  → writes current user's record to D1
+  //   • GET  poll    every 5 s   → reads all online users from D1 (shared state)
+  //   • BroadcastChannel          → instant same-browser tab notifications
+  //   • visibilitychange / focus  → instant refresh when switching back to tab
+  //   • sendBeacon on unload      → marks user offline immediately
+  // ---------------------------------------------------------------------------
   React.useEffect(() => {
     let isMounted = true;
     let bc: BroadcastChannel | null = null;
@@ -81,76 +91,147 @@ export function Header({
       bc = new BroadcastChannel('kynov:presence_channel');
     } catch {}
 
-    const syncServerPresence = async (statusOverride?: 'ONLINE' | 'AWAY' | 'OFFLINE') => {
+    // Helper: apply a presence payload from the server into local state
+    const applyPresenceData = (data: any) => {
+      if (!isMounted || !data) return;
+
+      if (Array.isArray(data.onlineUserIds)) {
+        const activeSet = new Set<string>([currentUser.id, ...data.onlineUserIds]);
+        setOnlineUserIds(activeSet);
+      }
+      if (Array.isArray(data.onlineEmails)) {
+        const emailSet = new Set<string>(data.onlineEmails.map((e: string) => String(e).toLowerCase().trim()));
+        if (currentUser.email) emailSet.add(currentUser.email.toLowerCase().trim());
+        setOnlineEmails(emailSet);
+      }
+      if (Array.isArray(data.onlineNames)) {
+        const nameSet = new Set<string>(data.onlineNames.map((n: string) => String(n).toLowerCase().trim()));
+        if (currentUser.name) nameSet.add(currentUser.name.toLowerCase().trim());
+        setOnlineNames(nameSet);
+      }
+      if (Array.isArray(data.activeUsers)) {
+        const stMap: Record<string, 'ONLINE' | 'AWAY'> = {};
+        data.activeUsers.forEach((u: any) => {
+          if (u.userId) stMap[u.userId] = u.status;
+          if (u.email) stMap[String(u.email).toLowerCase().trim()] = u.status;
+          if (u.name) stMap[String(u.name).toLowerCase().trim()] = u.status;
+        });
+        setUserStatuses(stMap);
+      }
+    };
+
+    // POST heartbeat — announces this user as online and returns full list
+    const postHeartbeat = async (statusOverride?: 'ONLINE' | 'AWAY' | 'OFFLINE') => {
       try {
-        const payload = {
+        const currentStatus = statusOverride ?? presenceMode;
+
+        // Broadcast to same browser tabs immediately
+        bc?.postMessage({
           userId: currentUser.id,
-          email: currentUser.email?.toLowerCase(),
+          email: currentUser.email?.toLowerCase().trim(),
           name: currentUser.name,
-          status: statusOverride || presenceMode,
-        };
+          status: currentStatus,
+        });
 
         const res = await fetch('/api/presence', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            userId: currentUser.id,
+            email: currentUser.email?.toLowerCase().trim(),
+            name: currentUser.name,
+            status: currentStatus,
+          }),
         });
-
-        if (res.ok && isMounted) {
-          const data: any = await res.json();
-          if (data && Array.isArray(data.onlineUserIds)) {
-            const activeSet = new Set<string>([currentUser.id, ...data.onlineUserIds]);
-            setOnlineUserIds(activeSet);
-          }
-          if (data && Array.isArray(data.onlineEmails)) {
-            const emailSet = new Set<string>(data.onlineEmails.map((e: string) => e.toLowerCase()));
-            if (currentUser.email) emailSet.add(currentUser.email.toLowerCase());
-            setOnlineEmails(emailSet);
-          }
-          if (data && Array.isArray(data.activeUsers)) {
-            const stMap: Record<string, 'ONLINE' | 'AWAY'> = {};
-            data.activeUsers.forEach((u: any) => {
-              if (u.userId) stMap[u.userId] = u.status;
-              if (u.email) stMap[u.email.toLowerCase()] = u.status;
-            });
-            setUserStatuses(stMap);
-          }
+        if (res.ok) {
+          const json = await res.json();
+          applyPresenceData(json);
         }
-      } catch {
-        // network resilience
-      }
+      } catch { /* network resilience */ }
     };
 
-    // Immediate initial sync
-    syncServerPresence();
+    // GET poll — reads shared presence state from D1 (no writes)
+    const pollPresence = async () => {
+      try {
+        const res = await fetch('/api/presence', { method: 'GET' });
+        if (res.ok) {
+          const json = await res.json();
+          applyPresenceData(json);
+        }
+      } catch { /* network resilience */ }
+    };
 
-    // Pulse heartbeat every 4 seconds to maintain cross-browser presence live (< 25s server TTL)
-    const interval = setInterval(() => {
-      syncServerPresence();
-    }, 4000);
+    // Fire immediately on mount
+    postHeartbeat();
+    pollPresence();
 
-    // Instant same-browser tab notification
+    // POST every 4 s to keep this user's D1 record fresh (TTL = 45 s)
+    const heartbeatInterval = setInterval(postHeartbeat, 4000);
+
+    // GET every 5 s to pull other users' presence updates from D1
+    const pollInterval = setInterval(pollPresence, 5000);
+
+    // BroadcastChannel — instant same-browser-session updates
     if (bc) {
       bc.onmessage = (event) => {
         const data = event.data;
-        if (data && (data.userId || data.email)) {
-          if (data.status === 'OFFLINE') {
-            if (data.userId) setOnlineUserIds((prev) => { const n = new Set(prev); n.delete(data.userId); return n; });
-            if (data.email) setOnlineEmails((prev) => { const n = new Set(prev); n.delete(data.email.toLowerCase()); return n; });
-          } else {
-            if (data.userId) setOnlineUserIds((prev) => new Set([...prev, data.userId]));
-            if (data.email) setOnlineEmails((prev) => new Set([...prev, data.email.toLowerCase()]));
+        if (!data || (!data.userId && !data.email && !data.name)) return;
+        const normalizedEmail = data.email ? String(data.email).toLowerCase().trim() : null;
+        const normalizedName = data.name ? String(data.name).toLowerCase().trim() : null;
+
+        if (data.status === 'OFFLINE') {
+          if (data.userId && data.userId !== currentUser.id) {
+            setOnlineUserIds((prev) => { const n = new Set(prev); n.delete(data.userId); return n; });
           }
+          if (normalizedEmail && normalizedEmail !== currentUser.email?.toLowerCase().trim()) {
+            setOnlineEmails((prev) => { const n = new Set(prev); n.delete(normalizedEmail); return n; });
+          }
+          if (normalizedName && normalizedName !== currentUser.name?.toLowerCase().trim()) {
+            setOnlineNames((prev) => { const n = new Set(prev); n.delete(normalizedName); return n; });
+          }
+          if (data.userId) setUserStatuses((prev) => { const n = { ...prev }; delete n[data.userId]; return n; });
+        } else {
+          if (data.userId) setOnlineUserIds((prev) => new Set([...prev, data.userId]));
+          if (normalizedEmail) setOnlineEmails((prev) => new Set([...prev, normalizedEmail]));
+          if (normalizedName) setOnlineNames((prev) => new Set([...prev, normalizedName]));
+          if (data.userId && data.status) setUserStatuses((prev) => ({ ...prev, [data.userId]: data.status }));
         }
       };
     }
 
-    // Leave beacon on tab close / reload
+    // Refresh instantly when user returns to tab or window gains focus
+    const handleFocus = () => {
+      postHeartbeat();
+      pollPresence();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        postHeartbeat();
+        pollPresence();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Offline beacon on tab close / reload
     const handleUnload = () => {
       try {
-        const payload = JSON.stringify({ userId: currentUser.id, email: currentUser.email, status: 'OFFLINE' });
-        bc?.postMessage({ userId: currentUser.id, email: currentUser.email, status: 'OFFLINE', timestamp: Date.now() });
-        navigator.sendBeacon('/api/presence', payload);
+        bc?.postMessage({
+          userId: currentUser.id,
+          email: currentUser.email?.toLowerCase().trim(),
+          name: currentUser.name,
+          status: 'OFFLINE',
+          timestamp: Date.now(),
+        });
+        navigator.sendBeacon(
+          '/api/presence',
+          JSON.stringify({
+            userId: currentUser.id,
+            email: currentUser.email?.toLowerCase().trim(),
+            name: currentUser.name,
+            status: 'OFFLINE',
+          })
+        );
       } catch {}
     };
 
@@ -158,12 +239,13 @@ export function Header({
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      clearInterval(heartbeatInterval);
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleUnload);
       handleUnload();
-      try {
-        bc?.close();
-      } catch {}
+      try { bc?.close(); } catch {}
     };
   }, [currentUser.id, currentUser.name, currentUser.email, presenceMode]);
 
@@ -172,16 +254,46 @@ export function Header({
     (member: User) => {
       if (member.id === currentUser.id) return true;
       if (onlineUserIds.has(member.id)) return true;
-      if (member.email && onlineEmails.has(member.email.toLowerCase())) return true;
+      if (member.email && onlineEmails.has(member.email.toLowerCase().trim())) return true;
+      if (member.name && onlineNames.has(member.name.toLowerCase().trim())) return true;
       return false;
     },
-    [currentUser.id, onlineUserIds, onlineEmails]
+    [currentUser.id, onlineUserIds, onlineEmails, onlineNames]
+  );
+
+  // Helper to get effective status for a member
+  const getMemberStatus = React.useCallback(
+    (member: User, isOnline: boolean): 'ONLINE' | 'AWAY' | 'OFFLINE' => {
+      if (!isOnline) return 'OFFLINE';
+      if (member.id === currentUser.id) return presenceMode;
+      const idStatus = userStatuses[member.id];
+      if (idStatus) return idStatus;
+      const emailStatus = member.email ? userStatuses[member.email.toLowerCase().trim()] : undefined;
+      if (emailStatus) return emailStatus;
+      const nameStatus = member.name ? userStatuses[member.name.toLowerCase().trim()] : undefined;
+      if (nameStatus) return nameStatus;
+      return 'ONLINE';
+    },
+    [currentUser.id, presenceMode, userStatuses]
   );
 
   // Active approved members for the collaborative workspace facepile
   const approvedMembers = React.useMemo(() => {
     return users.filter((u) => u.status === 'APPROVED');
   }, [users]);
+  // Sorted approved members (Current user first, then active/online members, then offline members)
+  const sortedMembers = React.useMemo(() => {
+    return [...approvedMembers].sort((a, b) => {
+      if (a.id === currentUser.id) return -1;
+      if (b.id === currentUser.id) return 1;
+      const aOnline = isMemberOnline(a);
+      const bOnline = isMemberOnline(b);
+      if (aOnline && !bOnline) return -1;
+      if (!aOnline && bOnline) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [approvedMembers, currentUser.id, isMemberOnline]);
+
   const getTabLabel = (tab: string) => {
     switch (tab) {
       case 'dashboard':
@@ -282,11 +394,9 @@ export function Header({
               title="Click to view real-time member presence"
             >
               <div className="flex items-center -space-x-2 overflow-visible">
-                {approvedMembers.slice(0, 4).map((member) => {
+                {sortedMembers.slice(0, 4).map((member) => {
                   const isOnline = isMemberOnline(member);
-                  const memberStatus = member.id === currentUser.id
-                    ? presenceMode
-                    : (userStatuses[member.id] || (member.email && userStatuses[member.email.toLowerCase()]) || (isOnline ? 'ONLINE' : 'OFFLINE'));
+                  const memberStatus = getMemberStatus(member, isOnline);
 
                   return (
                     <div
@@ -383,14 +493,12 @@ export function Header({
                   </div>
                 </div>
 
-                {/* Member Roster List */}
-                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                  {approvedMembers.map((member) => {
+                {/* Member Roster List (Online users always prioritized at top) */}
+                <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                  {sortedMembers.map((member) => {
                     const isOnline = isMemberOnline(member);
                     const isSelf = member.id === currentUser.id;
-                    const memberStatus = isSelf
-                      ? presenceMode
-                      : (userStatuses[member.id] || (member.email && userStatuses[member.email.toLowerCase()]) || (isOnline ? 'ONLINE' : 'OFFLINE'));
+                    const memberStatus = getMemberStatus(member, isOnline);
 
                     return (
                       <div
