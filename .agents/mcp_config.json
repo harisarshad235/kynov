@@ -1,8 +1,3 @@
 {
-  "mcpServers": {
-    "rea": {
-      "command": "npx",
-      "args": ["-y", "rea-agents@latest", "mcp"]
-    }
-  }
+  "mcpServers": {}
 }
