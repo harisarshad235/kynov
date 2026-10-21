@@ -18,7 +18,7 @@ import { KynovLogo } from '@/components/brand/KynovLogo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kynov.io';
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kynov.harisarshad.site';
 
 export const metadata: Metadata = {
   title: 'Kynov vs. Jira: The Fast, Modern Jira Alternative for Agile Teams',
@@ -33,6 +33,14 @@ export const metadata: Metadata = {
       'Compare speed, sprint tracking, multi-tenancy, and developer experience between Kynov and Atlassian Jira.',
     url: `${siteUrl}/compare/kynov-vs-jira`,
     type: 'article',
+    images: ['/og-image.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Kynov vs. Jira: Fast, Modern Agile Sprint Tracker',
+    description:
+      'Sub-50ms Kanban boards, live sprint backlogs, and multi-tenant corporate workspaces compared to Jira.',
+    images: ['/og-image.png'],
   },
 };
 
@@ -105,15 +113,42 @@ export default function KynovVsJiraPage() {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((f) => ({
-      '@type': 'Question',
-      name: f.q,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: f.a,
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: siteUrl,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Compare',
+            item: `${siteUrl}/compare/kynov-vs-jira`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: 'Kynov vs. Jira',
+            item: `${siteUrl}/compare/kynov-vs-jira`,
+          },
+        ],
       },
-    })),
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: f.a,
+          },
+        })),
+      },
+    ],
   };
 
   return (

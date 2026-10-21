@@ -1,15 +1,22 @@
-# Kynov
+# Kynov — Next-Gen Agile Engine & Sprint Tracker
 
-> Agile sprint tracking and workspace management web application.
+> High-performance Agile velocity engine, sprint tracking workspace, and multi-tenant project governance running on Cloudflare Edge.
 
 ## Overview
-Kynov is a modern sprint planner and task workspace designed for rapid product cycles, sprint swimlanes, and backlog issue filtering.
+Kynov is a modern alternative to Atlassian Jira and Linear built for high-output engineering teams. It provides sub-50ms Kanban board interactions, live sprint backlogs, velocity sparklines, multi-tenant organization workspaces, and Git PR tracking.
 
-## Core Features
-- Sprint Planning and Kanban Swimlanes
-- Backlog Issue Filtering and Priority Management
-- Workspace Collaboration and Member Roles
+## Core Capabilities
+- **Sub-50ms Board Latency**: Optimistic state updates and distributed Cloudflare D1 persistence.
+- **Sprint & Backlog Planning**: Velocity tracking, point estimation, and burndown analytics.
+- **Multi-Tenant Corporate Governance**: Complete tenant isolation, granular RBAC, and multi-project support.
+- **Integrated Knowledge Base**: Built-in architecture decision records (ADRs), PRDs, and team runbooks.
 
-## Links & Endpoints
-- [Documentation](/docs): Project architecture and guides. (2K tokens)
-- [App Dashboard](/board): Interactive sprint board. (5K tokens)
+## Key URLs & Documentation
+- [Home & Feature Showcase](https://kynov.harisarshad.site/): Public landing page with live interactive board previews. (3K tokens)
+- [Kynov vs. Jira Comparison](https://kynov.harisarshad.site/compare/kynov-vs-jira): Architectural and feature comparison vs Atlassian Jira. (4K tokens)
+- [Kynov vs. Linear Comparison](https://kynov.harisarshad.site/compare/kynov-vs-linear): Enterprise governance and feature comparison vs Linear. (4K tokens)
+- [Architecture & Edge System](https://kynov.harisarshad.site/docs/architecture.md): Distributed edge computing design and security model. (2K tokens)
+- [REST & Agent API Reference](https://kynov.harisarshad.site/docs/api.md): Endpoints for sprints, task cards, and agent integrations. (2K tokens)
+- [Operations Manual](https://kynov.harisarshad.site/docs/USER_OPERATIONS_MANUAL.md): Complete user operations and administrative guide. (8K tokens)
+- [Terms of Service](https://kynov.harisarshad.site/terms): Legal agreement and acceptable use policy. (3K tokens)
+- [Privacy Policy](https://kynov.harisarshad.site/privacy): GDPR, CCPA, and telemetry privacy commitments. (3K tokens)

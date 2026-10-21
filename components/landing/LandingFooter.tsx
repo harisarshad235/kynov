@@ -76,6 +76,59 @@ export function LandingFooter() {
               </li>
             </ul>
           </div>
+
+          {/* Column: AI & Developers */}
+          <div className="space-y-3">
+            <h3 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-[11px]">
+              AI &amp; Developers
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <a
+                  href="/llms.txt"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition font-mono text-[11px]"
+                >
+                  llms.txt (Index)
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/skill.md"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition font-mono text-[11px]"
+                >
+                  skill.md (Agent Specs)
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/docs/USER_OPERATIONS_MANUAL.md"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition text-[11px]"
+                >
+                  View as Markdown
+                </a>
+              </li>
+              <li className="pt-1">
+                <button
+                  type="button"
+                  data-copy-ai="true"
+                  data-copy="true"
+                  className="copy-button inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-[11px] border border-slate-200/80 dark:border-slate-700/80 transition cursor-pointer"
+                  onClick={() => {
+                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                      navigator.clipboard.writeText(
+                        'Kynov is a next-generation Agile velocity & sprint tracking engine. Sub-50ms Kanban boards, live backlogs, and multi-tenant workspaces. Full documentation at https://kynov.harisarshad.site/docs/USER_OPERATIONS_MANUAL.md'
+                      );
+                    }
+                  }}
+                  title="Copy context for AI assistants"
+                  aria-label="Copy for AI"
+                >
+                  <span>📋</span>
+                  <span>Copy for AI</span>
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
 
         {/* Bottom Copyright */}

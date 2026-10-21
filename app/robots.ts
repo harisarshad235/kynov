@@ -9,12 +9,14 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: [
           '/',
-          '/pricing',
           '/compare/kynov-vs-jira',
           '/compare/kynov-vs-linear',
           '/login',
           '/signup',
+          '/terms',
+          '/privacy',
           '/llms.txt',
+          '/skill.md',
         ],
         disallow: [
           '/dashboard',
@@ -24,7 +26,6 @@ export default function robots(): MetadataRoute.Robots {
           '/awaiting-approval/*',
           '/settings',
           '/settings/*',
-          '/*/[orgSlug]/*',
         ],
       },
       {
@@ -40,14 +41,17 @@ export default function robots(): MetadataRoute.Robots {
         ],
         allow: [
           '/',
-          '/pricing',
           '/compare/kynov-vs-jira',
           '/compare/kynov-vs-linear',
+          '/terms',
+          '/privacy',
           '/llms.txt',
+          '/skill.md',
         ],
         disallow: [
           '/api/*',
           '/dashboard/*',
+          '/awaiting-approval/*',
         ],
       },
     ],

@@ -94,6 +94,12 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/manifest.webmanifest",
+  other: {
+    'ai:token-count': '2400',
+    'token-count': '2400',
+    'ai:page-type': 'productivity-tool',
+    'page-type': 'productivity-tool',
+  },
 };
 
 const jsonLd = {

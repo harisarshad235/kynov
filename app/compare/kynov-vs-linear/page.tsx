@@ -18,7 +18,7 @@ import { KynovLogo } from '@/components/brand/KynovLogo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kynov.io';
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kynov.harisarshad.site';
 
 export const metadata: Metadata = {
   title: 'Kynov vs. Linear: The Enterprise-Ready Agile Platform for High-Velocity Teams',
@@ -33,6 +33,14 @@ export const metadata: Metadata = {
       'Compare multi-tenancy, sprint velocity, documentation engines, and governance between Kynov and Linear.',
     url: `${siteUrl}/compare/kynov-vs-linear`,
     type: 'article',
+    images: ['/og-image.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Kynov vs. Linear: Enterprise-Ready Agile Platform',
+    description:
+      'Compare multi-tenancy, sprint velocity, documentation engines, and governance between Kynov and Linear.',
+    images: ['/og-image.png'],
   },
 };
 
@@ -99,15 +107,42 @@ export default function KynovVsLinearPage() {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((f) => ({
-      '@type': 'Question',
-      name: f.q,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: f.a,
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: siteUrl,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Compare',
+            item: `${siteUrl}/compare/kynov-vs-linear`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: 'Kynov vs. Linear',
+            item: `${siteUrl}/compare/kynov-vs-linear`,
+          },
+        ],
       },
-    })),
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: f.a,
+          },
+        })),
+      },
+    ],
   };
 
   return (

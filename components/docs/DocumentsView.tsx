@@ -9,13 +9,11 @@ import {
   FolderTree,
   FileSpreadsheet,
   Layers,
-  Sparkles,
   BookOpen,
   Download,
 } from 'lucide-react';
 import { FullDocument, User } from '@/lib/types';
 import { DocExplorer } from './DocExplorer';
-import { GlassFolderCardsDemo } from '@/components/ui/glass-folder-demo';
 
 interface DocumentsViewProps {
   docs: FullDocument[];
@@ -36,7 +34,7 @@ export function DocumentsView({
   onCreateDoc,
   isViewer,
 }: DocumentsViewProps) {
-  const [activeTab, setActiveTab] = useState<'explorer' | 'glass' | 'classic'>('explorer');
+  const [activeTab, setActiveTab] = useState<'explorer' | 'classic'>('explorer');
   const [docCategory, setDocCategory] = useState<string>('ALL');
 
   const categories = useMemo(() => {
@@ -96,17 +94,7 @@ export function DocumentsView({
               <span>Asset Hub</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab('glass')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'glass'
-                  ? 'bg-white text-indigo-950 shadow-md scale-102'
-                  : 'text-white/70 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Glass Folders</span>
-            </button>
+
 
             <button
               onClick={() => setActiveTab('classic')}
@@ -130,28 +118,7 @@ export function DocumentsView({
         </div>
       )}
 
-      {/* TAB 2: Glass Folder Cards (21st.dev / shadcn component showcase) */}
-      {activeTab === 'glass' && (
-        <div className="animate-fade-in space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                3D Interactive Glass Folders
-              </h3>
-              <p className="text-xs text-slate-500">
-                Self-contained liquid-glass folders with domain-warped noise surfaces and parallax motion.
-              </p>
-            </div>
-            <button
-              onClick={() => setActiveTab('explorer')}
-              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
-            >
-              Back to Explorer
-            </button>
-          </div>
-          <GlassFolderCardsDemo />
-        </div>
-      )}
+
 
       {/* TAB 3: Classic Flat Document Cards */}
       {activeTab === 'classic' && (
