@@ -786,9 +786,9 @@
     "semantic_hash": ""
   },
   ".agents/mcp_config.json": {
-    "mtime": 1792400266.9732769,
-    "seen": 1792400288.297378,
-    "ast_hash": "6e5fd763daf35aa9e66806c40dcfc490",
+    "mtime": 1792587668.7449398,
+    "seen": 1792587691.3288891,
+    "ast_hash": "1a6618c9486afd375cdf1135b5b2acc4",
     "semantic_hash": ""
   },
   "agent-permissions.json": {
