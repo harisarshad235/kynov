@@ -32,14 +32,14 @@
   "r2_buckets": [
     {
       "binding": "ATTACHMENTS",
-      "bucket_name": "apextrack-attachments"
+      "bucket_name": "kynov-attachments"
     }
   ],
   "previews": {
     "r2_buckets": [
       {
         "binding": "ATTACHMENTS",
-        "bucket_name": "apextrack-attachments"
+        "bucket_name": "kynov-attachments"
       }
     ],
     "d1_databases": [
@@ -71,7 +71,7 @@
       "r2_buckets": [
         {
           "binding": "ATTACHMENTS",
-          "bucket_name": "apextrack-attachments"
+          "bucket_name": "kynov-attachments"
         }
       ],
       "vars": {
