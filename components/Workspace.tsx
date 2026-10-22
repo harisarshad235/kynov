@@ -1249,10 +1249,10 @@ export function Workspace({
 
           {activeTab === 'metrics' && (
             <MetricsReportView
-              issues={optimisticIssues}
+              issues={projectIssues}
               users={liveUsers}
-              metrics={initialMetrics}
-              sprints={optimisticSprints}
+              metrics={projectMetrics}
+              sprints={activeProjectSprints}
             />
           )}
         </div>

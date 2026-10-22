@@ -1,15 +1,14 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
-  LineChart,
-  Line,
   BarChart,
   Bar,
   AreaChart,
   Area,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -22,15 +21,11 @@ import {
   TrendingDown,
   Layers,
   Calendar,
-  CheckCircle2,
-  Clock,
-  Sparkles,
   ArrowUpRight,
   GitPullRequest,
-  AlertTriangle,
-  ShieldCheck,
   Zap,
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { FullIssue, User, WorkspaceMetrics, Sprint } from '@/lib/types';
 
 interface MetricsReportViewProps {
@@ -48,25 +43,61 @@ export function MetricsReportView({
   metrics,
   sprints = [],
 }: MetricsReportViewProps) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const isDark = mounted ? resolvedTheme === 'dark' : false;
+
   const [activeReportTab, setActiveReportTab] = useState<'burndown' | 'velocity' | 'cfd'>('burndown');
+
+  // Deduplicate and sort sprints chronologically
+  const sortedSprints = useMemo(() => {
+    const map = new Map<string, Sprint>();
+    sprints.forEach((s) => map.set(s.id, s));
+    const unique = Array.from(map.values());
+
+    return unique.sort((a, b) => {
+      const startA = a.startDate || '';
+      const startB = b.startDate || '';
+      if (startA && startB) return startA.localeCompare(startB);
+      const numA = parseInt(a.name.match(/\d+/)?.[0] || '0', 10);
+      const numB = parseInt(b.name.match(/\d+/)?.[0] || '0', 10);
+      if (numA && numB) return numA - numB;
+      return a.name.localeCompare(b.name);
+    });
+  }, [sprints]);
 
   // Active / selected sprint for burndown
   const activeOrLatestSprint = useMemo(() => {
     return (
-      sprints.find((s) => s.state === 'active') ||
-      sprints.find((s) => s.state === 'upcoming') ||
-      sprints[0] ||
+      sortedSprints.find((s) => s.state === 'active' || (s as any).status === 'ACTIVE') ||
+      sortedSprints.find((s) => s.state === 'upcoming' || (s as any).status === 'PLANNED') ||
+      sortedSprints[0] ||
       null
     );
-  }, [sprints]);
+  }, [sortedSprints]);
 
   const [selectedSprintId, setSelectedSprintId] = useState<string>(
     activeOrLatestSprint?.id || ''
   );
 
+  // Sync selected sprint when sprints change (e.g. project switch)
+  useEffect(() => {
+    if (activeOrLatestSprint) {
+      setSelectedSprintId((prev) => {
+        const stillExists = sortedSprints.some((s) => s.id === prev);
+        return stillExists && prev ? prev : activeOrLatestSprint.id;
+      });
+    } else {
+      setSelectedSprintId('');
+    }
+  }, [sortedSprints, activeOrLatestSprint]);
+
   const selectedSprint = useMemo(() => {
-    return sprints.find((s) => s.id === selectedSprintId) || activeOrLatestSprint;
-  }, [sprints, selectedSprintId, activeOrLatestSprint]);
+    return sortedSprints.find((s) => s.id === selectedSprintId) || activeOrLatestSprint;
+  }, [sortedSprints, selectedSprintId, activeOrLatestSprint]);
 
   // Burndown Data Calculation
   const burndownData = useMemo(() => {
@@ -82,10 +113,13 @@ export function MetricsReportView({
     );
 
     const doneItems = sprintIssues
-      .filter((i) => i.status.toLowerCase() === 'done')
+      .filter((i) => {
+        const st = (i.status || '').toLowerCase();
+        return st === 'done' || st === 'completed' || st === 'closed' || st === 'shipped';
+      })
       .map((i) => {
         const historyDone = (i.history || [])
-          .filter((h) => h.field === 'status' && h.toValue?.toLowerCase() === 'done')
+          .filter((h) => h.field === 'status' && (h.toValue || '').toLowerCase() === 'done')
           .map((h) => new Date(h.createdAt).getTime());
         return {
           pts: Number(i.storyPoints) || 0,
@@ -119,28 +153,31 @@ export function MetricsReportView({
           injected: injectedSoFar > 0 ? injectedSoFar : null,
         });
       } else {
-        const burnedSoFar = doneItems
+        const completedSoFar = doneItems
           .filter((item) => item.at <= dayEnd + DAY_MS - 1)
           .reduce((sum, item) => sum + item.pts, 0);
 
-        const actual = Math.max(0, totalCommitted - burnedSoFar);
+        const currentScope = totalCommitted + injectedSoFar;
+        const actualRemaining = Math.max(0, currentScope - completedSoFar);
+
         result.push({
           day: `Day ${d}`,
           date: dateStr,
           ideal,
-          actual,
+          actual: actualRemaining,
           injected: injectedSoFar > 0 ? injectedSoFar : null,
         });
       }
     }
 
     return result;
-  }, [issues, selectedSprint]);
+  }, [selectedSprint, issues]);
 
-  // Scope Shock & Creep Analytics
+  // Scope Shock Analysis
   const scopeShockSummary = useMemo(() => {
-    if (!selectedSprint?.startDate)
+    if (!selectedSprint?.startDate) {
       return { initialCommitted: 0, injectedPoints: 0, injectedCount: 0 };
+    }
     const start = new Date(selectedSprint.startDate).getTime();
     const sprintIssues = issues.filter((i) => i.sprintId === selectedSprint.id);
 
@@ -223,11 +260,14 @@ export function MetricsReportView({
 
   // Velocity Report Data (Committed vs Completed story points across historical sprints)
   const velocityData = useMemo(() => {
-    return sprints.map((s) => {
+    return sortedSprints.map((s) => {
       const sIssues = issues.filter((i) => i.sprintId === s.id);
       const committed = sIssues.reduce((sum, i) => sum + (Number(i.storyPoints) || 0), 0);
       const completed = sIssues
-        .filter((i) => i.status.toLowerCase() === 'done')
+        .filter((i) => {
+          const st = (i.status || '').toLowerCase();
+          return st === 'done' || st === 'completed' || st === 'closed' || st === 'shipped';
+        })
         .reduce((sum, i) => sum + (Number(i.storyPoints) || 0), 0);
 
       return {
@@ -237,7 +277,7 @@ export function MetricsReportView({
         state: s.state,
       };
     });
-  }, [sprints, issues]);
+  }, [sortedSprints, issues]);
 
   const rollingVelocity = useMemo(() => {
     if (velocityData.length === 0) return 0;
@@ -265,7 +305,7 @@ export function MetricsReportView({
 
       for (const item of existingIssues) {
         const lower = item.status.toLowerCase();
-        if (lower === 'done' || lower === 'closed') {
+        if (lower === 'done' || lower === 'closed' || lower === 'completed') {
           if (new Date(item.updatedAt).getTime() <= dayEndMs) {
             done++;
           } else {
@@ -289,28 +329,43 @@ export function MetricsReportView({
     return result;
   }, [issues]);
 
+  // Adaptive theme colors for recharts
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
+  const axisColor = isDark ? '#71717a' : '#94a3b8';
+  const tickColor = isDark ? '#a1a1aa' : '#64748b';
+  const tooltipBg = isDark ? '#0f172a' : '#ffffff';
+  const tooltipBorder = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+  const tooltipText = isDark ? '#f4f4f5' : '#0f172a';
+  const idealLineColor = isDark ? '#71717a' : '#94a3b8';
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-[#111723] border border-[#263348]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-blue-400" />
-            <h2 className="text-lg font-bold text-white tracking-tight">Agile Analytics & Velocity Reports</h2>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <BarChart3 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                Agile Analytics & Velocity Reports
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Enterprise burndown burn-rate, historical velocity variance, and cumulative flow trends.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Enterprise burndown burn-rate, historical velocity variance, and cumulative flow trends.
-          </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#090d16] border border-[#263348]">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
           <button
             onClick={() => setActiveReportTab('burndown')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
               activeReportTab === 'burndown'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <TrendingDown className="w-3.5 h-3.5" />
@@ -322,7 +377,7 @@ export function MetricsReportView({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
               activeReportTab === 'velocity'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5" />
@@ -334,7 +389,7 @@ export function MetricsReportView({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
               activeReportTab === 'cfd'
                 ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -345,43 +400,67 @@ export function MetricsReportView({
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-sm">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Total Points</span>
+        {/* Total Points */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Total Points
+          </span>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-zinc-100 font-mono tracking-tight text-3xl font-semibold">{metrics.totalPoints}</span>
-            <span className="text-xs text-zinc-400 font-mono bg-zinc-800/60 border border-zinc-700/50 px-2 py-0.5 rounded-full">100% committed</span>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-sm">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Points Burned</span>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-zinc-100 font-mono tracking-tight text-3xl font-semibold">{metrics.completedPoints}</span>
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{metrics.completionRate}% rate</span>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-sm">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Team Velocity Average</span>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="text-zinc-100 font-mono tracking-tight text-3xl font-semibold">
-              {rollingVelocity} <span className="text-xl font-normal text-zinc-400">pts</span>
+            <span className="text-slate-900 dark:text-zinc-100 font-mono tracking-tight text-3xl font-semibold">
+              {metrics.totalPoints}
             </span>
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-0.5">
-              <ArrowUpRight className="w-3 h-3" /> rolling 7
+            <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              {metrics.total} items
             </span>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-sm">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Active Work items</span>
+        {/* Points Burned */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Points Burned
+          </span>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-zinc-100 font-mono tracking-tight text-3xl font-semibold">{metrics.inProgress}</span>
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${
-              metrics.openBugs > 0
-                ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/50'
-            }`}>
+            <span className="text-slate-900 dark:text-zinc-100 font-mono tracking-tight text-3xl font-semibold">
+              {metrics.completedPoints}
+            </span>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              {metrics.completionRate}% rate
+            </span>
+          </div>
+        </div>
+
+        {/* Team Velocity Average */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Team Velocity Average
+          </span>
+          <div className="flex items-baseline justify-between mt-2">
+            <span className="text-slate-900 dark:text-zinc-100 font-mono tracking-tight text-3xl font-semibold">
+              {rollingVelocity} <span className="text-xl font-normal text-slate-400 dark:text-zinc-400">pts</span>
+            </span>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center gap-0.5">
+              <ArrowUpRight className="w-3 h-3" /> rolling
+            </span>
+          </div>
+        </div>
+
+        {/* Active Work Items */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Active Work Items
+          </span>
+          <div className="flex items-baseline justify-between mt-2">
+            <span className="text-slate-900 dark:text-zinc-100 font-mono tracking-tight text-3xl font-semibold">
+              {metrics.inProgress}
+            </span>
+            <span
+              className={`text-xs font-medium px-2 py-0.5 rounded-full border ${
+                metrics.openBugs > 0
+                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+              }`}
+            >
               {metrics.openBugs} open bugs
             </span>
           </div>
@@ -389,32 +468,32 @@ export function MetricsReportView({
       </div>
 
       {/* Main Chart Card */}
-      <div className="p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-sm">
+      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
         {/* TAB 1: Burndown Chart */}
         {activeReportTab === 'burndown' && (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                   Sprint Burndown Chart
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Ideal Burn Rate (dashed) vs. Actual Burn (solid blue) across active sprint days.
                 </p>
               </div>
 
               {/* Sprint selector */}
-              {sprints.length > 0 && (
+              {sortedSprints.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-400" />
                   <select
                     value={selectedSprintId}
                     onChange={(e) => setSelectedSprintId(e.target.value)}
-                    className="bg-zinc-950/60 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                    className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-blue-500"
                   >
-                    {sprints.map((s) => (
-                      <option key={s.id} value={s.id} className="bg-zinc-900 text-zinc-200">
-                        {s.name} ({s.state})
+                    {sortedSprints.map((s) => (
+                      <option key={s.id} value={s.id} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-zinc-200">
+                        {s.name} ({(s as any).status || s.state})
                       </option>
                     ))}
                   </select>
@@ -423,8 +502,9 @@ export function MetricsReportView({
             </div>
 
             {burndownData.length === 0 ? (
-              <div className="h-72 flex items-center justify-center border border-dashed border-zinc-800/80 rounded-xl text-zinc-500 text-xs">
-                No active sprint with start and end dates available to plot a burndown.
+              <div className="h-72 flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-zinc-800/80 rounded-xl text-slate-500 dark:text-zinc-400 text-xs gap-1.5 p-6 text-center">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">No active sprint schedule available</span>
+                <span>Select or start an active sprint with valid start and end dates to plot a live burndown curve.</span>
               </div>
             ) : (
               <div className="h-80 w-full pt-4">
@@ -432,33 +512,35 @@ export function MetricsReportView({
                   <ComposedChart data={burndownData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="burnGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.15} />
-                        <stop offset="50%" stopColor="#3b82f6" stopOpacity={0.05} />
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.00} />
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={isDark ? 0.2 : 0.15} />
+                        <stop offset="50%" stopColor="#3b82f6" stopOpacity={isDark ? 0.08 : 0.05} />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
                     <XAxis
                       dataKey="date"
-                      stroke="#71717a"
-                      tick={{ fontSize: 11, fill: '#71717a' }}
-                      axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+                      stroke={axisColor}
+                      tick={{ fontSize: 11, fill: tickColor }}
+                      axisLine={{ stroke: gridColor }}
                       tickLine={false}
                     />
                     <YAxis
-                      stroke="#71717a"
-                      tick={{ fontSize: 11, fill: '#71717a' }}
-                      axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+                      stroke={axisColor}
+                      tick={{ fontSize: 11, fill: tickColor }}
+                      axisLine={{ stroke: gridColor }}
                       tickLine={false}
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#090d16',
-                        borderColor: 'rgba(255,255,255,0.1)',
+                        backgroundColor: tooltipBg,
+                        borderColor: tooltipBorder,
                         borderRadius: '0.75rem',
                         fontSize: '12px',
-                        color: '#f4f4f5',
-                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.6)',
+                        color: tooltipText,
+                        boxShadow: isDark
+                          ? '0 10px 25px -5px rgba(0, 0, 0, 0.6)'
+                          : '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
                       }}
                       itemStyle={{ padding: '2px 0' }}
                     />
@@ -477,7 +559,7 @@ export function MetricsReportView({
                       type="monotone"
                       dataKey="ideal"
                       name="Ideal Burn (pts)"
-                      stroke="#71717a"
+                      stroke={idealLineColor}
                       strokeDasharray="4 4"
                       strokeWidth={1.5}
                       dot={false}
@@ -512,29 +594,29 @@ export function MetricsReportView({
             {/* Differentiators: Scope Shock Attribution & Code-Truth Stagnation Radar */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
               {/* Panel 1: Scope Shock Attribution */}
-              <div className="p-3.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2">
+              <div className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/80 dark:border-zinc-800/80 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
+                    <Zap className="w-4 h-4 text-amber-500" />
+                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">
                       Scope Shock Attribution
                     </span>
                   </div>
                   {scopeShockSummary.injectedPoints > 0 ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                       +{scopeShockSummary.injectedPoints} pts injected
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                       Scope Locked
                     </span>
                   )}
                 </div>
 
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
+                <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed">
                   {scopeShockSummary.injectedPoints > 0 ? (
                     <>
-                      <span className="text-amber-300 font-semibold">
+                      <span className="text-amber-600 dark:text-amber-300 font-semibold">
                         {scopeShockSummary.injectedPoints} pts ({scopeShockSummary.injectedCount} issues)
                       </span>{' '}
                       were injected after sprint commitment. Any deviation from the ideal burn trajectory is driven by unplanned stakeholder additions, preserving team velocity integrity.
@@ -544,36 +626,36 @@ export function MetricsReportView({
                   )}
                 </p>
 
-                <div className="flex items-center gap-4 pt-1 border-t border-zinc-800/60 text-[11px] font-mono text-zinc-400">
-                  <span>Initial: <strong className="text-zinc-200">{scopeShockSummary.initialCommitted} pts</strong></span>
-                  <span>Injected: <strong className="text-amber-400">+{scopeShockSummary.injectedPoints} pts</strong></span>
+                <div className="flex items-center gap-4 pt-1 border-t border-slate-200 dark:border-zinc-800/60 text-[11px] font-mono text-slate-500 dark:text-zinc-400">
+                  <span>Initial: <strong className="text-slate-800 dark:text-zinc-200">{scopeShockSummary.initialCommitted} pts</strong></span>
+                  <span>Injected: <strong className="text-amber-600 dark:text-amber-400">+{scopeShockSummary.injectedPoints} pts</strong></span>
                 </div>
               </div>
 
               {/* Panel 2: Code-Truth PR Review Bottleneck Pulse */}
-              <div className="p-3.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2">
+              <div className="p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/80 dark:border-zinc-800/80 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <GitPullRequest className="w-4 h-4 text-blue-400" />
-                    <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
+                    <GitPullRequest className="w-4 h-4 text-blue-500" />
+                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wider">
                       Code-Truth Review Stagnation
                     </span>
                   </div>
                   {codeTruthMetrics.stalledCount > 0 ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
                       {codeTruthMetrics.stalledCount} PRs Stalled
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                       {codeTruthMetrics.totalReviewPoints} pts in Review
                     </span>
                   )}
                 </div>
 
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
+                <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed">
                   {codeTruthMetrics.stalledCount > 0 ? (
                     <>
-                      <span className="text-rose-400 font-semibold">{codeTruthMetrics.stalledCount} pull request(s)</span>{' '}
+                      <span className="text-rose-600 dark:text-rose-400 font-semibold">{codeTruthMetrics.stalledCount} pull request(s)</span>{' '}
                       have been awaiting review for over 24 hours ({codeTruthMetrics.stalledPoints} pts at risk). Real progress is bottlenecked by code review, not development.
                     </>
                   ) : (
@@ -582,11 +664,11 @@ export function MetricsReportView({
                 </p>
 
                 {codeTruthMetrics.stalledPRs.length > 0 && (
-                  <div className="space-y-1 pt-1 border-t border-zinc-800/60">
+                  <div className="space-y-1 pt-1 border-t border-slate-200 dark:border-zinc-800/60">
                     {codeTruthMetrics.stalledPRs.slice(0, 2).map((pr, idx) => (
                       <div key={idx} className="flex items-center justify-between text-[10px] font-mono">
-                        <span className="text-zinc-300 truncate max-w-[180px]">{pr.issueKey}: {pr.title}</span>
-                        <span className="text-rose-400 font-bold">{pr.prName} ({pr.ageHours}h lag)</span>
+                        <span className="text-slate-700 dark:text-zinc-300 truncate max-w-[180px]">{pr.issueKey}: {pr.title}</span>
+                        <span className="text-rose-600 dark:text-rose-400 font-bold">{pr.prName} ({pr.ageHours}h lag)</span>
                       </div>
                     ))}
                   </div>
@@ -600,33 +682,36 @@ export function MetricsReportView({
         {activeReportTab === 'velocity' && (
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                 Sprint Velocity Chart
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Story Points Committed vs. Completed per sprint, with rolling velocity reference line.
               </p>
             </div>
 
             {velocityData.length === 0 ? (
-              <div className="h-72 flex items-center justify-center border border-dashed border-zinc-800/80 rounded-xl text-zinc-500 text-xs">
-                No sprint history available to calculate velocity.
+              <div className="h-72 flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-zinc-800/80 rounded-xl text-slate-500 dark:text-zinc-400 text-xs gap-1.5 p-6 text-center">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">No sprint iterations found</span>
+                <span>Complete planned sprints in this project to generate historical sprint velocity tracking.</span>
               </div>
             ) : (
               <div className="h-80 w-full pt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={velocityData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                    <XAxis dataKey="name" stroke="#71717a" tick={{ fontSize: 11, fill: '#71717a' }} />
-                    <YAxis stroke="#71717a" tick={{ fontSize: 11, fill: '#71717a' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                    <XAxis dataKey="name" stroke={axisColor} tick={{ fontSize: 11, fill: tickColor }} />
+                    <YAxis stroke={axisColor} tick={{ fontSize: 11, fill: tickColor }} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#090d16',
-                        borderColor: 'rgba(255,255,255,0.1)',
+                        backgroundColor: tooltipBg,
+                        borderColor: tooltipBorder,
                         borderRadius: '0.75rem',
                         fontSize: '12px',
-                        color: '#f4f4f5',
-                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.6)',
+                        color: tooltipText,
+                        boxShadow: isDark
+                          ? '0 10px 25px -5px rgba(0, 0, 0, 0.6)'
+                          : '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
                       }}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
@@ -649,10 +734,10 @@ export function MetricsReportView({
         {activeReportTab === 'cfd' && (
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                 Cumulative Flow Diagram (CFD)
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Work-in-progress distribution across workflow categories over the past 14 days.
               </p>
             </div>
@@ -660,17 +745,19 @@ export function MetricsReportView({
             <div className="h-80 w-full pt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={cfdData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                  <XAxis dataKey="date" stroke="#71717a" tick={{ fontSize: 11, fill: '#71717a' }} />
-                  <YAxis stroke="#71717a" tick={{ fontSize: 11, fill: '#71717a' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                  <XAxis dataKey="date" stroke={axisColor} tick={{ fontSize: 11, fill: tickColor }} />
+                  <YAxis stroke={axisColor} tick={{ fontSize: 11, fill: tickColor }} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#090d16',
-                      borderColor: 'rgba(255,255,255,0.1)',
+                      backgroundColor: tooltipBg,
+                      borderColor: tooltipBorder,
                       borderRadius: '0.75rem',
                       fontSize: '12px',
-                      color: '#f4f4f5',
-                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.6)',
+                      color: tooltipText,
+                      boxShadow: isDark
+                        ? '0 10px 25px -5px rgba(0, 0, 0, 0.6)'
+                        : '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
                     }}
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />

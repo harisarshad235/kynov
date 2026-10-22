@@ -31,7 +31,12 @@ export default async function ProjectReportsPage({
 
   const currentProject = projects.find((p) => p.id === projectId) || projects[0];
   const projectIssues = issues.filter((i) => !i.projectId || i.projectId === projectId);
-  const projectSprints = sprints;
+  const projectSprints = sprints.filter((s) => {
+    const pId = (s as any).projectId || (s as any).project_id;
+    if (pId) return pId === projectId;
+    const sIssues = projectIssues.filter((i) => i.sprintId === s.id);
+    return sIssues.length > 0;
+  });
 
   return (
     <div className="min-h-screen bg-[#09090b] text-slate-100 p-4 md:p-8 space-y-6">
