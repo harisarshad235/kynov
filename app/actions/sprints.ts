@@ -54,6 +54,13 @@ export async function ensureSprintTables(dbInstance?: ReturnType<typeof getDb>) 
     `);
   } catch {}
 
+  // Compound partial unique index enforcing single active sprint per project
+  try {
+    await db.run(sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS unique_active_sprint_per_project ON sprints (project_id) WHERE status = 'ACTIVE' OR status = 'active'
+    `);
+  } catch {}
+
   try {
     await db.run(sql`
       UPDATE sprints
@@ -65,14 +72,6 @@ export async function ensureSprintTables(dbInstance?: ReturnType<typeof getDb>) 
       WHERE project_id IS NULL AND EXISTS (
         SELECT 1 FROM issues WHERE issues.sprint_id = sprints.id AND issues.project_id IS NOT NULL
       )
-    `);
-  } catch {}
-
-  try {
-    await db.run(sql`
-      UPDATE sprints
-      SET project_id = 'proj-apex'
-      WHERE project_id IS NULL
     `);
   } catch {}
 
@@ -208,7 +207,7 @@ export async function createSprintAction({
 
     // Fetch existing sprints to determine next sequential number and date range
     const allSprints = projectId
-      ? await db.all<Sprint>(sql`SELECT * FROM sprints WHERE project_id = ${projectId} OR project_id IS NULL`)
+      ? await db.all<Sprint>(sql`SELECT * FROM sprints WHERE project_id = ${projectId}`)
       : await db.all<Sprint>(sql`SELECT * FROM sprints`);
 
     let maxNum = 0;
@@ -331,12 +330,14 @@ export async function deleteSprintAction({
  */
 export async function startSprintAction({
   sprintId,
+  projectId,
   name,
   startDate,
   endDate,
   goal,
 }: {
   sprintId: string;
+  projectId?: string;
   name?: string;
   startDate?: string;
   endDate?: string;
@@ -356,12 +357,35 @@ export async function startSprintAction({
       return { success: false, error: 'Sprint not found.' };
     }
 
-    const projectId = (targetSprint as any).project_id || 'proj-apex';
+    // Determine target project ID with robust fallback cascade:
+    // 1. Explicitly provided projectId
+    // 2. targetSprint.projectId or (targetSprint as any).project_id
+    // 3. Project ID derived from issues linked to this sprint
+    let targetProjectId =
+      projectId?.trim() ||
+      targetSprint.projectId ||
+      (targetSprint as any).project_id ||
+      null;
 
-    // Single-Active Constraint: verify no other sprint is currently ACTIVE in this project
+    if (!targetProjectId) {
+      const issueWithProject = await db.all<{ project_id: string }>(sql`
+        SELECT project_id FROM issues
+        WHERE sprint_id = ${sprintId} AND project_id IS NOT NULL AND project_id != ''
+        LIMIT 1
+      `);
+      if (issueWithProject && issueWithProject[0]?.project_id) {
+        targetProjectId = issueWithProject[0].project_id;
+      }
+    }
+
+    if (!targetProjectId) {
+      targetProjectId = 'proj-apex';
+    }
+
+    // Single-Active Constraint: strictly scoped by project_id
     const activeSprints = await db.all<Sprint>(sql`
       SELECT * FROM sprints
-      WHERE (project_id = ${projectId} OR project_id IS NULL)
+      WHERE project_id = ${targetProjectId}
         AND (status = 'ACTIVE' OR state = 'active')
         AND id != ${sprintId}
       LIMIT 1
@@ -370,7 +394,7 @@ export async function startSprintAction({
     if (activeSprints && activeSprints.length > 0) {
       return {
         success: false,
-        error: `Sprint "${activeSprints[0].name}" is currently active. Complete it before starting a new sprint.`,
+        error: `Sprint "${activeSprints[0].name}" is already active in this project. Please complete it before starting a new one.`,
       };
     }
 
@@ -390,7 +414,8 @@ export async function startSprintAction({
         state = 'active',
         start_date = ${cleanStart},
         end_date = ${cleanEnd},
-        goal = ${cleanGoal || ''}
+        goal = ${cleanGoal || ''},
+        project_id = ${targetProjectId}
       WHERE id = ${sprintId}
     `);
 

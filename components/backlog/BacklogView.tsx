@@ -51,6 +51,7 @@ import {
 } from '@/lib/agile-capacity';
 
 interface BacklogViewProps {
+  projectId?: string;
   issues: FullIssue[];
   allProjectIssues?: FullIssue[];
   users: User[];
@@ -84,6 +85,7 @@ function formatDateDisplay(dateStr?: string | null | number | Date): string {
 }
 
 export function BacklogView({
+  projectId,
   issues: initialIssues,
   allProjectIssues,
   users = [],
@@ -425,8 +427,8 @@ export function BacklogView({
     if (isViewer || isCreatingSprint) return;
     setIsCreatingSprint(true);
     try {
-      const projectId = localIssues[0]?.projectId || undefined;
-      const res = await createSprintAction({ projectId });
+      const targetProjectId = projectId || localIssues[0]?.projectId || undefined;
+      const res = await createSprintAction({ projectId: targetProjectId });
       if (res.success && res.sprint) {
         setLocalSprints((prev) => [...prev, res.sprint!]);
         if (typeof window !== 'undefined') {
@@ -1365,6 +1367,7 @@ export function BacklogView({
         <StartSprintModal
           key={startingSprint.id}
           sprint={startingSprint}
+          projectId={projectId || (startingSprint as any).projectId || (startingSprint as any).project_id}
           isOpen={Boolean(startingSprint)}
           onClose={() => setStartingSprint(null)}
           onSprintStarted={(s) => {

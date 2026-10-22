@@ -168,7 +168,7 @@ export function SprintHeader({
                 className="flex items-center gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md font-semibold transition shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
                 title={
                   isAnotherSprintActive
-                    ? `Sprint "${activeSprintName}" is currently active. Complete it before starting a new sprint.`
+                    ? `Sprint "${activeSprintName}" is already active in this project. Please complete it before starting a new one.`
                     : 'Activate this sprint'
                 }
               >
@@ -180,7 +180,7 @@ export function SprintHeader({
               {isAnotherSprintActive && (
                 <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center z-50 pointer-events-none">
                   <div className="bg-slate-900 text-white text-[11px] px-2.5 py-1.5 rounded-lg shadow-xl border border-slate-700 whitespace-nowrap">
-                    Sprint &quot;{activeSprintName}&quot; is currently active. Complete it first.
+                    Sprint &quot;{activeSprintName}&quot; is already active in this project. Please complete it before starting a new one.
                   </div>
                 </div>
               )}

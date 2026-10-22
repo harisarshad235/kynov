@@ -7,6 +7,7 @@ import { startSprintAction } from '@/app/actions/sprints';
 
 interface StartSprintModalProps {
   sprint: Sprint;
+  projectId?: string;
   isOpen: boolean;
   onClose: () => void;
   onSprintStarted?: (sprint: Sprint) => void;
@@ -37,6 +38,7 @@ function addDays(dateStr: string, days: number): string {
 
 export function StartSprintModal({
   sprint,
+  projectId,
   isOpen,
   onClose,
   onSprintStarted,
@@ -70,8 +72,10 @@ export function StartSprintModal({
     setIsSubmitting(true);
 
     try {
+      const resolvedProjectId = projectId || (sprint as any).projectId || (sprint as any).project_id;
       const res = await startSprintAction({
         sprintId: sprint.id,
+        projectId: resolvedProjectId,
         name,
         startDate,
         endDate,

@@ -1169,6 +1169,7 @@ export function Workspace({
 
               {activeTab === 'backlog' && (
                 <BacklogView
+                  projectId={activeProjectId}
                   issues={filteredIssues}
                   allProjectIssues={projectIssues}
                   users={liveUsers}
