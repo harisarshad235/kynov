@@ -733,50 +733,50 @@
   },
   "db/seed.sql": {
     "mtime": 1792048827.4531503,
-    "seen": 1792657413.077125,
-    "ast_hash": "",
+    "seen": 1792658004.684413,
+    "ast_hash": "94ed36aa302e401880695468b0940f9a",
     "semantic_hash": ""
   },
   "db/seed_manual_formatted.sql": {
     "mtime": 1792048827.4536562,
-    "seen": 1792657413.077127,
-    "ast_hash": "",
+    "seen": 1792658004.684416,
+    "ast_hash": "ed715d89b1f7b3850c0c3c0a67be8992",
     "semantic_hash": ""
   },
   "db/update_manual.sql": {
     "mtime": 1792048827.454246,
-    "seen": 1792657413.077129,
-    "ast_hash": "",
+    "seen": 1792658004.684418,
+    "ast_hash": "1bdb74298af9281af6ccc328ee90a8c8",
     "semantic_hash": ""
   },
   "drizzle/0000_friendly_marvel_boy.sql": {
     "mtime": 1792048827.4566896,
-    "seen": 1792657413.0771341,
-    "ast_hash": "",
+    "seen": 1792658004.6844218,
+    "ast_hash": "8393c6a2ce2101163296cc8ad05b6d66",
     "semantic_hash": ""
   },
   "drizzle/0001_rainy_miek.sql": {
     "mtime": 1792048827.4570768,
-    "seen": 1792657413.0771358,
-    "ast_hash": "",
+    "seen": 1792658004.684424,
+    "ast_hash": "7efbc1675c40e4244d1bf0177c2ba095",
     "semantic_hash": ""
   },
   "drizzle/0002_gifted_argent.sql": {
     "mtime": 1792048827.4573543,
-    "seen": 1792657413.077138,
-    "ast_hash": "",
+    "seen": 1792658004.684426,
+    "ast_hash": "f7f84bf9a0f830c900499746e32d68e0",
     "semantic_hash": ""
   },
   "drizzle/0003_bizarre_scalphunter.sql": {
     "mtime": 1792048827.4576306,
-    "seen": 1792657413.0771399,
-    "ast_hash": "",
+    "seen": 1792658004.684428,
+    "ast_hash": "3a129ac8b07c16279a0836d9462699ca",
     "semantic_hash": ""
   },
   "drizzle/0004_jira_enterprise_upgrade.sql": {
     "mtime": 1792048827.4579084,
-    "seen": 1792657413.077142,
-    "ast_hash": "",
+    "seen": 1792658004.6844301,
+    "ast_hash": "c3c67ba0e8efc06cc4ae36754277482c",
     "semantic_hash": ""
   },
   ".agents/mcp_config.json": {
@@ -1237,8 +1237,8 @@
   },
   "drizzle/0005_user_presence.sql": {
     "mtime": 1792477069.6677685,
-    "seen": 1792657413.0771441,
-    "ast_hash": "",
+    "seen": 1792658004.6844318,
+    "ast_hash": "d4600e31ef5aba1517746c3c162567ae",
     "semantic_hash": ""
   },
   "docs/compare-jira.md": {

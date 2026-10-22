@@ -1,17 +1,17 @@
 # Graph Report - kynov  (2026-10-22)
 
 ## Corpus Check
-- 194 files · ~242,983 words
+- 194 files · ~242,990 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 8 file(s) not represented in the graph (top: (none) 2, .ico 2, .example 1)
 
 ## Summary
-- 2918 nodes · 4705 edges · 223 communities (61 shown, 162 thin omitted)
+- 2918 nodes · 4703 edges · 223 communities (61 shown, 162 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 13 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0487511b`
+- Built from commit: `2ff7bc47`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -244,9 +244,9 @@
 2. `react` - 74 edges
 3. `lucide-react` - 63 edges
 4. `next` - 63 edges
-5. `User` - 53 edges
-6. `ensureEnterpriseSchema()` - 53 edges
-7. `requireRole()` - 52 edges
+5. `ensureEnterpriseSchema()` - 53 edges
+6. `requireRole()` - 52 edges
+7. `User` - 51 edges
 8. `getCurrentUser()` - 50 edges
 9. `Workspace()` - 45 edges
 10. `FullIssue` - 36 edges
@@ -256,12 +256,12 @@
   PRD.md → components/docs/GoogleSheetEmbedModal.tsx
 - `SprintHeaderProps` --references--> `Sprint`  [EXTRACTED]
   components/backlog/SprintHeader.tsx → db/schema.ts
-- `DocumentReaderModalProps` --references--> `FullDocument`  [EXTRACTED]
-  components/docs/DocumentReaderModal.tsx → lib/types.ts
 - `UserProfileModalProps` --references--> `User`  [EXTRACTED]
   components/profile/UserProfileModal.tsx → db/schema.ts
 - `ProjectMembersPanelProps` --references--> `User`  [EXTRACTED]
   components/projects/ProjectMembersPanel.tsx → db/schema.ts
+- `HeaderProps` --references--> `User`  [EXTRACTED]
+  components/shell/Header.tsx → db/schema.ts
 
 ## Import Cycles
 - None detected.
@@ -306,11 +306,11 @@ Nodes (10): ActiveSprintMetrics, getActiveSprintMetricsAction(), OrganizationSwi
 
 ### Community 10 - "types.ts"
 Cohesion: 0.07
-Nodes (49): UpdateSprintResult, WorkspaceData, BacklogViewProps, BoardFiltersProps, KanbanBoardProps, CommandPaletteProps, DashboardOverviewProps, CreateDocModalProps (+41 more)
+Nodes (48): UpdateSprintResult, WorkspaceData, BacklogViewProps, KanbanBoardProps, CommandPaletteProps, DashboardOverviewProps, CreateDocModalProps, DocumentsViewProps (+40 more)
 
 ### Community 11 - "Workspace.tsx"
-Cohesion: 0.10
-Nodes (32): createDocument(), deleteDocument(), updateDocument(), addComment(), setActiveOrganizationAction(), approveUser(), inviteUser(), removeUser() (+24 more)
+Cohesion: 0.09
+Nodes (33): createDocument(), deleteDocument(), updateDocument(), addComment(), setActiveOrganizationAction(), approveUser(), inviteUser(), removeUser() (+25 more)
 
 ### Community 12 - "getCurrentUser"
 Cohesion: 0.16
@@ -513,7 +513,7 @@ Cohesion: 0.50
 Nodes (3): Developer API Execution, High-Output Architecture, Kynov Architecture & Feature Showcase
 
 ## Knowledge Gaps
-- **19 isolated node(s):** `RFC-5246`, `RFC-2253`, `RFC-9440`, `RFC-3339`, `RFC-2046` (+14 more)
+- **19 isolated node(s):** `RFC-2253`, `RFC-3339`, `RFC-5246`, `RFC-9440`, `react-dom` (+14 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2070 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **162 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -521,16 +521,16 @@ Nodes (3): Developer API Execution, High-Output Architecture, Kynov Architecture
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `3. Functional Requirements & Feature Specifications` connect `3. Functional Requirements & Feature Specifications` to `Product Requirements Document (PRD) — KYNOV`?**
-  _High betweenness centrality (0.365) - this node is a cross-community bridge._
-- **What connects `RFC-5246`, `RFC-2253`, `RFC-9440` to the rest of the system?**
+  _High betweenness centrality (0.381) - this node is a cross-community bridge._
+- **What connects `RFC-2253`, `RFC-3339`, `RFC-5246` to the rest of the system?**
   _19 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `cloudflare-env.d.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.0021390374331550803 - nodes in this community are weakly interconnected._
 - **Why does `3.4 Confluence-Style Documentation & Asset Directory` connect `3. Functional Requirements & Feature Specifications` to `glass-folder-cards.tsx`?**
-  _High betweenness centrality (0.363) - this node is a cross-community bridge._
+  _High betweenness centrality (0.374) - this node is a cross-community bridge._
 - **Should `glass-folder-cards.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.12612612612612611 - nodes in this community are weakly interconnected._
 - **Why does `GoogleSheetEmbedModal()` connect `glass-folder-cards.tsx` to `3. Functional Requirements & Feature Specifications`?**
-  _High betweenness centrality (0.360) - this node is a cross-community bridge._
+  _High betweenness centrality (0.374) - this node is a cross-community bridge._
 - **Should `schema.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.03184005923731951 - nodes in this community are weakly interconnected._
