@@ -735,57 +735,66 @@ export function IssueDetailDrawer({
         )}
 
         {/* Top Header Bar */}
-        <div className="px-6 py-3.5 border-b border-[#1e293b]/80 flex items-center justify-between bg-[#0d1424]/80 backdrop-blur-sm">
+        <div className="px-6 py-3 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-950/80 backdrop-blur-sm">
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Parent Epic Breadcrumb Tag */}
-            {parentEpic ? (
-              <button
-                onClick={() => onNavigateIssue && onNavigateIssue(parentEpic.key)}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold tracking-wide transition border hover:opacity-80"
-                style={{
-                  backgroundColor: `${parentEpic.epicColor || '#3B82F6'}15`,
-                  color: parentEpic.epicColor || '#3B82F6',
-                  borderColor: `${parentEpic.epicColor || '#3B82F6'}40`,
-                }}
-                title={`Parent Epic: ${parentEpic.title}`}
-              >
-                <span>{parentEpic.key}</span>
-                <span className="text-slate-400 font-normal">/</span>
-                <span className="truncate max-w-[120px]">{parentEpic.title}</span>
-              </button>
-            ) : null}
+            {/* Understated Breadcrumbs */}
+            <div className="flex items-center gap-1.5 text-sm text-zinc-400 font-medium">
+              {parentEpic ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onNavigateIssue && onNavigateIssue(parentEpic.key)}
+                    className="hover:text-zinc-200 transition-colors flex items-center gap-1.5"
+                    title={`Parent Epic: ${parentEpic.title}`}
+                  >
+                    <span className="font-mono text-zinc-300">{parentEpic.key}</span>
+                    <span className="text-zinc-600">/</span>
+                    <span className="truncate max-w-[150px] text-zinc-400 hover:text-zinc-200">{parentEpic.title}</span>
+                  </button>
+                  <span className="text-zinc-600">/</span>
+                </>
+              ) : null}
+              <span className="font-mono font-semibold text-zinc-200">{issue.key}</span>
+            </div>
 
-            {/* Issue Key Pill */}
-            <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-xs">
-              {issue.key}
+            <div className="h-3.5 w-px bg-zinc-800 hidden sm:block" />
+
+            {/* Compact Issue Type Pill with 8px dot */}
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800/60 text-zinc-300 border border-zinc-700/40">
+              <span className="w-2 h-2 rounded-full bg-blue-400" />
+              <span className="capitalize">{resolvedType.toLowerCase()}</span>
             </span>
 
-            {/* Issue Type Badge */}
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800/80 text-slate-300 border border-slate-700/80 shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-              {resolvedType}
-            </span>
-
-            {/* Live vs Demo Badge */}
-            <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border shadow-xs ${
-                selectedEnvironment === 'LIVE'
-                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
-                  : 'bg-purple-500/15 border-purple-500/40 text-purple-400'
-              }`}
-            >
+            {/* Compact Status Pill with 8px dot */}
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800/60 text-zinc-300 border border-zinc-700/40">
               <span
-                className={`w-1.5 h-1.5 rounded-full ${
+                className={`w-2 h-2 rounded-full ${
+                  issue.status === 'Done'
+                    ? 'bg-emerald-400'
+                    : issue.status === 'In Progress'
+                    ? 'bg-amber-400 animate-pulse'
+                    : issue.status === 'In Review'
+                    ? 'bg-purple-400'
+                    : 'bg-zinc-400'
+                }`}
+              />
+              <span>{issue.status}</span>
+            </span>
+
+            {/* Compact Environment / Classification Pill with 8px dot */}
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800/60 text-zinc-300 border border-zinc-700/40">
+              <span
+                className={`w-2 h-2 rounded-full ${
                   selectedEnvironment === 'LIVE' ? 'bg-emerald-400 animate-pulse' : 'bg-purple-400'
                 }`}
               />
-              <span>{selectedEnvironment === 'LIVE' ? 'Live Issue' : 'Demo'}</span>
+              <span>{selectedEnvironment === 'LIVE' ? 'Live' : 'Demo'}</span>
             </span>
 
             {/* Flagged impediment badge */}
             {issue.isFlagged && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/30">
-                <Flag className="w-3 h-3 fill-red-400" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                <Flag className="w-3 h-3 fill-rose-400" />
                 Impediment
               </span>
             )}
@@ -943,9 +952,9 @@ export function IssueDetailDrawer({
           {/* Left Column: Context & Work Area */}
           <div className="md:col-span-8 space-y-4">
             {/* Description Block */}
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-4">
+            <div className="bg-zinc-900/40 rounded-2xl border border-zinc-800/80 p-4 backdrop-blur-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Description</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Description</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsPreviewDesc(!isPreviewDesc)}
@@ -1035,14 +1044,14 @@ export function IssueDetailDrawer({
             </div>
 
             {/* Subtasks Checklist Block */}
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-4">
+            <div className="bg-zinc-900/40 rounded-2xl border border-zinc-800/80 p-4 backdrop-blur-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <ListChecks className="w-4 h-4 text-blue-400" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Subtasks</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Subtasks</span>
                 </div>
                 {localSubtasks.length > 0 && (
-                  <span className="text-xs text-slate-400 font-mono">
+                  <span className="text-xs text-zinc-400 font-mono">
                     {doneSubtasks}/{localSubtasks.length} ({subtaskPct}%)
                   </span>
                 )}
@@ -1116,65 +1125,63 @@ export function IssueDetailDrawer({
             </div>
 
             {/* Issue Links / Relationships Block */}
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Link2 className="w-4 h-4 text-blue-400" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Issue Links</span>
-                </div>
-                {!isViewer && (
-                  <button
-                    onClick={() => setIsAddingLink(!isAddingLink)}
-                    className="text-xs text-blue-400 hover:text-blue-300 font-semibold"
-                  >
-                    {isAddingLink ? 'Cancel' : '+ Link Issue'}
-                  </button>
-                )}
-              </div>
-
-              {/* Link Creator Form */}
-              {isAddingLink && (
-                <div className="mb-4 p-3.5 rounded-xl bg-[#0a0f1d] border border-[#1e293b] space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <select
-                      value={linkType}
-                      onChange={(e) => setLinkType(e.target.value as EnterpriseLinkType)}
-                      className="bg-[#0c121e] border border-[#1e293b] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 transition"
-                    >
-                      <option value="BLOCKS">blocks</option>
-                      <option value="IS_BLOCKED_BY">is blocked by</option>
-                      <option value="RELATES_TO">relates to</option>
-                      <option value="DUPLICATES">duplicates</option>
-                    </select>
-
-                    <input
-                      type="text"
-                      value={linkTarget}
-                      onChange={(e) => setLinkTarget(e.target.value)}
-                      placeholder="Target Key (e.g. KYN-102)"
-                      className="bg-[#0c121e] border border-[#1e293b] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 font-mono transition"
-                    />
+            {(issue.links || []).length > 0 || isAddingLink ? (
+              <div className="bg-zinc-900/40 rounded-2xl border border-zinc-800/80 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Link2 className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Issue Links</span>
                   </div>
-
-                  {linkError && <p className="text-xs text-rose-400">{linkError}</p>}
-
-                  <div className="flex justify-end gap-2">
+                  {!isViewer && (
                     <button
-                      onClick={handleAddLink}
-                      className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all duration-150 active:scale-95 cursor-pointer"
+                      onClick={() => setIsAddingLink(!isAddingLink)}
+                      className="text-xs text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
                     >
-                      Create Link
+                      {isAddingLink ? 'Cancel' : '+ Link Issue'}
                     </button>
-                  </div>
+                  )}
                 </div>
-              )}
 
-              {/* Render Linked Issues */}
-              <div className="space-y-2">
-                {(issue.links || []).length === 0 ? (
-                  <p className="text-xs text-slate-500 italic">No linked issues.</p>
-                ) : (
-                  (issue.links || []).map((l) => {
+                {/* Link Creator Form */}
+                {isAddingLink && (
+                  <div className="mb-4 p-3.5 rounded-xl bg-zinc-950/60 border border-zinc-800 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <select
+                        value={linkType}
+                        onChange={(e) => setLinkType(e.target.value as EnterpriseLinkType)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 transition"
+                      >
+                        <option value="BLOCKS">blocks</option>
+                        <option value="IS_BLOCKED_BY">is blocked by</option>
+                        <option value="RELATES_TO">relates to</option>
+                        <option value="DUPLICATES">duplicates</option>
+                      </select>
+
+                      <input
+                        type="text"
+                        value={linkTarget}
+                        onChange={(e) => setLinkTarget(e.target.value)}
+                        placeholder="Target Key (e.g. KYN-102)"
+                        className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 font-mono transition"
+                      />
+                    </div>
+
+                    {linkError && <p className="text-xs text-rose-400">{linkError}</p>}
+
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={handleAddLink}
+                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-xs transition-all duration-150 active:scale-95 cursor-pointer"
+                      >
+                        Create Link
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Render Linked Issues */}
+                <div className="space-y-2">
+                  {(issue.links || []).map((l) => {
                     const isSource = l.sourceIssueId === issue.key;
                     const otherKey = isSource ? l.targetIssueId : l.sourceIssueId;
                     const rawLType = (l.linkType || (l as any).relationType || 'RELATES_TO').toUpperCase();
@@ -1191,10 +1198,10 @@ export function IssueDetailDrawer({
                     return (
                       <div
                         key={l.id}
-                        className="flex items-center justify-between p-2 rounded-lg bg-[#0c121e] border border-[#1e293b] text-xs"
+                        className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/60 border border-zinc-800/80 text-xs"
                       >
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-slate-400 font-medium">{displayLabel}</span>
+                          <span className="text-zinc-400 font-medium">{displayLabel}</span>
                           <button
                             onClick={() => onNavigateIssue && onNavigateIssue(otherKey)}
                             className="font-mono font-bold text-blue-400 hover:underline"
@@ -1203,8 +1210,8 @@ export function IssueDetailDrawer({
                           </button>
                           {targetFull && (
                             <>
-                              <span className="text-slate-300 truncate max-w-xs">{targetFull.title}</span>
-                              <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 border border-slate-700">
+                              <span className="text-zinc-300 truncate max-w-xs">{targetFull.title}</span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700/50">
                                 {targetFull.status}
                               </span>
                             </>
@@ -1214,7 +1221,7 @@ export function IssueDetailDrawer({
                         {!isViewer && (
                           <button
                             onClick={() => handleRemoveLink(l.id)}
-                            className="text-slate-500 hover:text-rose-400 p-1"
+                            className="text-zinc-500 hover:text-rose-400 p-1"
                             title="Remove Link"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -1222,79 +1229,87 @@ export function IssueDetailDrawer({
                         )}
                       </div>
                     );
-                  })
-                )}
+                  })}
+                </div>
               </div>
-            </div>
+            ) : (
+              <button
+                type="button"
+                disabled={isViewer}
+                onClick={() => setIsAddingLink(true)}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/20 hover:bg-zinc-900/40 text-xs text-zinc-400 hover:text-zinc-200 transition cursor-pointer"
+              >
+                <Link2 className="w-3.5 h-3.5 text-zinc-500" />
+                <span>+ Link Issue</span>
+              </button>
+            )}
 
             {/* Development / Git Panel */}
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <GitPullRequest className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Development</span>
-                </div>
-                {!isViewer && (
-                  <button
-                    onClick={() => setIsAddingGit(!isAddingGit)}
-                    className="text-xs text-blue-400 hover:text-blue-300 font-semibold"
-                  >
-                    {isAddingGit ? 'Cancel' : '+ Link Git Ref'}
-                  </button>
-                )}
-              </div>
-
-              {/* Add Git Link Modal / Form */}
-              {isAddingGit && (
-                <div className="mb-4 p-3.5 rounded-xl bg-[#0a0f1d] border border-[#1e293b] space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <select
-                      value={gitRefType}
-                      onChange={(e) => setGitRefType(e.target.value as any)}
-                      className="bg-[#0c121e] border border-[#1e293b] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 transition"
-                    >
-                      <option value="BRANCH">Branch</option>
-                      <option value="PULL_REQUEST">Pull Request</option>
-                      <option value="COMMIT">Commit</option>
-                    </select>
-
-                    <input
-                      type="text"
-                      value={gitRefName}
-                      onChange={(e) => setGitRefName(e.target.value)}
-                      placeholder={gitRefType === 'BRANCH' ? 'feat/kyn-101-upgrade' : gitRefType === 'PULL_REQUEST' ? '#42 PR Title' : 'a1b2c3d'}
-                      className="bg-[#0c121e] border border-[#1e293b] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 font-mono transition"
-                    />
-
-                    <input
-                      type="text"
-                      value={gitUrl}
-                      onChange={(e) => setGitUrl(e.target.value)}
-                      placeholder="https://github.com/..."
-                      className="bg-[#0c121e] border border-[#1e293b] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 font-mono transition"
-                    />
+            {(issue.gitLinks || []).length > 0 || isAddingGit ? (
+              <div className="bg-zinc-900/40 rounded-2xl border border-zinc-800/80 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <GitPullRequest className="w-4 h-4 text-emerald-400" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Development</span>
                   </div>
-
-                  <div className="flex justify-end gap-2">
+                  {!isViewer && (
                     <button
-                      onClick={handleAddGitRef}
-                      className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all duration-150 active:scale-95 cursor-pointer"
+                      onClick={() => setIsAddingGit(!isAddingGit)}
+                      className="text-xs text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
                     >
-                      Link Reference
+                      {isAddingGit ? 'Cancel' : '+ Link Git Ref'}
                     </button>
-                  </div>
+                  )}
                 </div>
-              )}
 
-              {/* Git links list */}
-              <div className="space-y-2">
-                {(issue.gitLinks || []).length === 0 ? (
-                  <p className="text-xs text-slate-500 italic">No branches, pull requests, or commits linked yet.</p>
-                ) : (
-                  (issue.gitLinks || []).map((g) => (
+                {/* Add Git Link Modal / Form */}
+                {isAddingGit && (
+                  <div className="mb-4 p-3.5 rounded-xl bg-zinc-950/60 border border-zinc-800 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <select
+                        value={gitRefType}
+                        onChange={(e) => setGitRefType(e.target.value as any)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 transition"
+                      >
+                        <option value="BRANCH">Branch</option>
+                        <option value="PULL_REQUEST">Pull Request</option>
+                        <option value="COMMIT">Commit</option>
+                      </select>
+
+                      <input
+                        type="text"
+                        value={gitRefName}
+                        onChange={(e) => setGitRefName(e.target.value)}
+                        placeholder={gitRefType === 'BRANCH' ? 'feat/kyn-101-upgrade' : gitRefType === 'PULL_REQUEST' ? '#42 PR Title' : 'a1b2c3d'}
+                        className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 font-mono transition"
+                      />
+
+                      <input
+                        type="text"
+                        value={gitUrl}
+                        onChange={(e) => setGitUrl(e.target.value)}
+                        placeholder="https://github.com/..."
+                        className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500/60 font-mono transition"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={handleAddGitRef}
+                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-xs transition-all duration-150 active:scale-95 cursor-pointer"
+                      >
+                        Link Reference
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Git links list */}
+                <div className="space-y-2">
+                  {(issue.gitLinks || []).map((g) => (
                     <div
                       key={g.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-[#0c121e] border border-[#1e293b] text-xs"
+                      className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/60 border border-zinc-800/80 text-xs"
                     >
                       <div className="flex items-center gap-2">
                         {g.refType === 'BRANCH' ? (
@@ -1308,10 +1323,10 @@ export function IssueDetailDrawer({
                           href={g.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-mono text-slate-200 hover:text-blue-400 flex items-center gap-1 hover:underline"
+                          className="font-mono text-zinc-200 hover:text-blue-400 flex items-center gap-1 hover:underline"
                         >
                           {g.refName}
-                          <ExternalLink className="w-3 h-3 text-slate-500" />
+                          <ExternalLink className="w-3 h-3 text-zinc-500" />
                         </a>
                         <span
                           className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
@@ -1334,26 +1349,36 @@ export function IssueDetailDrawer({
                               showToast('Git reference removed');
                             });
                           }}
-                          className="text-slate-500 hover:text-rose-400 p-1"
+                          className="text-zinc-500 hover:text-rose-400 p-1"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
-                  ))
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <button
+                type="button"
+                disabled={isViewer}
+                onClick={() => setIsAddingGit(true)}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/20 hover:bg-zinc-900/40 text-xs text-zinc-400 hover:text-zinc-200 transition cursor-pointer"
+              >
+                <GitPullRequest className="w-3.5 h-3.5 text-zinc-500" />
+                <span>+ Link PR</span>
+              </button>
+            )}
 
             {/* Activity Streams Tabs: Comments, History (Audit Log), Work Log */}
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-5 space-y-4">
-              <div className="flex items-center gap-5 border-b border-[#1e293b]/80 pb-3">
+            <div className="bg-zinc-900/40 rounded-2xl border border-zinc-800/80 p-5 space-y-4 backdrop-blur-sm">
+              <div className="flex items-center gap-5 border-b border-zinc-800/80 pb-3">
                 <button
                   onClick={() => setActiveTab('comments')}
-                  className={`text-xs font-bold uppercase tracking-wider pb-2 transition border-b-2 cursor-pointer ${
+                  className={`text-xs font-semibold uppercase tracking-wider pb-2 transition border-b-2 cursor-pointer ${
                     activeTab === 'comments'
                       ? 'text-indigo-400 border-indigo-500'
-                      : 'text-slate-400 border-transparent hover:text-slate-200'
+                      : 'text-zinc-400 border-transparent hover:text-zinc-200'
                   }`}
                 >
                   Comments ({issue.comments?.length ?? 0})
@@ -1383,10 +1408,10 @@ export function IssueDetailDrawer({
               {/* Comments Tab */}
               {activeTab === 'comments' && (
                 <div className="space-y-4">
-                  {/* Add comment box */}
+                  {/* Add comment box with integrated compact ghost toolbar */}
                   {!isViewer && (
                     <div className="space-y-3">
-                      <div className="relative">
+                      <div className="relative rounded-xl border border-zinc-800 bg-zinc-950/60 focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700/50 transition">
                         <textarea
                           ref={commentTextareaRef}
                           value={commentText}
@@ -1394,20 +1419,20 @@ export function IssueDetailDrawer({
                           onKeyDown={handleCommentKeyDown}
                           placeholder="Add a comment... (Type @ to tag a user, Markdown supported)"
                           rows={3}
-                          className="w-full bg-[#0a0f1d] border border-[#1e293b] rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 leading-relaxed font-sans transition"
+                          className="w-full bg-transparent p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none leading-relaxed font-sans"
                         />
 
                         {/* User Mention Autocomplete Popup */}
                         {showMentionList && filteredMentionUsers.length > 0 && (
                           <div
                             ref={mentionDropdownRef}
-                            className="absolute left-2 bottom-full mb-1.5 z-50 w-72 max-h-56 overflow-y-auto bg-[#151c28] border border-[#263348] rounded-xl shadow-2xl p-1.5 space-y-0.5 animate-in fade-in slide-in-from-bottom-1 duration-150"
+                            className="absolute left-2 bottom-full mb-1.5 z-50 w-72 max-h-56 overflow-y-auto bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl p-1.5 space-y-0.5 animate-in fade-in slide-in-from-bottom-1 duration-150"
                           >
-                            <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-[#263348]/60 flex items-center justify-between mb-1">
+                            <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400 border-b border-zinc-800 flex items-center justify-between mb-1">
                               <span className="flex items-center gap-1 text-blue-400">
                                 <AtSign className="w-3 h-3" /> Mention User
                               </span>
-                              <span className="text-[9px] font-normal text-slate-500">↑↓ navigate • ↵ tag</span>
+                              <span className="text-[9px] font-normal text-zinc-500">↑↓ navigate • ↵ tag</span>
                             </div>
                             {filteredMentionUsers.map((u, idx) => {
                               const handle = u.email ? u.email.split('@')[0] : u.name.replace(/\s+/g, '');
@@ -1421,19 +1446,19 @@ export function IssueDetailDrawer({
                                   className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition cursor-pointer ${
                                     isSelected
                                       ? 'bg-blue-600 text-white'
-                                      : 'hover:bg-slate-800 text-slate-200'
+                                      : 'hover:bg-zinc-800 text-zinc-200'
                                   }`}
                                 >
                                   <UserAvatar user={u} size="xs" />
                                   <div className="flex-1 min-w-0">
                                     <p className="font-semibold truncate leading-tight">{u.name}</p>
-                                    <p className={`text-[10px] truncate ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
+                                    <p className={`text-[10px] truncate ${isSelected ? 'text-blue-100' : 'text-zinc-400'}`}>
                                       @{handle}
                                     </p>
                                   </div>
                                   <span
                                     className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                                      isSelected ? 'bg-blue-700 text-white' : 'bg-slate-800 text-slate-400'
+                                      isSelected ? 'bg-blue-700 text-white' : 'bg-zinc-800 text-zinc-400'
                                     }`}
                                   >
                                     {u.role}
@@ -1443,81 +1468,78 @@ export function IssueDetailDrawer({
                             })}
                           </div>
                         )}
-                      </div>
 
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <button
-                            type="button"
-                            onClick={triggerMention}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0c121e] hover:bg-slate-800 border border-[#1e293b] text-xs text-indigo-400 hover:text-indigo-300 font-medium transition cursor-pointer"
-                            title="Tag a team member"
-                          >
-                            <AtSign className="w-3.5 h-3.5" /> Tag User
-                          </button>
+                        {/* Compact Bottom Toolbar inside input container */}
+                        <div className="flex items-center justify-between px-2.5 py-1.5 border-t border-zinc-800/60 bg-zinc-900/30 rounded-b-xl">
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={triggerMention}
+                              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition cursor-pointer"
+                              title="Mention user (@)"
+                            >
+                              <AtSign className="w-3.5 h-3.5" />
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => insertSlashTemplateIntoComment('todo')}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0c121e] hover:bg-slate-800 border border-[#1e293b] text-[11px] font-mono text-emerald-400 hover:text-emerald-300 transition cursor-pointer"
-                            title="Insert checklist"
-                          >
-                            <CheckSquare className="w-3.5 h-3.5" /> /todo
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => insertSlashTemplateIntoComment('code')}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0c121e] hover:bg-slate-800 border border-[#1e293b] text-[11px] font-mono text-purple-400 hover:text-purple-300 transition cursor-pointer"
-                            title="Insert code snippet"
-                          >
-                            <Code className="w-3.5 h-3.5" /> /code
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => insertSlashTemplateIntoComment('table')}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0c121e] hover:bg-slate-800 border border-[#1e293b] text-[11px] font-mono text-blue-400 hover:text-blue-300 transition cursor-pointer"
-                            title="Insert table"
-                          >
-                            <Table className="w-3.5 h-3.5" /> /table
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => insertSlashTemplateIntoComment('todo')}
+                              className="px-2 py-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition flex items-center gap-1 cursor-pointer"
+                              title="Insert checklist (/todo)"
+                            >
+                              <CheckSquare className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">/todo</span>
+                            </button>
 
-                          {detectedMentions.length > 0 && (
-                            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 flex-wrap">
-                              <span className="text-slate-500">Mentioning:</span>
-                              {detectedMentions.map((handle) => {
-                                const u = users.find(
-                                  (x) =>
-                                    x.email?.split('@')[0]?.toLowerCase() === handle.toLowerCase() ||
-                                    x.name?.toLowerCase().replace(/\s+/g, '') === handle.toLowerCase() ||
-                                    x.name?.toLowerCase().split(' ')[0] === handle.toLowerCase()
-                                );
-                                return (
+                            <button
+                              type="button"
+                              onClick={() => insertSlashTemplateIntoComment('code')}
+                              className="px-2 py-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition flex items-center gap-1 cursor-pointer"
+                              title="Insert code block (/code)"
+                            >
+                              <Code className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">/code</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => insertSlashTemplateIntoComment('table')}
+                              className="px-2 py-1 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition flex items-center gap-1 cursor-pointer"
+                              title="Insert table (/table)"
+                            >
+                              <Table className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">/table</span>
+                            </button>
+
+                            {detectedMentions.length > 0 && (
+                              <div className="flex items-center gap-1 text-[11px] text-zinc-400 ml-2">
+                                <span className="text-zinc-500">Mentioning:</span>
+                                {detectedMentions.map((handle) => (
                                   <span
                                     key={handle}
-                                    className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/25 text-[11px] font-semibold"
+                                    className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-medium"
                                   >
-                                    <span className="text-indigo-400 font-bold">@</span>
-                                    <span>{u ? u.name : handle}</span>
+                                    @{handle}
                                   </span>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
 
-                        <button
-                          onClick={() => {
-                            if (!commentText.trim()) return;
-                            onAddComment(commentText.trim());
-                            setCommentText('');
-                            setShowMentionList(false);
-                            showToast('Comment posted');
-                          }}
-                          disabled={!commentText.trim()}
-                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all duration-150 active:scale-95 cursor-pointer"
-                        >
-                          Post Comment
-                        </button>
+                          <button
+                            onClick={() => {
+                              if (!commentText.trim()) return;
+                              onAddComment(commentText.trim());
+                              setCommentText('');
+                              setShowMentionList(false);
+                              showToast('Comment posted');
+                            }}
+                            disabled={!commentText.trim()}
+                            className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
+                          >
+                            Comment
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1671,145 +1693,253 @@ export function IssueDetailDrawer({
             </div>
           </div>
 
-          {/* Right Column: Metadata Sidebar */}
+          {/* Right Column: Unified Metadata Property Inspector Sidebar */}
           <div className="md:col-span-4 space-y-3">
-            {/* Status Selector with Workflow Rules */}
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Status</span>
-              <select
-                value={issue.status}
-                onChange={(e) => handleTransitionStatus(e.target.value)}
-                disabled={isViewer}
-                className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs font-semibold text-white focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition"
-              >
-                {swimlanes.length > 0 ? (
-                  swimlanes.map((s) => (
-                    <option key={s.id} value={s.name}>
-                      {s.name}
-                    </option>
-                  ))
-                ) : (
-                  ['To Do', 'In Progress', 'In Review', 'Done'].map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-
-            {/* Parent Epic Selector */}
-            {resolvedType !== 'EPIC' && (
-              <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Parent Epic</span>
+            <div className="bg-zinc-900/40 rounded-2xl border border-zinc-800/80 p-4 divide-y divide-zinc-800/50 backdrop-blur-sm">
+              {/* Status */}
+              <div className="pb-3 flex items-center justify-between gap-3">
+                <span className="text-xs text-zinc-400 font-medium">Status</span>
                 <select
-                  value={selectedParentId || ''}
-                  onChange={(e) => setSelectedParentId(e.target.value || null)}
+                  value={issue.status}
+                  onChange={(e) => handleTransitionStatus(e.target.value)}
                   disabled={isViewer}
-                  className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/60 transition"
+                  className="bg-transparent hover:bg-zinc-800/60 text-right text-xs font-medium text-zinc-200 border-0 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500/40 cursor-pointer transition"
                 >
-                  <option value="">None (No Epic)</option>
-                  {availableEpics.map((ep) => (
-                    <option key={ep.key} value={ep.key}>
-                      {ep.key} - {ep.title}
+                  {swimlanes.length > 0 ? (
+                    swimlanes.map((s) => (
+                      <option key={s.id} value={s.name} className="bg-zinc-900 text-zinc-200">
+                        {s.name}
+                      </option>
+                    ))
+                  ) : (
+                    ['To Do', 'In Progress', 'In Review', 'Done'].map((st) => (
+                      <option key={st} value={st} className="bg-zinc-900 text-zinc-200">
+                        {st}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              {/* Parent Epic (if not Epic) */}
+              {resolvedType !== 'EPIC' && (
+                <div className="py-2.5 flex items-center justify-between gap-3">
+                  <span className="text-xs text-zinc-400 font-medium">Parent Epic</span>
+                  <select
+                    value={selectedParentId || ''}
+                    onChange={(e) => setSelectedParentId(e.target.value || null)}
+                    disabled={isViewer}
+                    className="bg-transparent hover:bg-zinc-800/60 text-right text-xs text-zinc-200 border-0 rounded-md px-2 py-1 max-w-[170px] truncate focus:outline-none focus:ring-1 focus:ring-blue-500/40 cursor-pointer transition"
+                  >
+                    <option value="" className="bg-zinc-900 text-zinc-400">None (No Epic)</option>
+                    {availableEpics.map((ep) => (
+                      <option key={ep.key} value={ep.key} className="bg-zinc-900 text-zinc-200">
+                        {ep.key} - {ep.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Issue Type */}
+              <div className="py-2.5 flex items-center justify-between gap-3">
+                <span className="text-xs text-zinc-400 font-medium">Issue Type</span>
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  disabled={isViewer}
+                  className="bg-transparent hover:bg-zinc-800/60 text-right text-xs font-medium text-zinc-200 border-0 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500/40 cursor-pointer transition"
+                >
+                  <option value="STORY" className="bg-zinc-900 text-zinc-200">Story</option>
+                  <option value="TASK" className="bg-zinc-900 text-zinc-200">Task</option>
+                  <option value="BUG" className="bg-zinc-900 text-zinc-200">Bug</option>
+                  <option value="EPIC" className="bg-zinc-900 text-zinc-200">Epic</option>
+                  <option value="SUBTASK" className="bg-zinc-900 text-zinc-200">Subtask</option>
+                </select>
+              </div>
+
+              {/* Classification: Live vs Demo */}
+              <div className="py-2.5 flex items-center justify-between gap-3">
+                <span className="text-xs text-zinc-400 font-medium">Classification</span>
+                <div className="flex items-center gap-1 bg-zinc-950/60 p-0.5 rounded-lg border border-zinc-800/60">
+                  <button
+                    type="button"
+                    disabled={isViewer}
+                    onClick={() => setSelectedEnvironment('LIVE')}
+                    className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition flex items-center gap-1.5 cursor-pointer ${
+                      selectedEnvironment === 'LIVE'
+                        ? 'bg-emerald-500/15 text-emerald-300 font-semibold shadow-xs'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full bg-emerald-400 ${selectedEnvironment === 'LIVE' ? 'animate-pulse' : 'opacity-40'}`} />
+                    Live
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isViewer}
+                    onClick={() => setSelectedEnvironment('DEMO')}
+                    className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition flex items-center gap-1.5 cursor-pointer ${
+                      selectedEnvironment === 'DEMO'
+                        ? 'bg-purple-500/15 text-purple-300 font-semibold shadow-xs'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full bg-purple-400 ${selectedEnvironment === 'DEMO' ? '' : 'opacity-40'}`} />
+                    Demo
+                  </button>
+                </div>
+              </div>
+
+              {/* Assignee */}
+              <div className="py-2.5 flex items-center justify-between gap-3">
+                <span className="text-xs text-zinc-400 font-medium">Assignee</span>
+                <div className="flex items-center gap-2">
+                  {issue.assignee && <UserAvatar user={issue.assignee} size="xs" />}
+                  <select
+                    value={selectedAssigneeId || ''}
+                    onChange={(e) => setSelectedAssigneeId(e.target.value || null)}
+                    disabled={isViewer}
+                    className="bg-transparent hover:bg-zinc-800/60 text-right text-xs text-zinc-200 border-0 rounded-md px-2 py-1 max-w-[160px] truncate focus:outline-none focus:ring-1 focus:ring-blue-500/40 cursor-pointer transition"
+                  >
+                    <option value="" className="bg-zinc-900 text-zinc-400">Unassigned</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id} className="bg-zinc-900 text-zinc-200">
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Story Points */}
+              <div className="py-2.5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-zinc-400 font-medium">Story Points</span>
+                  {selectedType === 'EPIC' && epicChildIssues.length > 0 && (
+                    <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.2 rounded">
+                      Rollup
+                    </span>
+                  )}
+                </div>
+                {selectedType === 'EPIC' && epicChildIssues.length > 0 ? (
+                  <div className="flex items-center gap-1.5 font-mono text-xs text-indigo-300 font-semibold px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 rounded-md">
+                    <span>{epicChildIssues.reduce((sum, c) => sum + (Number(c.storyPoints) || 0), 0)} pts</span>
+                    <span className="text-[10px] text-zinc-400 font-normal">({epicChildIssues.length} issues)</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 justify-end">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={selectedPoints}
+                      onChange={(e) => setSelectedPoints(parseInt(e.target.value) || 0)}
+                      disabled={isViewer}
+                      className="w-16 bg-transparent hover:bg-zinc-800/60 text-right text-xs text-zinc-200 font-mono border-0 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500/40 transition"
+                    />
+                    <span className="text-xs text-zinc-500 font-mono pr-1">pts</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Priority */}
+              <div className="py-2.5 flex items-center justify-between gap-3">
+                <span className="text-xs text-zinc-400 font-medium">Priority</span>
+                <select
+                  value={selectedPriority}
+                  onChange={(e) => setSelectedPriority(e.target.value as IssuePriority)}
+                  disabled={isViewer}
+                  className="bg-transparent hover:bg-zinc-800/60 text-right text-xs font-medium text-zinc-200 border-0 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500/40 cursor-pointer transition"
+                >
+                  {['Critical', 'High', 'Medium', 'Low', 'Lowest'].map((p) => (
+                    <option key={p} value={p} className="bg-zinc-900 text-zinc-200">
+                      {p}
                     </option>
                   ))}
                 </select>
               </div>
-            )}
 
-            {/* Issue Type Selector */}
-            {/* Divider */}
-            <div className="border-t border-[#1e293b]/40" />
-
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Issue Type</span>
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                disabled={isViewer}
-                className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/60 transition"
-              >
-                <option value="STORY">Story</option>
-                <option value="TASK">Task</option>
-                <option value="BUG">Bug</option>
-                <option value="EPIC">Epic</option>
-                <option value="SUBTASK">Subtask</option>
-              </select>
-            </div>
-
-            {/* Issue Classification: Live vs Demo */}
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                  Classification
-                </span>
-                <span className="text-[9px] text-slate-500 font-mono px-1.5 py-0.5 rounded bg-[#0c121e]">
-                  {selectedEnvironment === 'LIVE' ? 'Production' : 'Sandbox'}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
+              {/* Sprint Assignment */}
+              <div className="py-2.5 flex items-center justify-between gap-3">
+                <span className="text-xs text-zinc-400 font-medium">Sprint</span>
+                <select
+                  value={selectedSprintId || 'Backlog'}
+                  onChange={(e) =>
+                    setSelectedSprintId(e.target.value === 'Backlog' ? null : e.target.value)
+                  }
                   disabled={isViewer}
-                  onClick={() => setSelectedEnvironment('LIVE')}
-                  className={`flex items-center justify-center gap-1.5 py-2.5 px-2.5 rounded-xl border text-xs font-semibold transition-all duration-150 active:scale-95 cursor-pointer ${
-                    selectedEnvironment === 'LIVE'
-                      ? 'bg-emerald-500/15 border-emerald-500/60 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]'
-                      : 'bg-[#0c121e] border-[#1e293b] text-slate-500 hover:text-slate-300 hover:border-slate-600'
-                  }`}
+                  className="bg-transparent hover:bg-zinc-800/60 text-right text-xs text-zinc-200 border-0 rounded-md px-2 py-1 max-w-[160px] truncate focus:outline-none focus:ring-1 focus:ring-blue-500/40 cursor-pointer transition"
                 >
-                  <span className={`w-2 h-2 rounded-full bg-emerald-400 ${selectedEnvironment === 'LIVE' ? 'animate-pulse' : 'opacity-40'}`} />
-                  <span>Live Issue</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={isViewer}
-                  onClick={() => setSelectedEnvironment('DEMO')}
-                  className={`flex items-center justify-center gap-1.5 py-2.5 px-2.5 rounded-xl border text-xs font-semibold transition-all duration-150 active:scale-95 cursor-pointer ${
-                    selectedEnvironment === 'DEMO'
-                      ? 'bg-purple-500/15 border-purple-500/60 text-purple-300 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
-                      : 'bg-[#0c121e] border-[#1e293b] text-slate-500 hover:text-slate-300 hover:border-slate-600'
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full bg-purple-400 ${selectedEnvironment === 'DEMO' ? '' : 'opacity-40'}`} />
-                  <span>Demo</span>
-                </button>
+                  {availableSprints.map((s) => {
+                    const stateStr = ((s as any).status || s.state || '').toUpperCase();
+                    const stateLabel =
+                      stateStr === 'ACTIVE'
+                        ? 'Active'
+                        : stateStr === 'CLOSED'
+                        ? 'Closed'
+                        : 'Upcoming';
+                    return (
+                      <option key={s.id} value={s.id} className="bg-zinc-900 text-zinc-200">
+                        {s.name} ({stateLabel})
+                      </option>
+                    );
+                  })}
+                  <option value="Backlog" className="bg-zinc-900 text-zinc-400">Backlog (Unassigned)</option>
+                </select>
               </div>
-            </div>
 
-            {/* Epic Theme Color & Child Issues (when Epic) */}
-            {selectedType === 'EPIC' && (
-              <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Epic Theme Color</span>
-                  <div
-                    className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-xs"
-                    style={{ backgroundColor: selectedEpicColor }}
-                  />
+              {/* Epic Theme Color & Child Issues (when Epic) */}
+              {selectedType === 'EPIC' && (
+                <div className="py-2.5 flex items-center justify-between gap-3">
+                  <span className="text-xs text-zinc-400 font-medium">Theme Color</span>
+                  <div className="flex items-center gap-1.5">
+                    {['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4'].map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        disabled={isViewer}
+                        onClick={() => setSelectedEpicColor(color)}
+                        style={{ backgroundColor: color }}
+                        className={`w-3.5 h-3.5 rounded-full transition-transform cursor-pointer ${
+                          selectedEpicColor === color ? 'ring-2 ring-white scale-125' : 'opacity-70 hover:opacity-100'
+                        }`}
+                        title={`Theme ${color}`}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap pt-0.5">
-                  {['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4'].map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      disabled={isViewer}
-                      onClick={() => setSelectedEpicColor(color)}
-                      style={{ backgroundColor: color }}
-                      className={`w-6 h-6 rounded-lg transition-transform active:scale-90 cursor-pointer ${
-                        selectedEpicColor === color ? 'ring-2 ring-white scale-110 shadow-md' : 'opacity-80 hover:opacity-100'
-                      }`}
-                      title={`Theme ${color}`}
-                    />
-                  ))}
+              )}
+
+              {/* Flag as Impediment Button */}
+              {!isViewer && (
+                <div className="pt-2.5">
+                  <button
+                    onClick={() => {
+                      startTransition(async () => {
+                        const res = await toggleIssueFlag(issue.key);
+                        if (res.success) {
+                          showToast(res.flagged ? 'Flagged as impediment' : 'Impediment flag cleared');
+                        }
+                      });
+                    }}
+                    className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-medium transition border cursor-pointer ${
+                      issue.isFlagged
+                        ? 'bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20'
+                        : 'bg-zinc-950/40 text-zinc-400 border-zinc-800/80 hover:text-zinc-200 hover:border-zinc-700'
+                    }`}
+                  >
+                    <Flag className={`w-3.5 h-3.5 ${issue.isFlagged ? 'fill-rose-400 text-rose-400' : 'text-zinc-400'}`} />
+                    <span>{issue.isFlagged ? 'Clear Impediment Flag' : 'Flag as Impediment'}</span>
+                  </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Child Stories / Tasks (when Epic) */}
             {selectedType === 'EPIC' && epicChildIssues.length > 0 && (
-              <div className="bg-[#111723] rounded-xl border border-[#263348] p-3.5 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+              <div className="bg-zinc-900/40 rounded-2xl border border-zinc-800/80 p-3.5 space-y-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 block">
                   Child Issues ({epicChildIssues.length})
                 </span>
                 <div className="space-y-1.5 max-h-36 overflow-y-auto scrollbar-thin">
@@ -1817,13 +1947,13 @@ export function IssueDetailDrawer({
                     <button
                       key={child.key}
                       onClick={() => onNavigateIssue && onNavigateIssue(child.key)}
-                      className="w-full flex items-center justify-between p-2 rounded-lg bg-[#0c121e] hover:bg-[#162032] border border-[#263348] text-left transition group cursor-pointer"
+                      className="w-full flex items-center justify-between p-2 rounded-lg bg-zinc-950/60 hover:bg-zinc-800/60 border border-zinc-800/80 text-left transition group cursor-pointer"
                     >
                       <div className="flex items-center gap-2 truncate">
                         <span className="font-mono text-[10px] font-bold text-blue-400">{child.key}</span>
-                        <span className="text-xs text-slate-300 truncate group-hover:text-white">{child.title}</span>
+                        <span className="text-xs text-zinc-300 truncate group-hover:text-white">{child.title}</span>
                       </div>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-medium">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium">
                         {child.status}
                       </span>
                     </button>
@@ -1832,150 +1962,16 @@ export function IssueDetailDrawer({
               </div>
             )}
 
-            {/* Assignee Selector */}
-            {/* Divider */}
-            <div className="border-t border-[#1e293b]/40" />
-
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Assignee</span>
-              <div className="flex items-center gap-2.5">
-                {issue.assignee && <UserAvatar user={issue.assignee} size="sm" />}
-                <select
-                  value={selectedAssigneeId || ''}
-                  onChange={(e) => setSelectedAssigneeId(e.target.value || null)}
-                  disabled={isViewer}
-                  className="flex-1 bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/60 transition"
-                >
-                  <option value="">Unassigned</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Story Points */}
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Story Points</span>
-                {selectedType === 'EPIC' && epicChildIssues.length > 0 && (
-                  <span className="text-[9px] font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full">
-                    Dynamic Rollup ({epicChildIssues.length} issues)
-                  </span>
-                )}
-              </div>
-              {selectedType === 'EPIC' && epicChildIssues.length > 0 ? (
-                <div className="flex items-center justify-between bg-[#0c121e] border border-indigo-500/30 rounded-lg p-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-mono font-bold text-indigo-400">
-                      {epicChildIssues.reduce((sum, c) => sum + (Number(c.storyPoints) || 0), 0)} pts
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      (Aggregated from linked tickets)
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-indigo-400 font-medium bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/60">
-                    Auto-sum
-                  </span>
-                </div>
-              ) : (
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={selectedPoints}
-                  onChange={(e) => setSelectedPoints(parseInt(e.target.value) || 0)}
-                  disabled={isViewer}
-                  className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500/60 transition"
-                />
-              )}
-            </div>
-
-            {/* Priority */}
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Priority</span>
-              <select
-                value={selectedPriority}
-                onChange={(e) => setSelectedPriority(e.target.value as IssuePriority)}
-                disabled={isViewer}
-                className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/60 transition"
-              >
-                {['Critical', 'High', 'Medium', 'Low', 'Lowest'].map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Sprint Assignment */}
-            <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Sprint</span>
-              <select
-                value={selectedSprintId || 'Backlog'}
-                onChange={(e) =>
-                  setSelectedSprintId(e.target.value === 'Backlog' ? null : e.target.value)
-                }
-                disabled={isViewer}
-                className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-blue-500/60 transition"
-              >
-                {availableSprints.map((s) => {
-                  const stateStr = ((s as any).status || s.state || '').toUpperCase();
-                  const stateLabel =
-                    stateStr === 'ACTIVE'
-                      ? 'Active'
-                      : stateStr === 'CLOSED'
-                      ? 'Closed'
-                      : 'Upcoming';
-                  return (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({stateLabel})
-                    </option>
-                  );
-                })}
-                <option value="Backlog">Product Backlog (Unassigned)</option>
-              </select>
-            </div>
-
-            {/* Impediment Flag Button */}
-            {/* Divider */}
-            <div className="border-t border-[#1e293b]/40" />
-
-            {!isViewer && (
-              <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5">
-                <button
-                  onClick={() => {
-                    startTransition(async () => {
-                      const res = await toggleIssueFlag(issue.key);
-                      if (res.success) {
-                        showToast(res.flagged ? 'Flagged as impediment' : 'Impediment flag cleared');
-                      }
-                    });
-                  }}
-                  className={`w-full flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-semibold transition-all duration-150 border ${
-                    issue.isFlagged
-                      ? 'bg-rose-500/15 text-rose-300 border-rose-500/40 hover:bg-rose-500/25 shadow-[0_0_12px_rgba(239,68,68,0.1)]'
-                      : 'bg-[#0c121e] text-slate-400 border-[#1e293b] hover:text-slate-200 hover:border-slate-600'
-                  }`}
-                >
-                  <Flag className={`w-3.5 h-3.5 ${issue.isFlagged ? 'fill-rose-400' : ''}`} />
-                  {issue.isFlagged ? 'Clear Impediment Flag' : 'Flag as Impediment'}
-                </button>
-              </div>
-            )}
-
             {/* Delete Issue Danger Zone */}
             {!isViewer && (
-              <div className="pt-2">
+              <div className="pt-1">
                 <button
                   onClick={() => {
                     if (confirm(`Are you sure you want to delete ${issue.key}?`)) {
                       onDelete();
                     }
                   }}
-                  className="w-full flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition"
+                  className="w-full flex items-center justify-center gap-2 p-2 rounded-lg text-xs font-medium text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/10 transition cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Delete Issue

@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   ResponsiveContainer,
+  ComposedChart,
   LineChart,
   Line,
   BarChart,
@@ -343,44 +344,52 @@ export function MetricsReportView({
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-[#111723] border border-[#263348]">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Points</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-sm">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Total Points</span>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-bold font-mono text-white">{metrics.totalPoints}</span>
-            <span className="text-xs text-slate-400 font-mono">100% committed</span>
+            <span className="text-zinc-100 font-mono tracking-tight text-3xl font-semibold">{metrics.totalPoints}</span>
+            <span className="text-xs text-zinc-400 font-mono bg-zinc-800/60 border border-zinc-700/50 px-2 py-0.5 rounded-full">100% committed</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#111723] border border-[#263348]">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Points Burned</span>
+        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-sm">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Points Burned</span>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-bold font-mono text-emerald-400">{metrics.completedPoints}</span>
-            <span className="text-xs text-emerald-400 font-semibold">{metrics.completionRate}% rate</span>
+            <span className="text-zinc-100 font-mono tracking-tight text-3xl font-semibold">{metrics.completedPoints}</span>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{metrics.completionRate}% rate</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#111723] border border-[#263348]">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Team Velocity Average</span>
+        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-sm">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Team Velocity Average</span>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-bold font-mono text-blue-400">{rollingVelocity} pts</span>
-            <span className="text-xs text-blue-400 flex items-center gap-0.5">
+            <span className="text-zinc-100 font-mono tracking-tight text-3xl font-semibold">
+              {rollingVelocity} <span className="text-xl font-normal text-zinc-400">pts</span>
+            </span>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-0.5">
               <ArrowUpRight className="w-3 h-3" /> rolling 7
             </span>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#111723] border border-[#263348]">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Work items</span>
+        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-sm">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Active Work items</span>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-bold font-mono text-amber-400">{metrics.inProgress}</span>
-            <span className="text-xs text-rose-400">{metrics.openBugs} open bugs</span>
+            <span className="text-zinc-100 font-mono tracking-tight text-3xl font-semibold">{metrics.inProgress}</span>
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${
+              metrics.openBugs > 0
+                ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/50'
+            }`}>
+              {metrics.openBugs} open bugs
+            </span>
           </div>
         </div>
       </div>
 
       {/* Main Chart Card */}
-      <div className="p-5 rounded-2xl bg-[#111723] border border-[#263348]">
+      <div className="p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-sm">
         {/* TAB 1: Burndown Chart */}
         {activeReportTab === 'burndown' && (
           <div className="space-y-4">
@@ -397,14 +406,14 @@ export function MetricsReportView({
               {/* Sprint selector */}
               {sprints.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  <Calendar className="w-3.5 h-3.5 text-zinc-400" />
                   <select
                     value={selectedSprintId}
                     onChange={(e) => setSelectedSprintId(e.target.value)}
-                    className="bg-[#090d16] border border-[#263348] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none"
+                    className="bg-zinc-950/60 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
                   >
                     {sprints.map((s) => (
-                      <option key={s.id} value={s.id}>
+                      <option key={s.id} value={s.id} className="bg-zinc-900 text-zinc-200">
                         {s.name} ({s.state})
                       </option>
                     ))}
@@ -414,42 +423,74 @@ export function MetricsReportView({
             </div>
 
             {burndownData.length === 0 ? (
-              <div className="h-72 flex items-center justify-center border border-dashed border-[#263348] rounded-xl text-slate-500 text-xs">
+              <div className="h-72 flex items-center justify-center border border-dashed border-zinc-800/80 rounded-xl text-zinc-500 text-xs">
                 No active sprint with start and end dates available to plot a burndown.
               </div>
             ) : (
               <div className="h-80 w-full pt-4">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={burndownData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="date" stroke="#64748b" tick={{ fontSize: 11 }} />
-                    <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
+                  <ComposedChart data={burndownData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="burnGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.15} />
+                        <stop offset="50%" stopColor="#3b82f6" stopOpacity={0.05} />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.00} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      stroke="#71717a"
+                      tick={{ fontSize: 11, fill: '#71717a' }}
+                      axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      stroke="#71717a"
+                      tick={{ fontSize: 11, fill: '#71717a' }}
+                      axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+                      tickLine={false}
+                    />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#0b0f17',
-                        borderColor: '#263348',
+                        backgroundColor: '#090d16',
+                        borderColor: 'rgba(255,255,255,0.1)',
                         borderRadius: '0.75rem',
                         fontSize: '12px',
-                        color: '#f8fafc',
+                        color: '#f4f4f5',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.6)',
                       }}
+                      itemStyle={{ padding: '2px 0' }}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                    <Area
+                      type="monotone"
+                      dataKey="actual"
+                      fill="url(#burnGradient)"
+                      stroke="none"
+                      isAnimationActive={true}
+                      connectNulls={false}
+                      legendType="none"
+                      tooltipType="none"
+                    />
                     <Line
                       type="monotone"
                       dataKey="ideal"
                       name="Ideal Burn (pts)"
-                      stroke="#94a3b8"
-                      strokeDasharray="5 5"
-                      strokeWidth={2}
+                      stroke="#71717a"
+                      strokeDasharray="4 4"
+                      strokeWidth={1.5}
                       dot={false}
+                      activeDot={false}
                     />
                     <Line
                       type="monotone"
                       dataKey="actual"
                       name="Actual Remaining (pts)"
                       stroke="#3b82f6"
-                      strokeWidth={3}
-                      dot={{ r: 4, fill: '#3b82f6' }}
+                      strokeWidth={2.5}
+                      dot={{ r: 2.5, fill: '#3b82f6', strokeWidth: 0 }}
+                      activeDot={{ r: 5, fill: '#3b82f6', stroke: '#ffffff', strokeWidth: 2 }}
                       connectNulls={false}
                     />
                     <Line
@@ -458,11 +499,12 @@ export function MetricsReportView({
                       name="Injected Scope (pts)"
                       stroke="#f59e0b"
                       strokeDasharray="3 3"
-                      strokeWidth={2}
-                      dot={{ r: 3, fill: '#f59e0b' }}
+                      strokeWidth={1.5}
+                      dot={{ r: 2, fill: '#f59e0b', strokeWidth: 0 }}
+                      activeDot={{ r: 4.5, fill: '#f59e0b', stroke: '#ffffff', strokeWidth: 2 }}
                       connectNulls={false}
                     />
-                  </LineChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             )}
@@ -470,11 +512,11 @@ export function MetricsReportView({
             {/* Differentiators: Scope Shock Attribution & Code-Truth Stagnation Radar */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
               {/* Panel 1: Scope Shock Attribution */}
-              <div className="p-3.5 rounded-xl bg-[#090d16] border border-[#263348] space-y-2">
+              <div className="p-3.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                    <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
                       Scope Shock Attribution
                     </span>
                   </div>
@@ -489,7 +531,7 @@ export function MetricsReportView({
                   )}
                 </div>
 
-                <p className="text-[11px] text-slate-400 leading-relaxed">
+                <p className="text-[11px] text-zinc-400 leading-relaxed">
                   {scopeShockSummary.injectedPoints > 0 ? (
                     <>
                       <span className="text-amber-300 font-semibold">
@@ -502,18 +544,18 @@ export function MetricsReportView({
                   )}
                 </p>
 
-                <div className="flex items-center gap-4 pt-1 border-t border-[#1a2333] text-[11px] font-mono text-slate-400">
-                  <span>Initial: <strong className="text-slate-200">{scopeShockSummary.initialCommitted} pts</strong></span>
+                <div className="flex items-center gap-4 pt-1 border-t border-zinc-800/60 text-[11px] font-mono text-zinc-400">
+                  <span>Initial: <strong className="text-zinc-200">{scopeShockSummary.initialCommitted} pts</strong></span>
                   <span>Injected: <strong className="text-amber-400">+{scopeShockSummary.injectedPoints} pts</strong></span>
                 </div>
               </div>
 
               {/* Panel 2: Code-Truth PR Review Bottleneck Pulse */}
-              <div className="p-3.5 rounded-xl bg-[#090d16] border border-[#263348] space-y-2">
+              <div className="p-3.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <GitPullRequest className="w-4 h-4 text-blue-400" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                    <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
                       Code-Truth Review Stagnation
                     </span>
                   </div>
@@ -528,7 +570,7 @@ export function MetricsReportView({
                   )}
                 </div>
 
-                <p className="text-[11px] text-slate-400 leading-relaxed">
+                <p className="text-[11px] text-zinc-400 leading-relaxed">
                   {codeTruthMetrics.stalledCount > 0 ? (
                     <>
                       <span className="text-rose-400 font-semibold">{codeTruthMetrics.stalledCount} pull request(s)</span>{' '}
@@ -540,10 +582,10 @@ export function MetricsReportView({
                 </p>
 
                 {codeTruthMetrics.stalledPRs.length > 0 && (
-                  <div className="space-y-1 pt-1 border-t border-[#1a2333]">
+                  <div className="space-y-1 pt-1 border-t border-zinc-800/60">
                     {codeTruthMetrics.stalledPRs.slice(0, 2).map((pr, idx) => (
                       <div key={idx} className="flex items-center justify-between text-[10px] font-mono">
-                        <span className="text-slate-300 truncate max-w-[180px]">{pr.issueKey}: {pr.title}</span>
+                        <span className="text-zinc-300 truncate max-w-[180px]">{pr.issueKey}: {pr.title}</span>
                         <span className="text-rose-400 font-bold">{pr.prName} ({pr.ageHours}h lag)</span>
                       </div>
                     ))}
@@ -567,23 +609,24 @@ export function MetricsReportView({
             </div>
 
             {velocityData.length === 0 ? (
-              <div className="h-72 flex items-center justify-center border border-dashed border-[#263348] rounded-xl text-slate-500 text-xs">
+              <div className="h-72 flex items-center justify-center border border-dashed border-zinc-800/80 rounded-xl text-zinc-500 text-xs">
                 No sprint history available to calculate velocity.
               </div>
             ) : (
               <div className="h-80 w-full pt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={velocityData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="name" stroke="#64748b" tick={{ fontSize: 11 }} />
-                    <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                    <XAxis dataKey="name" stroke="#71717a" tick={{ fontSize: 11, fill: '#71717a' }} />
+                    <YAxis stroke="#71717a" tick={{ fontSize: 11, fill: '#71717a' }} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#0b0f17',
-                        borderColor: '#263348',
+                        backgroundColor: '#090d16',
+                        borderColor: 'rgba(255,255,255,0.1)',
                         borderRadius: '0.75rem',
                         fontSize: '12px',
-                        color: '#f8fafc',
+                        color: '#f4f4f5',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.6)',
                       }}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
@@ -617,16 +660,17 @@ export function MetricsReportView({
             <div className="h-80 w-full pt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={cfdData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="date" stroke="#64748b" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                  <XAxis dataKey="date" stroke="#71717a" tick={{ fontSize: 11, fill: '#71717a' }} />
+                  <YAxis stroke="#71717a" tick={{ fontSize: 11, fill: '#71717a' }} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#0b0f17',
-                      borderColor: '#263348',
+                      backgroundColor: '#090d16',
+                      borderColor: 'rgba(255,255,255,0.1)',
                       borderRadius: '0.75rem',
                       fontSize: '12px',
-                      color: '#f8fafc',
+                      color: '#f4f4f5',
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.6)',
                     }}
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
