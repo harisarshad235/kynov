@@ -15,6 +15,12 @@ import {
   Loader2,
   GripVertical,
   Download,
+  FileText,
+  GitPullRequest,
+  Gauge,
+  Users,
+  ShieldAlert,
+  CheckCircle,
 } from 'lucide-react';
 import { FullIssue, User, Swimlane, Sprint } from '@/lib/types';
 import { getTypeConfig, getPriorityConfig } from '@/lib/config';
@@ -157,6 +163,100 @@ export function BacklogView({
     () => localIssues.filter((i) => !i.sprintId || !allSprintIdSet.has(i.sprintId)),
     [localIssues, allSprintIdSet]
   );
+
+  // Live Capacity Drawer & Rolling Velocity Guardrails
+  const [showCapacityDrawer, setShowCapacityDrawer] = useState(true);
+
+  const capacityMetrics = useMemo(() => {
+    const targetSprint = activeSprint || plannedSprints[0] || null;
+    const sprintIssues = targetSprint
+      ? localIssues.filter((i) => i.sprintId === targetSprint.id)
+      : [];
+
+    const totalPointsCommitted = sprintIssues.reduce(
+      (sum, i) => sum + (Number(i.storyPoints) || 0),
+      0
+    );
+
+    // Calculate historical rolling velocity from closed sprints, fallback to 24 points
+    let rollingVelocity = 24;
+    if (closedSprints.length > 0) {
+      const closedPoints = closedSprints.map((cs) => {
+        const issuesInClosed = (allProjectIssues || localIssues).filter((i) => i.sprintId === cs.id);
+        return issuesInClosed
+          .filter((i) => i.status.toLowerCase() === 'done' || i.status.toLowerCase() === 'shipped')
+          .reduce((sum, i) => sum + (Number(i.storyPoints) || 0), 0);
+      });
+      const validPoints = closedPoints.filter((p) => p > 0);
+      if (validPoints.length > 0) {
+        rollingVelocity = Math.round(validPoints.reduce((a, b) => a + b, 0) / validPoints.length);
+      }
+    }
+
+    // Workload distribution by user for the target sprint
+    const userWorkloadMap = new Map<string, { user: User; points: number; count: number }>();
+    users.forEach((u) => {
+      userWorkloadMap.set(u.id, { user: u, points: 0, count: 0 });
+    });
+
+    let unassignedPoints = 0;
+    let unassignedCount = 0;
+
+    sprintIssues.forEach((issue) => {
+      const pts = Number(issue.storyPoints) || 0;
+      if (issue.assigneeId && userWorkloadMap.has(issue.assigneeId)) {
+        const item = userWorkloadMap.get(issue.assigneeId)!;
+        item.points += pts;
+        item.count += 1;
+      } else {
+        unassignedPoints += pts;
+        unassignedCount += 1;
+      }
+    });
+
+    // Recommended capacity per developer
+    const activeAssignees = users.filter((u) => u.role !== 'Viewer');
+    const perDevCapacity =
+      activeAssignees.length > 0
+        ? Math.max(6, Math.round(rollingVelocity / activeAssignees.length))
+        : 10;
+
+    const userBreakdowns = Array.from(userWorkloadMap.values())
+      .filter(
+        (w) =>
+          w.points > 0 ||
+          w.count > 0 ||
+          w.user.role === 'Member' ||
+          w.user.role === 'Admin'
+      )
+      .map((w) => {
+        const capacityLimit = perDevCapacity;
+        const utilizationPct = capacityLimit > 0 ? Math.round((w.points / capacityLimit) * 100) : 0;
+        const isOver = utilizationPct > 100;
+        return {
+          ...w,
+          capacityLimit,
+          utilizationPct,
+          isOver,
+        };
+      })
+      .sort((a, b) => b.points - a.points);
+
+    const teamUtilizationPct =
+      rollingVelocity > 0 ? Math.round((totalPointsCommitted / rollingVelocity) * 100) : 100;
+    const isTeamOver = teamUtilizationPct > 115;
+
+    return {
+      targetSprint,
+      totalPointsCommitted,
+      rollingVelocity,
+      teamUtilizationPct,
+      isTeamOver,
+      unassignedPoints,
+      unassignedCount,
+      userBreakdowns,
+    };
+  }, [activeSprint, plannedSprints, closedSprints, localIssues, allProjectIssues, users]);
 
   // Drag and drop handler to move issues between sprints and backlog
   const handleDropIssue = async (e: React.DragEvent, targetSprintId: string | null) => {
@@ -424,6 +524,63 @@ export function BacklogView({
               {lbl}
             </span>
           ))}
+
+          {/* Doc-Linked Spec Readiness Guardrail (5+ pts requiring architectural spec) */}
+          {(Number(issue.storyPoints) || 0) >= 5 && (!issue.links || issue.links.length === 0) && (
+            <span
+              className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 flex-shrink-0"
+              title="Guardrail: High complexity (5+ pts) task lacks a linked Architecture Decision Record (ADR) or PRD spec."
+            >
+              <FileText className="w-3 h-3 text-amber-500" />
+              <span>No Spec</span>
+            </span>
+          )}
+
+          {/* Code-Truth: Git PR Pill & Stagnation Alert */}
+          {issue.gitLinks && issue.gitLinks.length > 0 ? (
+            <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
+              {issue.gitLinks.map((git) => {
+                const isMerged = git.status === 'MERGED';
+                const isOpen = git.status === 'OPEN';
+                const ageHours = git.createdAt
+                  ? (Date.now() - new Date(git.createdAt).getTime()) / (1000 * 60 * 60)
+                  : 0;
+                const isStagnant = isOpen && ageHours > 24;
+                return (
+                  <a
+                    key={git.id}
+                    href={git.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium transition ${
+                      isMerged
+                        ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20'
+                        : isStagnant
+                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                        : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
+                    }`}
+                    title={
+                      isStagnant
+                        ? `PR ${git.refName} waiting on review for >${Math.round(ageHours)}h`
+                        : `PR ${git.refName} (${git.status})`
+                    }
+                  >
+                    <GitPullRequest className="w-3 h-3" />
+                    <span>{git.refName}</span>
+                    {isStagnant && <span className="text-[9px] font-bold text-amber-500">stalled</span>}
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            issue.status.toLowerCase().includes('review') ? (
+              <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex-shrink-0">
+                <GitPullRequest className="w-3 h-3" />
+                <span>Review</span>
+              </span>
+            ) : null
+          )}
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -610,6 +767,147 @@ export function BacklogView({
           )}
         </div>
       </div>
+
+      {/* Live Capacity Drawer & Rolling Velocity Guardrails */}
+      {capacityMetrics.targetSprint && (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 shadow-xs overflow-hidden transition-all duration-200">
+          <div className="p-4 bg-slate-50/70 dark:bg-slate-850/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <Gauge className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                    Sprint Capacity Budget & Velocity Guardrails
+                  </h3>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    {capacityMetrics.targetSprint.name}
+                  </span>
+                  {capacityMetrics.isTeamOver ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                      <ShieldAlert className="w-3 h-3" />
+                      Overcommitted ({capacityMetrics.teamUtilizationPct}%)
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <CheckCircle className="w-3 h-3" />
+                      Capacity Balanced ({capacityMetrics.teamUtilizationPct}%)
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">
+                    {capacityMetrics.totalPointsCommitted} pts committed
+                  </span>{' '}
+                  against {capacityMetrics.rollingVelocity} pts 3-sprint rolling velocity baseline.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowCapacityDrawer((prev) => !prev)}
+              className="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              {showCapacityDrawer ? 'Collapse Workload' : 'Expand Workload'}
+            </button>
+          </div>
+
+          {showCapacityDrawer && (
+            <div className="p-4 space-y-3 text-xs">
+              {/* Team Progress Bar */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                  <span>Team Velocity Utilization</span>
+                  <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                    {capacityMetrics.totalPointsCommitted} / {capacityMetrics.rollingVelocity} pts ({capacityMetrics.teamUtilizationPct}%)
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      capacityMetrics.isTeamOver
+                        ? 'bg-rose-500'
+                        : capacityMetrics.teamUtilizationPct > 85
+                        ? 'bg-amber-500'
+                        : 'bg-emerald-500'
+                    }`}
+                    style={{ width: `${Math.min(100, capacityMetrics.teamUtilizationPct)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Developer Workload Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 pt-1">
+                {capacityMetrics.userBreakdowns.map((w) => (
+                  <div
+                    key={w.user.id}
+                    className={`p-2.5 rounded-xl border transition ${
+                      w.isOver
+                        ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60'
+                        : 'bg-slate-50/50 dark:bg-slate-850/40 border-slate-200 dark:border-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <UserAvatar user={w.user} size="xs" />
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 truncate text-[11px]">
+                          {w.user.name}
+                        </span>
+                      </div>
+                      <span
+                        className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                          w.isOver
+                            ? 'bg-rose-500/20 text-rose-700 dark:text-rose-400'
+                            : 'bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        {w.points} pts
+                      </span>
+                    </div>
+
+                    <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden mb-1">
+                      <div
+                        className={`h-1.5 rounded-full transition-all ${
+                          w.isOver ? 'bg-rose-500' : 'bg-indigo-500'
+                        }`}
+                        style={{ width: `${Math.min(100, w.utilizationPct)}%` }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] text-slate-400">
+                      <span>Max {w.capacityLimit} pts</span>
+                      {w.isOver ? (
+                        <span className="text-rose-600 dark:text-rose-400 font-bold">
+                          +{w.points - w.capacityLimit} pts over
+                        </span>
+                      ) : (
+                        <span>{w.utilizationPct}% target</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {capacityMetrics.unassignedPoints > 0 && (
+                  <div className="p-2.5 rounded-xl border border-dashed border-amber-300 dark:border-amber-800/60 bg-amber-50/30 dark:bg-amber-950/20 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+                        Unassigned Pool
+                      </span>
+                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-400">
+                        {capacityMetrics.unassignedPoints} pts
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-amber-700/80 dark:text-amber-400/80 mt-1">
+                      {capacityMetrics.unassignedCount} task(s) in sprint lack assignees
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 1. Active Sprint Container (Top Container) */}
       {activeSprint && (

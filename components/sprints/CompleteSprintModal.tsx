@@ -29,12 +29,16 @@ export function CompleteSprintModal({
     (i) => !(i.status === 'Done' || i.status.toLowerCase().includes('done') || i.status.toLowerCase().includes('shipped'))
   );
 
+  const completedPoints = completedIssues.reduce((sum, i) => sum + (Number(i.storyPoints) || 0), 0);
+  const incompletePoints = incompleteIssues.reduce((sum, i) => sum + (Number(i.storyPoints) || 0), 0);
+
   const hasIncomplete = incompleteIssues.length > 0;
   const hasPlannedSprints = plannedSprints.length > 0;
 
   // If no planned sprint exists, auto-select 'backlog'
   const defaultTarget = hasPlannedSprints ? plannedSprints[0].id : 'backlog';
   const [rolloverTarget, setRolloverTarget] = useState<string>(defaultTarget);
+  const [carryoverReason, setCarryoverReason] = useState<string>('review_bottleneck');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -110,7 +114,7 @@ export function CompleteSprintModal({
               </div>
               <div>
                 <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 block">
-                  Completed
+                  Completed ({completedPoints} pts)
                 </span>
                 <span className="text-[11px] text-emerald-600 dark:text-emerald-400">
                   Issues finished
@@ -124,7 +128,7 @@ export function CompleteSprintModal({
               </div>
               <div>
                 <span className="text-xs font-bold text-amber-800 dark:text-amber-300 block">
-                  Incomplete
+                  Incomplete ({incompletePoints} pts)
                 </span>
                 <span className="text-[11px] text-amber-600 dark:text-amber-400">
                   Require rollover
@@ -137,17 +141,17 @@ export function CompleteSprintModal({
             <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-center space-y-1">
               <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
               <p className="font-bold text-xs">
-                All {sprintIssues.length} issues completed!
+                All {sprintIssues.length} issues completed! ({completedPoints} pts)
               </p>
               <p className="text-[11px] text-emerald-700/80 dark:text-emerald-300/80">
-                Sprint goals successfully met. Ready to close sprint.
+                Sprint goals successfully met. Ready to close sprint without rollover.
               </p>
             </div>
           ) : (
             <div className="space-y-3 pt-2">
               <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-semibold text-xs">
                 <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>Move {incompleteIssues.length} incomplete issue(s) to:</span>
+                <span>Move {incompleteIssues.length} incomplete issue(s) ({incompletePoints} pts) to:</span>
               </div>
 
               <div className="space-y-2">
@@ -171,6 +175,27 @@ export function CompleteSprintModal({
                     <span>No planned sprints available. Issues will be moved to the Product Backlog.</span>
                   </p>
                 )}
+              </div>
+
+              {/* Carryover Attribution & Triage */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center justify-between">
+                  <span>Carryover Attribution:</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Zero-panic retro taxonomy</span>
+                </label>
+                <select
+                  value={carryoverReason}
+                  onChange={(e) => setCarryoverReason(e.target.value)}
+                  className="w-full text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white font-medium"
+                >
+                  <option value="review_bottleneck">PR & Code Review Bottleneck (Code finished, awaiting approvals)</option>
+                  <option value="scope_creep">Scope Injected Mid-Sprint (New requirements added after commitment)</option>
+                  <option value="dependency_blocked">External Dependency Blocked (Third-party API / team blockers)</option>
+                  <option value="estimation_miss">Underestimated Technical Complexity (Architectural discovery)</option>
+                </select>
+                <div className="p-2.5 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/50 text-[11px] text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                  <span className="font-semibold">No-Shame Retro Note:</span> {incompletePoints} pts will be archived with this attribution so the team velocity is not misconstrued as underperformance.
+                </div>
               </div>
             </div>
           )}

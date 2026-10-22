@@ -20,6 +20,7 @@ import {
   Layers,
   Sparkles,
   ChevronDown,
+  GitPullRequest,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FullIssue, User, Swimlane, Sprint, isDemoIssue } from '@/lib/types';
@@ -900,6 +901,61 @@ export function KanbanBoardView({
                                 />
                               </div>
                             </div>
+                          )}
+
+                          {/* Code-Truth: Git PR Pill & Stagnation Radar */}
+                          {issue.gitLinks && issue.gitLinks.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {issue.gitLinks.map((git) => {
+                                const isMerged = git.status === 'MERGED';
+                                const isOpen = git.status === 'OPEN';
+                                const ageHours = git.createdAt
+                                  ? (Date.now() - new Date(git.createdAt).getTime()) / (1000 * 60 * 60)
+                                  : 0;
+                                const isStagnant = isOpen && ageHours > 24;
+
+                                return (
+                                  <a
+                                    key={git.id}
+                                    href={git.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium transition ${
+                                      isMerged
+                                        ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:bg-purple-500/20'
+                                        : isStagnant
+                                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                                        : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20'
+                                    }`}
+                                    title={
+                                      isStagnant
+                                        ? `PR ${git.refName} waiting on review for >${Math.round(ageHours)}h`
+                                        : `Git PR: ${git.refName} (${git.status})`
+                                    }
+                                  >
+                                    <GitPullRequest className="w-3 h-3 flex-shrink-0" />
+                                    <span className="truncate max-w-[90px]">{git.refName}</span>
+                                    {isMerged ? (
+                                      <span className="text-[9px] opacity-75 font-semibold">merged</span>
+                                    ) : isStagnant ? (
+                                      <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400">stalled</span>
+                                    ) : (
+                                      <span className="text-[9px] opacity-75">review</span>
+                                    )}
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            issue.status.toLowerCase().includes('review') ? (
+                              <div className="flex items-center gap-1 mb-2">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                                  <GitPullRequest className="w-3 h-3 flex-shrink-0" />
+                                  <span>PR in Review</span>
+                                </span>
+                              </div>
+                            ) : null
                           )}
 
                           {/* Footer: Due Date, Story Points, Comments & Assignee with Active Status Dot */}
