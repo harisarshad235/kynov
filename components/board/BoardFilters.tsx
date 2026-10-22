@@ -329,10 +329,10 @@ export function BoardFilters({
   }, [filters.selectedEnvironment]);
 
   return (
-    <div className="relative z-20 bg-white/95 dark:bg-[#0D121D]/95 backdrop-blur-md border-b border-slate-200/90 dark:border-slate-800/80 px-4 py-2 text-xs transition-colors">
-      <div className="flex items-center justify-between gap-3 min-w-0 flex-nowrap overflow-x-auto scrollbar-none">
+    <div className="relative z-30 bg-white/95 dark:bg-[#0D121D]/95 backdrop-blur-md border-b border-slate-200/90 dark:border-slate-800/80 px-4 py-2 text-xs transition-colors overflow-visible">
+      <div className="flex items-center justify-between gap-3 min-w-0 flex-wrap lg:flex-nowrap overflow-visible">
         {/* Left Side: Consolidated 1-Line Filters */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap overflow-visible relative">
           {/* Quick "My Issues" Filter */}
           <button
             type="button"
@@ -361,7 +361,7 @@ export function BoardFilters({
 
           {/* 1. Priority Dropdown */}
           {!filters.isJqlMode && (
-            <div className="relative z-30" ref={priorityDropdownRef}>
+            <div className={`relative ${priorityDropdownOpen ? 'z-50' : 'z-30'}`} ref={priorityDropdownRef}>
               <button
                 type="button"
                 onClick={() => {
@@ -386,7 +386,7 @@ export function BoardFilters({
               </button>
 
               {priorityDropdownOpen && (
-                <div className="absolute left-0 top-full mt-1.5 w-52 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute left-0 top-full mt-1.5 w-56 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-1.5 z-[100] animate-fade-in">
                   <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100 dark:border-slate-800 mb-1">
                     <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
                       Filter by Priority
@@ -446,7 +446,7 @@ export function BoardFilters({
 
           {/* 2. Issue Type Dropdown (Bug, Story, Task, Epic) */}
           {!filters.isJqlMode && (
-            <div className="relative z-30" ref={typeDropdownRef}>
+            <div className={`relative ${typeDropdownOpen ? 'z-50' : 'z-30'}`} ref={typeDropdownRef}>
               <button
                 type="button"
                 onClick={() => {
@@ -471,7 +471,7 @@ export function BoardFilters({
               </button>
 
               {typeDropdownOpen && (
-                <div className="absolute left-0 top-full mt-1.5 w-52 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute left-0 top-full mt-1.5 w-52 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-1.5 z-[100] animate-fade-in">
                   <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100 dark:border-slate-800 mb-1">
                     <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
                       Filter by Issue Type
@@ -532,7 +532,7 @@ export function BoardFilters({
 
           {/* 3. Data Scope Dropdown (Live & Demo) */}
           {!filters.isJqlMode && (
-            <div className="relative z-30" ref={envDropdownRef}>
+            <div className={`relative ${envDropdownOpen ? 'z-50' : 'z-30'}`} ref={envDropdownRef}>
               <button
                 type="button"
                 onClick={() => {
@@ -557,7 +557,7 @@ export function BoardFilters({
               </button>
 
               {envDropdownOpen && (
-                <div className="absolute left-0 top-full mt-1.5 w-60 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute left-0 top-full mt-1.5 w-60 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-1.5 z-[100] animate-fade-in">
                   <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100 dark:border-slate-800 mb-1">
                     <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
                       Data Classification
