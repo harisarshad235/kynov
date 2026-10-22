@@ -33,6 +33,10 @@ export async function ensureSprintTables(dbInstance?: ReturnType<typeof getDb>) 
   } catch {}
 
   try {
+    await db.run(sql`ALTER TABLE sprints ADD COLUMN capacity_overrides TEXT`);
+  } catch {}
+
+  try {
     await db.run(sql`
       UPDATE sprints
       SET status = CASE
@@ -577,15 +581,28 @@ export async function getActiveSprintMetricsAction(projectId?: string): Promise<
     }
 
     const db = getDb();
-    const issueRows = await db.all<{ story_points: number; status: string }>(sql`
-      SELECT story_points, status FROM issues
+    const issueRows = await db.all<{ key: string; type: string; issue_type: string; parent_issue_id: string | null; story_points: number; status: string }>(sql`
+      SELECT key, type, issue_type, parent_issue_id, story_points, status FROM issues
       WHERE sprint_id = ${active.id}
     `);
+
+    // Fetch all child issues in project to check which epics have children
+    const childRows = await db.all<{ parent_issue_id: string }>(sql`
+      SELECT parent_issue_id FROM issues
+      WHERE parent_issue_id IS NOT NULL
+    `);
+    const epicsWithChildrenSet = new Set(childRows.map((c) => c.parent_issue_id));
 
     let totalPoints = 0;
     let completedPoints = 0;
 
     for (const row of issueRows) {
+      const isEpic = (row.type || '').toUpperCase() === 'EPIC' || (row.issue_type || '').toUpperCase() === 'EPIC';
+      // Prevent double counting: if this is an Epic with child issues, do not count its parent points
+      if (isEpic && epicsWithChildrenSet.has(row.key)) {
+        continue;
+      }
+
       const pts = Number(row.story_points) || 0;
       totalPoints += pts;
       const st = (row.status || '').toLowerCase();
@@ -612,3 +629,63 @@ export async function getActiveSprintMetricsAction(projectId?: string): Promise<
     };
   }
 }
+
+/**
+ * Server Action to update or override a user's sprint capacity budget (e.g. PTO, schedule change).
+ */
+export async function updateSprintCapacityOverrideAction({
+  sprintId,
+  userId,
+  capacityLimit,
+}: {
+  sprintId: string;
+  userId: string;
+  capacityLimit: number | null; // null to reset to default
+}): Promise<{ success: boolean; error?: string; capacityOverrides?: string | null }> {
+  try {
+    await requireRole(['Admin', 'Member']);
+    const id = sprintId?.trim();
+    const uid = userId?.trim();
+    if (!id || !uid) return { success: false, error: 'Sprint ID and User ID are required.' };
+
+    const db = getDb();
+    await ensureSprintTables(db);
+
+    const existing = await db.query.sprints.findFirst({
+      where: eq(sprints.id, id),
+    });
+
+    if (!existing) {
+      return { success: false, error: 'Sprint not found.' };
+    }
+
+    let overrides: Record<string, number> = {};
+    if (existing.capacityOverrides) {
+      try {
+        overrides = JSON.parse(existing.capacityOverrides) || {};
+      } catch {}
+    }
+
+    if (capacityLimit === null || capacityLimit === undefined) {
+      delete overrides[uid];
+    } else {
+      overrides[uid] = Math.max(0, Math.round(Number(capacityLimit)));
+    }
+
+    const updatedOverridesStr = Object.keys(overrides).length > 0 ? JSON.stringify(overrides) : null;
+
+    await db
+      .update(sprints)
+      .set({
+        capacityOverrides: updatedOverridesStr,
+      })
+      .where(eq(sprints.id, id));
+
+    revalidatePath('/[orgSlug]', 'layout');
+    return { success: true, capacityOverrides: updatedOverridesStr };
+  } catch (err: any) {
+    console.error('Failed to update sprint capacity overrides:', err);
+    return { success: false, error: err.message || 'Failed to update capacity limit.' };
+  }
+}
+

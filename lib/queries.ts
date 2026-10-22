@@ -22,6 +22,7 @@ import { FullIssue, FullDocument, WorkspaceMetrics, User, Sprint, Project, Swiml
 import { desc, asc, sql } from 'drizzle-orm';
 import { ensureProjectRbacTables } from './rbac';
 import { getUserOrganizationsAction } from '@/app/actions/org';
+import { shouldCountInSprintCapacity } from './agile-capacity';
 
 export async function getWorkspaceData(
   currentUser?: User | null,
@@ -346,9 +347,11 @@ export async function getWorkspaceData(
   const completed = fullIssues.filter((i) => i.status === 'Done').length;
   const inProgress = fullIssues.filter((i) => i.status === 'In Progress').length;
   const openBugs = fullIssues.filter((i) => i.type === 'Bug' && i.status !== 'Done').length;
-  const totalPoints = fullIssues.reduce((acc, curr) => acc + (curr.storyPoints || 0), 0);
+  const totalPoints = fullIssues
+    .filter((curr) => shouldCountInSprintCapacity(curr, fullIssues))
+    .reduce((acc, curr) => acc + (curr.storyPoints || 0), 0);
   const completedPoints = fullIssues
-    .filter((i) => i.status === 'Done')
+    .filter((curr) => curr.status === 'Done' && shouldCountInSprintCapacity(curr, fullIssues))
     .reduce((acc, curr) => acc + (curr.storyPoints || 0), 0);
   const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 

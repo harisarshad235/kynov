@@ -37,6 +37,7 @@ import { CommandPalette } from '@/components/command/CommandPalette';
 import { KeyboardShortcutsModal } from '@/components/command/KeyboardShortcutsModal';
 import { playCardErrorSound } from '@/lib/sound';
 import { Building2, Users as UsersIcon } from 'lucide-react';
+import { shouldCountInSprintCapacity } from '@/lib/agile-capacity';
 
 import {
   moveIssueStatus,
@@ -447,14 +448,12 @@ export function Workspace({
       const s = (i.status || '').toLowerCase();
       return s === 'done' || s === 'completed' || s === 'closed';
     });
-    const completedPoints = doneIssues.reduce(
-      (sum, i) => sum + (Number(i.storyPoints) || 0),
-      0
-    );
-    const totalPoints = projectIssues.reduce(
-      (sum, i) => sum + (Number(i.storyPoints) || 0),
-      0
-    );
+    const completedPoints = doneIssues
+      .filter((i) => shouldCountInSprintCapacity(i, projectIssues))
+      .reduce((sum, i) => sum + (Number(i.storyPoints) || 0), 0);
+    const totalPoints = projectIssues
+      .filter((i) => shouldCountInSprintCapacity(i, projectIssues))
+      .reduce((sum, i) => sum + (Number(i.storyPoints) || 0), 0);
     const completed = doneIssues.length;
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
     return {

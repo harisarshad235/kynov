@@ -1,17 +1,17 @@
 # Graph Report - kynov  (2026-10-22)
 
 ## Corpus Check
-- 194 files · ~242,990 words
+- 196 files · ~245,445 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 8 file(s) not represented in the graph (top: (none) 2, .ico 2, .example 1)
 
 ## Summary
-- 2918 nodes · 4703 edges · 223 communities (61 shown, 162 thin omitted)
+- 2932 nodes · 4759 edges · 230 communities (70 shown, 160 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 13 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2ff7bc47`
+- Built from commit: `474f32d6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -21,11 +21,11 @@
 - schema.ts
 - ServiceWorkerGlobalScope
 - Event
-- (auth)/layout.tsx
+- KanbanBoard.tsx
 - getDb
-- react
+- KynovLogo
 - actions/auth.ts
-- lucide-react
+- User
 - types.ts
 - Workspace.tsx
 - getCurrentUser
@@ -201,23 +201,28 @@
 - __WORKER_ENTRYPOINT_BRAND
 - __WORKFLOW_ENTRYPOINT_BRAND
 - app/layout.tsx
-- dashboard/layout.tsx
+- react
 - triage-labels.md
 - 3. Functional Requirements & Feature Specifications
 - lib/auth.ts
-- (workspace)/layout.tsx
+- auth-section-1.tsx
+- lucide-react
 - Kynov User Operations Manual & Visual Handbook
+- presence/route.ts
 - Kynov | Agile Velocity & Sprint Tracking
 - Agent skills
 - screenshots/README.md
 - react
-- getCurrentUser
+- EditSprintModal.tsx
+- reports/page.tsx
+- notifications.ts
 - 2. Core User Journeys & User Stories
 - UserAvatar
 - schemas.ts
-- [...nextauth]/route.ts
+- next
 - Kynov Capabilities
 - Kynov Capabilities
+- SprintHeader.tsx
 - Available Endpoints
 - Kynov Technical Architecture & Decision Records
 - Dashboard Overview
@@ -230,6 +235,8 @@
 - High-Output Architecture
 - Kynov Agentic Skill & Context Specification
 - Kynov Agentic Skill & Context Specification
+- KeyboardShortcutsModal.tsx
+- join/page.tsx
 - Kynov vs. Jira Comparison
 - Kynov vs. Linear Comparison
 - Kynov vs. Jira Comparison
@@ -240,33 +247,33 @@
 - public/docs/terms.md
 
 ## God Nodes (most connected - your core abstractions)
-1. `getDb` - 117 edges
+1. `getDb` - 118 edges
 2. `react` - 74 edges
 3. `lucide-react` - 63 edges
 4. `next` - 63 edges
-5. `ensureEnterpriseSchema()` - 53 edges
-6. `requireRole()` - 52 edges
-7. `User` - 51 edges
+5. `User` - 53 edges
+6. `requireRole()` - 53 edges
+7. `ensureEnterpriseSchema()` - 53 edges
 8. `getCurrentUser()` - 50 edges
-9. `Workspace()` - 45 edges
+9. `Workspace()` - 46 edges
 10. `FullIssue` - 36 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `3.4 Confluence-Style Documentation & Asset Directory` --references--> `GoogleSheetEmbedModal()`  [INFERRED]
   PRD.md → components/docs/GoogleSheetEmbedModal.tsx
+- `UpdateSprintResult` --references--> `Sprint`  [EXTRACTED]
+  app/actions/sprints.ts → db/schema.ts
 - `SprintHeaderProps` --references--> `Sprint`  [EXTRACTED]
   components/backlog/SprintHeader.tsx → db/schema.ts
-- `UserProfileModalProps` --references--> `User`  [EXTRACTED]
-  components/profile/UserProfileModal.tsx → db/schema.ts
+- `DocumentReaderModalProps` --references--> `FullDocument`  [EXTRACTED]
+  components/docs/DocumentReaderModal.tsx → lib/types.ts
 - `ProjectMembersPanelProps` --references--> `User`  [EXTRACTED]
   components/projects/ProjectMembersPanel.tsx → db/schema.ts
-- `HeaderProps` --references--> `User`  [EXTRACTED]
-  components/shell/Header.tsx → db/schema.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (223 total, 162 thin omitted)
+## Communities (230 total, 160 thin omitted)
 
 ### Community 0 - "cloudflare-env.d.ts"
 Cohesion: 0.00
@@ -278,7 +285,7 @@ Nodes (29): DocExplorer(), DocExplorerProps, INITIAL_DOC_ITEMS, DocItemCard(), D
 
 ### Community 2 - "schema.ts"
 Cohesion: 0.03
-Nodes (69): BurndownDay, CFDDayMetric, getCumulativeFlowDiagramAction(), getSprintBurndownAction(), getVelocityReportAction(), VelocitySprintMetric, AGILE_ISSUE_TYPES, AgileIssueType (+61 more)
+Nodes (63): BurndownDay, CFDDayMetric, getCumulativeFlowDiagramAction(), getSprintBurndownAction(), getVelocityReportAction(), VelocitySprintMetric, AGILE_ISSUE_TYPES, AgileIssueType (+55 more)
 
 ### Community 3 - "ServiceWorkerGlobalScope"
 Cohesion: 0.04
@@ -288,41 +295,45 @@ Nodes (7): AbortSignal, EventSource, EventTarget, MessagePort, ServiceWorkerGlob
 Cohesion: 0.04
 Nodes (12): CloseEvent, CustomEvent, EmailEvent, ErrorEvent, Event, ExtendableEvent, FetchEvent, MessageEvent (+4 more)
 
-### Community 6 - "getDb"
-Cohesion: 0.14
-Nodes (42): getIssueGitLinksAction(), GitRefInput, linkGitRefAction(), syncGithubWebhookAction(), unlinkGitRefAction(), addIssueLink(), addSubtask(), createIssue() (+34 more)
+### Community 5 - "KanbanBoard.tsx"
+Cohesion: 0.16
+Nodes (18): DEFAULT_WIP_LIMITS, getColBadgeColor(), getDotColor(), KanbanBoardView(), VelocityMetricsWidget(), VelocityMetricsWidgetProps, IssueStatus, ColumnConfig (+10 more)
 
-### Community 7 - "react"
-Cohesion: 0.07
-Nodes (46): LoginContent(), LoginPage(), SignupContent(), SignupPage(), AwaitingApprovalPage(), dynamic, metadata, KynovVsJiraPage() (+38 more)
+### Community 6 - "getDb"
+Cohesion: 0.15
+Nodes (40): getIssueGitLinksAction(), GitRefInput, linkGitRefAction(), syncGithubWebhookAction(), unlinkGitRefAction(), addIssueLink(), addSubtask(), createIssue() (+32 more)
+
+### Community 7 - "KynovLogo"
+Cohesion: 0.17
+Nodes (19): AwaitingApprovalPage(), KynovVsJiraPage(), metadata, KynovVsLinearPage(), metadata, ForgotPasswordPage(), metadata, PrivacyPage() (+11 more)
 
 ### Community 8 - "actions/auth.ts"
 Cohesion: 0.06
-Nodes (62): loginAction(), loginUser(), registerUser(), requestPasswordReset(), resetPassword(), dynamic, GET(), dynamic (+54 more)
+Nodes (56): loginAction(), loginUser(), registerUser(), requestPasswordReset(), resetPassword(), POST(), dynamic, GET() (+48 more)
 
-### Community 9 - "lucide-react"
-Cohesion: 0.27
-Nodes (10): ActiveSprintMetrics, getActiveSprintMetricsAction(), OrganizationSwitcher(), OrganizationSwitcherProps, ProjectSwitcher(), OrganizationViewProps, Sidebar(), loadMetrics() (+2 more)
+### Community 9 - "User"
+Cohesion: 0.11
+Nodes (26): ActiveSprintMetrics, getActiveSprintMetricsAction(), BoardFiltersProps, CommandPaletteProps, DashboardOverviewProps, LandingHeroProps, LandingNavbarProps, LandingPageProps (+18 more)
 
 ### Community 10 - "types.ts"
-Cohesion: 0.07
-Nodes (48): UpdateSprintResult, WorkspaceData, BacklogViewProps, KanbanBoardProps, CommandPaletteProps, DashboardOverviewProps, CreateDocModalProps, DocumentsViewProps (+40 more)
+Cohesion: 0.10
+Nodes (28): WorkspaceData, BacklogViewProps, KanbanBoardProps, CreateDocModalProps, DocumentsViewProps, CreateIssueModalProps, EPIC_COLORS, IssueDetailDrawerProps (+20 more)
 
 ### Community 11 - "Workspace.tsx"
-Cohesion: 0.09
-Nodes (33): createDocument(), deleteDocument(), updateDocument(), addComment(), setActiveOrganizationAction(), approveUser(), inviteUser(), removeUser() (+25 more)
+Cohesion: 0.11
+Nodes (30): addComment(), setActiveOrganizationAction(), approveUser(), inviteUser(), removeUser(), switchPersona(), updateUserProfile(), updateUserRole() (+22 more)
 
 ### Community 12 - "getCurrentUser"
-Cohesion: 0.16
-Nodes (24): assignUserToProject(), canManageProjectMembersAction(), createProject(), deleteProject(), getAllOrganizationProjectsAction(), getAllUserProjectAssignmentsAction(), getProjectMembersAction(), getUserProjectsAction() (+16 more)
+Cohesion: 0.20
+Nodes (21): createOrganizationAction(), assignUserToProject(), canManageProjectMembersAction(), createProject(), deleteProject(), getProjectMembersAction(), getUserProjectsAction(), removeUserFromProject() (+13 more)
 
 ### Community 13 - "test-ranking.ts"
 Cohesion: 0.08
 Nodes (29): BASE_62, decrementInteger(), DEFAULT_NUMERIC_STEP, generateKeyBetween(), generateNKeysBetween(), getIntegerLength(), getIntegerPart(), incrementInteger() (+21 more)
 
 ### Community 14 - "org.ts"
-Cohesion: 0.18
-Nodes (20): acceptOrgInviteAction(), addOrganizationMemberAction(), createOrganizationAction(), createOrgInviteLinkAction(), getOrganizationActivityAction(), getOrganizationMembersAction(), logOrgActivityAction(), removeOrganizationMemberAction() (+12 more)
+Cohesion: 0.15
+Nodes (27): getMyNotifications(), markNotificationsRead(), acceptOrgInviteAction(), addOrganizationMemberAction(), createOrgInviteLinkAction(), getActiveOrganizationAction(), getOrganizationActivityAction(), getOrganizationMembersAction() (+19 more)
 
 ### Community 15 - "generate-docs-manifest.ts"
 Cohesion: 0.07
@@ -330,7 +341,7 @@ Nodes (26): dynamic, APP_DIR, ASSETS_DIR, buildManualContent(), DOCS_DIR, genera
 
 ### Community 17 - "package.json"
 Cohesion: 0.10
-Nodes (19): eslintConfig, description, name, private, version, drizzle-kit, eslint, eslint-config-next (+11 more)
+Nodes (18): eslintConfig, description, name, private, version, drizzle-kit, eslint, eslint-config-next (+10 more)
 
 ### Community 18 - "TransformStream"
 Cohesion: 0.10
@@ -341,8 +352,8 @@ Cohesion: 0.11
 Nodes (18): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+10 more)
 
 ### Community 21 - "BacklogView.tsx"
-Cohesion: 0.08
-Nodes (45): completeSprintAction(), createSprintAction(), deleteSprintAction(), ensureSprintTables(), getActiveSprintAction(), getProjectSprintsAction(), moveIssueSprintAction(), startSprintAction() (+37 more)
+Cohesion: 0.13
+Nodes (33): completeSprintAction(), createSprintAction(), deleteSprintAction(), ensureSprintTables(), getActiveSprintAction(), getProjectSprintsAction(), moveIssueSprintAction(), startSprintAction() (+25 more)
 
 ### Community 22 - "ArtifactsRepo"
 Cohesion: 0.11
@@ -417,20 +428,36 @@ Cohesion: 0.67
 Nodes (3): RequestInitCfPropertiesVaryAcceptHeader, RequestInitCfPropertiesVaryAcceptLanguageHeader, RequestInitCfPropertiesVaryHeader
 
 ### Community 184 - "app/layout.tsx"
-Cohesion: 0.29
-Nodes (6): geistMono, inter, jsonLd, metadata, RootLayout(), ThemeProvider()
+Cohesion: 0.24
+Nodes (7): geistMono, inter, jsonLd, metadata, RootLayout(), ThemeProvider(), next-themes
+
+### Community 185 - "react"
+Cohesion: 0.25
+Nodes (8): ExplicitLandingPage(), HomePage(), SessionRedirector(), FeatureGrid(), LandingHero(), LandingNavbar(), LandingPage(), react
 
 ### Community 187 - "3. Functional Requirements & Feature Specifications"
 Cohesion: 0.22
 Nodes (7): 3.1 Authentication & Workspace Partitioning, 3.2 Real-Time Collaborative Presence Engine, 3.3 Kanban Board & Agile Filters, 3.4 Confluence-Style Documentation & Asset Directory, 3. Functional Requirements & Feature Specifications, 7.1 Core Entities, 7. Data Requirements & SQLite D1 Schema
 
 ### Community 188 - "lib/auth.ts"
-Cohesion: 0.17
-Nodes (16): addCommentAction(), AddCommentResult, extractAndFilterMentionTargets(), DELETE(), GET(), POST(), attachments, issueComments (+8 more)
+Cohesion: 0.13
+Nodes (22): addCommentAction(), AddCommentResult, extractAndFilterMentionTargets(), DELETE(), GET(), ProjectSettingsPageProps, attachments, comments (+14 more)
+
+### Community 189 - "auth-section-1.tsx"
+Cohesion: 0.28
+Nodes (9): LoginContent(), LoginPage(), SignupContent(), SignupPage(), AuthSectionOne(), AuthSectionOneProps, Default(), FloatingField() (+1 more)
+
+### Community 190 - "lucide-react"
+Cohesion: 0.29
+Nodes (6): logoutUser(), dynamic, metadata, ResetPasswordForm(), ResetPasswordPage(), lucide-react
 
 ### Community 191 - "Kynov User Operations Manual & Visual Handbook"
 Cohesion: 0.07
 Nodes (26): 1. Welcome to Kynov (The 30-Second Overview), 2. Getting Started & Authentication Flows (Step-by-Step with Visuals), 3. Daily Work & The Agile Board (For Team Members & Viewers), 4. Sprint Planning & Delivery (For Project Managers & Leads), 5. Team Management & Governance (For Workspace Admins), 6. Architecture Explained in 2 Minutes (Layman Edition), 7. Visual Screenshot Asset Catalog & Placeholder Index, Flow 2.1: Creating Your Account (+18 more)
+
+### Community 192 - "presence/route.ts"
+Cohesion: 0.35
+Nodes (10): buildPayload(), dynamic, ensureTableFallback(), GET(), getD1(), NO_CACHE, POST(), PresenceRecord (+2 more)
 
 ### Community 193 - "Kynov | Agile Velocity & Sprint Tracking"
 Cohesion: 0.40
@@ -444,25 +471,33 @@ Nodes (5): Agent skills, Domain docs, Issue tracker, This is NOT the Next.js you
 Cohesion: 0.46
 Nodes (5): DashboardContent(), DashboardContentProps, DashboardPage(), OrgDashboardPage(), DashboardSkeleton()
 
-### Community 200 - "getCurrentUser"
-Cohesion: 0.13
-Nodes (22): getMyNotifications(), markNotificationsRead(), clearNotificationAction(), EnrichedNotification, getUserNotificationsAction(), markAllNotificationsAsReadAction(), markNotificationAsReadAction(), getActiveOrganizationAction() (+14 more)
+### Community 198 - "EditSprintModal.tsx"
+Cohesion: 0.35
+Nodes (10): addDaysToDate(), calculateDayDiff(), detectPreset(), DURATION_DAYS_MAP, DurationPreset, EditSprintModal(), EditSprintModalProps, formatYMD() (+2 more)
+
+### Community 199 - "reports/page.tsx"
+Cohesion: 0.36
+Nodes (6): dynamic, GET(), dynamic, ProjectReportsPage(), MetricsReportView(), getWorkspaceData()
+
+### Community 200 - "notifications.ts"
+Cohesion: 0.42
+Nodes (8): clearNotificationAction(), EnrichedNotification, getUserNotificationsAction(), markAllNotificationsAsReadAction(), markNotificationAsReadAction(), formatRelativeTime(), NotificationBell(), NotificationBellProps
 
 ### Community 201 - "2. Core User Journeys & User Stories"
 Cohesion: 0.40
 Nodes (5): 2. Core User Journeys & User Stories, Journey 1: New Employee Onboarding & Admin Approval Gate, Journey 2: Sprint Execution & Drag-and-Drop Kanban Flow, Journey 3: Living Knowledge & Architecture Decision Records (ADRs), Journey 4: Real-Time Cross-Browser Team Presence
 
 ### Community 202 - "UserAvatar"
-Cohesion: 0.12
-Nodes (20): logoutUser(), UserProfileModal(), UserProfileModalProps, Header(), HeaderProps, AddUserModalProps, RoleConfig, RoleDropdown() (+12 more)
+Cohesion: 0.18
+Nodes (14): AddUserModalProps, RoleConfig, RoleDropdown(), RoleDropdownProps, ROLES, TeamManagementView(), TeamManagementViewProps, getGradientIndex() (+6 more)
 
 ### Community 203 - "schemas.ts"
-Cohesion: 0.20
-Nodes (12): documents, sanitizePlainText(), createCommentSchema, createDocumentSchema, createIssueSchema, inviteUserSchema, loginSchema, passwordResetConfirmSchema (+4 more)
+Cohesion: 0.14
+Nodes (16): createDocument(), deleteDocument(), updateDocument(), documents, sanitizeMarkdown(), sanitizePlainText(), createDocumentSchema, createIssueSchema (+8 more)
 
-### Community 204 - "[...nextauth]/route.ts"
-Cohesion: 0.67
-Nodes (3): dynamic, GET(), POST()
+### Community 204 - "next"
+Cohesion: 0.08
+Nodes (8): dynamic, GET(), POST(), metadata, metadata, metadata, RegisterFormProps, next
 
 ### Community 205 - "Kynov Capabilities"
 Cohesion: 0.33
@@ -471,6 +506,10 @@ Nodes (5): Constraints & Rate Limits, Documentation & API References, Kynov Capa
 ### Community 206 - "Kynov Capabilities"
 Cohesion: 0.33
 Nodes (5): Constraints & Rate Limits, Documentation & API References, Kynov Capabilities & AI Operations, Required Inputs & Prerequisites, What I Can Accomplish & Capabilities
+
+### Community 207 - "SprintHeader.tsx"
+Cohesion: 0.47
+Nodes (4): formatDateDisplay(), formatTimelineRange(), SprintHeader(), SprintHeaderProps
 
 ### Community 208 - "Available Endpoints"
 Cohesion: 0.50
@@ -512,25 +551,29 @@ Nodes (3): Core Capabilities, Kynov — Next-Gen Agile Velocity & Sprint Trackin
 Cohesion: 0.50
 Nodes (3): Developer API Execution, High-Output Architecture, Kynov Architecture & Feature Showcase
 
+### Community 220 - "KeyboardShortcutsModal.tsx"
+Cohesion: 0.50
+Nodes (3): KeyboardShortcutsModalProps, ShortcutItem, SHORTCUTS
+
 ## Knowledge Gaps
-- **19 isolated node(s):** `RFC-2253`, `RFC-3339`, `RFC-5246`, `RFC-9440`, `react-dom` (+14 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2070 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **162 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **19 isolated node(s):** `RFC-5246`, `RFC-2253`, `RFC-9440`, `RFC-3339`, `RFC-2046` (+14 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2073 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **160 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `3. Functional Requirements & Feature Specifications` connect `3. Functional Requirements & Feature Specifications` to `Product Requirements Document (PRD) — KYNOV`?**
-  _High betweenness centrality (0.381) - this node is a cross-community bridge._
-- **What connects `RFC-2253`, `RFC-3339`, `RFC-5246` to the rest of the system?**
+  _High betweenness centrality (0.365) - this node is a cross-community bridge._
+- **What connects `RFC-5246`, `RFC-2253`, `RFC-9440` to the rest of the system?**
   _19 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `cloudflare-env.d.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.0021390374331550803 - nodes in this community are weakly interconnected._
 - **Why does `3.4 Confluence-Style Documentation & Asset Directory` connect `3. Functional Requirements & Feature Specifications` to `glass-folder-cards.tsx`?**
-  _High betweenness centrality (0.374) - this node is a cross-community bridge._
+  _High betweenness centrality (0.361) - this node is a cross-community bridge._
 - **Should `glass-folder-cards.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.12612612612612611 - nodes in this community are weakly interconnected._
 - **Why does `GoogleSheetEmbedModal()` connect `glass-folder-cards.tsx` to `3. Functional Requirements & Feature Specifications`?**
-  _High betweenness centrality (0.374) - this node is a cross-community bridge._
+  _High betweenness centrality (0.361) - this node is a cross-community bridge._
 - **Should `schema.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.03184005923731951 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.031659882406151064 - nodes in this community are weakly interconnected._

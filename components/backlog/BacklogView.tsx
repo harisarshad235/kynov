@@ -21,6 +21,10 @@ import {
   Users,
   ShieldAlert,
   CheckCircle,
+  Edit2,
+  X,
+  RotateCcw,
+  Check,
 } from 'lucide-react';
 import { FullIssue, User, Swimlane, Sprint } from '@/lib/types';
 import { getTypeConfig, getPriorityConfig } from '@/lib/config';
@@ -33,9 +37,18 @@ import {
   createSprintAction,
   deleteSprintAction,
   moveIssueSprintAction,
+  updateSprintCapacityOverrideAction,
 } from '@/app/actions/sprints';
 import { updateIssue } from '@/app/actions/issues';
 import { playCardPickupSound, playCardDropSound } from '@/lib/sound';
+import {
+  calculateSprintCommittedPoints,
+  getRollupStoryPoints,
+  isEpicIssue,
+  resolveUserCapacityLimit,
+  shouldCountInSprintCapacity,
+  parseCapacityOverrides,
+} from '@/lib/agile-capacity';
 
 interface BacklogViewProps {
   issues: FullIssue[];
@@ -167,24 +180,34 @@ export function BacklogView({
   // Live Capacity Drawer & Rolling Velocity Guardrails
   const [showCapacityDrawer, setShowCapacityDrawer] = useState(true);
 
+  // Editable Developer Sprint Capacity State
+  const [editingCapacityUserId, setEditingCapacityUserId] = useState<string | null>(null);
+  const [editingCapacityValue, setEditingCapacityValue] = useState<string>('');
+  const [localCapacityOverrides, setLocalCapacityOverrides] = useState<Record<string, Record<string, number>>>({});
+  const [isSavingCapacity, setIsSavingCapacity] = useState(false);
+
   const capacityMetrics = useMemo(() => {
     const targetSprint = activeSprint || plannedSprints[0] || null;
     const sprintIssues = targetSprint
       ? localIssues.filter((i) => i.sprintId === targetSprint.id)
       : [];
 
-    const totalPointsCommitted = sprintIssues.reduce(
-      (sum, i) => sum + (Number(i.storyPoints) || 0),
-      0
-    );
+    const effectiveAllIssues = allProjectIssues && allProjectIssues.length > 0 ? allProjectIssues : localIssues;
 
-    // Calculate historical rolling velocity from closed sprints, fallback to 24 points
+    // Issue 1 Fix: Calculate committed points ONLY from executable tickets (exclude parent Epics with children)
+    const totalPointsCommitted = calculateSprintCommittedPoints(sprintIssues, effectiveAllIssues);
+
+    // Calculate historical rolling velocity from closed sprints (excluding double-counted epics)
     let rollingVelocity = 24;
     if (closedSprints.length > 0) {
       const closedPoints = closedSprints.map((cs) => {
-        const issuesInClosed = (allProjectIssues || localIssues).filter((i) => i.sprintId === cs.id);
+        const issuesInClosed = effectiveAllIssues.filter((i) => i.sprintId === cs.id);
         return issuesInClosed
-          .filter((i) => i.status.toLowerCase() === 'done' || i.status.toLowerCase() === 'shipped')
+          .filter(
+            (i) =>
+              shouldCountInSprintCapacity(i, effectiveAllIssues) &&
+              ((i.status || '').toLowerCase() === 'done' || (i.status || '').toLowerCase() === 'shipped')
+          )
           .reduce((sum, i) => sum + (Number(i.storyPoints) || 0), 0);
       });
       const validPoints = closedPoints.filter((p) => p > 0);
@@ -203,6 +226,10 @@ export function BacklogView({
     let unassignedCount = 0;
 
     sprintIssues.forEach((issue) => {
+      // Issue 1 Fix: Only executable leaf tickets consume developer capacity
+      if (!shouldCountInSprintCapacity(issue, effectiveAllIssues)) {
+        return;
+      }
       const pts = Number(issue.storyPoints) || 0;
       if (issue.assigneeId && userWorkloadMap.has(issue.assigneeId)) {
         const item = userWorkloadMap.get(issue.assigneeId)!;
@@ -214,12 +241,13 @@ export function BacklogView({
       }
     });
 
-    // Recommended capacity per developer
     const activeAssignees = users.filter((u) => u.role !== 'Viewer');
-    const perDevCapacity =
-      activeAssignees.length > 0
-        ? Math.max(6, Math.round(rollingVelocity / activeAssignees.length))
-        : 10;
+    const sprintOverrides = targetSprint
+      ? {
+          ...parseCapacityOverrides(targetSprint.capacityOverrides),
+          ...(localCapacityOverrides[targetSprint.id] || {}),
+        }
+      : {};
 
     const userBreakdowns = Array.from(userWorkloadMap.values())
       .filter(
@@ -230,7 +258,17 @@ export function BacklogView({
           w.user.role === 'Admin'
       )
       .map((w) => {
-        const capacityLimit = perDevCapacity;
+        // Issue 2 Fix: Resolve user capacity limit (Custom Override -> Personal Historical Velocity -> Fallback)
+        const resolved = resolveUserCapacityLimit({
+          userId: w.user.id,
+          sprint: targetSprint,
+          closedSprints,
+          allIssues: effectiveAllIssues,
+          teamRollingVelocity: rollingVelocity,
+          activeDevsCount: activeAssignees.length,
+          localOverride: sprintOverrides[w.user.id],
+        });
+        const capacityLimit = resolved.limit;
         const utilizationPct = capacityLimit > 0 ? Math.round((w.points / capacityLimit) * 100) : 0;
         const isOver = utilizationPct > 100;
         return {
@@ -238,17 +276,22 @@ export function BacklogView({
           capacityLimit,
           utilizationPct,
           isOver,
+          isCustom: resolved.isCustom,
+          source: resolved.source,
         };
       })
       .sort((a, b) => b.points - a.points);
 
+    const totalTeamCapacity =
+      userBreakdowns.reduce((sum, w) => sum + w.capacityLimit, 0) || rollingVelocity;
     const teamUtilizationPct =
-      rollingVelocity > 0 ? Math.round((totalPointsCommitted / rollingVelocity) * 100) : 100;
+      totalTeamCapacity > 0 ? Math.round((totalPointsCommitted / totalTeamCapacity) * 100) : 0;
     const isTeamOver = teamUtilizationPct > 115;
 
     return {
       targetSprint,
       totalPointsCommitted,
+      totalTeamCapacity,
       rollingVelocity,
       teamUtilizationPct,
       isTeamOver,
@@ -256,7 +299,97 @@ export function BacklogView({
       unassignedCount,
       userBreakdowns,
     };
-  }, [activeSprint, plannedSprints, closedSprints, localIssues, allProjectIssues, users]);
+  }, [
+    activeSprint,
+    plannedSprints,
+    closedSprints,
+    localIssues,
+    allProjectIssues,
+    users,
+    localCapacityOverrides,
+  ]);
+
+  const handleSaveCapacity = async (userId: string) => {
+    if (!capacityMetrics.targetSprint) return;
+    const sprintId = capacityMetrics.targetSprint.id;
+    const num = Math.max(0, parseInt(editingCapacityValue, 10) || 0);
+
+    // Optimistic update
+    setLocalCapacityOverrides((prev) => {
+      const updated = {
+        ...prev,
+        [sprintId]: {
+          ...(prev[sprintId] || {}),
+          [userId]: num,
+        },
+      };
+      try {
+        localStorage.setItem(`kynov_sprint_capacity_${sprintId}`, JSON.stringify(updated[sprintId]));
+      } catch {}
+      return updated;
+    });
+    setEditingCapacityUserId(null);
+
+    // Persist via Server Action
+    setIsSavingCapacity(true);
+    try {
+      const res = await updateSprintCapacityOverrideAction({
+        sprintId,
+        userId,
+        capacityLimit: num,
+      });
+      if (res.success && onUpdateSprint && capacityMetrics.targetSprint) {
+        onUpdateSprint({
+          ...capacityMetrics.targetSprint,
+          capacityOverrides: res.capacityOverrides ?? null,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save capacity override:', err);
+    } finally {
+      setIsSavingCapacity(false);
+    }
+  };
+
+  const handleResetCapacity = async (userId: string) => {
+    if (!capacityMetrics.targetSprint) return;
+    const sprintId = capacityMetrics.targetSprint.id;
+
+    // Optimistic reset
+    setLocalCapacityOverrides((prev) => {
+      const current = { ...(prev[sprintId] || {}) };
+      delete current[userId];
+      const updated = {
+        ...prev,
+        [sprintId]: current,
+      };
+      try {
+        localStorage.setItem(`kynov_sprint_capacity_${sprintId}`, JSON.stringify(current));
+      } catch {}
+      return updated;
+    });
+    setEditingCapacityUserId(null);
+
+    // Persist via Server Action
+    setIsSavingCapacity(true);
+    try {
+      const res = await updateSprintCapacityOverrideAction({
+        sprintId,
+        userId,
+        capacityLimit: null,
+      });
+      if (res.success && onUpdateSprint && capacityMetrics.targetSprint) {
+        onUpdateSprint({
+          ...capacityMetrics.targetSprint,
+          capacityOverrides: res.capacityOverrides ?? null,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to reset capacity override:', err);
+    } finally {
+      setIsSavingCapacity(false);
+    }
+  };
 
   // Drag and drop handler to move issues between sprints and backlog
   const handleDropIssue = async (e: React.DragEvent, targetSprintId: string | null) => {
@@ -634,18 +767,47 @@ export function BacklogView({
             </span>
           )}
 
-          {/* Inline Story Points Click-to-Edit */}
-          {editingPointsKey === issue.key ? (
-            <input
-              type="number"
-              min={0}
-              max={100}
-              autoFocus
-              value={editingPointsValue}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => setEditingPointsValue(e.target.value)}
-              onKeyDown={async (e) => {
-                if (e.key === 'Enter') {
+          {/* Story Points (Dynamic Rollup for Epics with child tickets) */}
+          {(() => {
+            const effectiveAll = allProjectIssues && allProjectIssues.length > 0 ? allProjectIssues : localIssues;
+            const rollup = getRollupStoryPoints(issue, effectiveAll);
+
+            if (rollup.isRollup) {
+              return (
+                <span
+                  title={`Dynamic Rollup: ${rollup.points} pts from ${rollup.childCount} child tickets (does not double-count in capacity)`}
+                  className="inline-flex items-center gap-1 text-xs font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 px-2 py-0.5 rounded shadow-2xs select-none"
+                >
+                  <Layers className="w-3 h-3 text-indigo-500 shrink-0" />
+                  <span>{rollup.points} pts</span>
+                  <span className="text-[9px] font-sans font-semibold uppercase tracking-wider text-indigo-500">Rollup</span>
+                </span>
+              );
+            }
+
+            return editingPointsKey === issue.key ? (
+              <input
+                type="number"
+                min={0}
+                max={100}
+                autoFocus
+                value={editingPointsValue}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => setEditingPointsValue(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key === 'Enter') {
+                    const pts = Math.max(0, parseInt(editingPointsValue, 10) || 0);
+                    setLocalIssues((prev) =>
+                      prev.map((i) => (i.key === issue.key ? { ...i, storyPoints: pts } : i))
+                    );
+                    setEditingPointsKey(null);
+                    await updateIssue(issue.key, { storyPoints: pts });
+                    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('kynov:issue-updated'));
+                  } else if (e.key === 'Escape') {
+                    setEditingPointsKey(null);
+                  }
+                }}
+                onBlur={async () => {
                   const pts = Math.max(0, parseInt(editingPointsValue, 10) || 0);
                   setLocalIssues((prev) =>
                     prev.map((i) => (i.key === issue.key ? { ...i, storyPoints: pts } : i))
@@ -653,36 +815,25 @@ export function BacklogView({
                   setEditingPointsKey(null);
                   await updateIssue(issue.key, { storyPoints: pts });
                   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('kynov:issue-updated'));
-                } else if (e.key === 'Escape') {
-                  setEditingPointsKey(null);
-                }
-              }}
-              onBlur={async () => {
-                const pts = Math.max(0, parseInt(editingPointsValue, 10) || 0);
-                setLocalIssues((prev) =>
-                  prev.map((i) => (i.key === issue.key ? { ...i, storyPoints: pts } : i))
-                );
-                setEditingPointsKey(null);
-                await updateIssue(issue.key, { storyPoints: pts });
-                if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('kynov:issue-updated'));
-              }}
-              className="w-16 text-xs font-mono font-bold text-center text-slate-800 dark:text-slate-100 bg-blue-50/50 dark:bg-blue-950/40 border border-blue-500 rounded px-1 py-0.5 focus:outline-none"
-            />
-          ) : (
-            <span
-              onClick={(e) => {
-                if (!isViewer && !isReadOnly) {
-                  e.stopPropagation();
-                  setEditingPointsKey(issue.key);
-                  setEditingPointsValue(String(issue.storyPoints ?? 0));
-                }
-              }}
-              title={!isViewer && !isReadOnly ? 'Click to edit points directly' : undefined}
-              className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2 py-0.5 rounded cursor-pointer transition"
-            >
-              {issue.storyPoints || 0} pts
-            </span>
-          )}
+                }}
+                className="w-16 text-xs font-mono font-bold text-center text-slate-800 dark:text-slate-100 bg-blue-50/50 dark:bg-blue-950/40 border border-blue-500 rounded px-1 py-0.5 focus:outline-none"
+              />
+            ) : (
+              <span
+                onClick={(e) => {
+                  if (!isViewer && !isReadOnly) {
+                    e.stopPropagation();
+                    setEditingPointsKey(issue.key);
+                    setEditingPointsValue(String(issue.storyPoints ?? 0));
+                  }
+                }}
+                title={!isViewer && !isReadOnly ? 'Click to edit points directly' : undefined}
+                className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2 py-0.5 rounded cursor-pointer transition"
+              >
+                {issue.storyPoints || 0} pts
+              </span>
+            );
+          })()}
 
           {/* Inline Assignee Quick Reassign Dropdown */}
           <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -800,7 +951,7 @@ export function BacklogView({
                   <span className="font-semibold text-slate-700 dark:text-slate-200">
                     {capacityMetrics.totalPointsCommitted} pts committed
                   </span>{' '}
-                  against {capacityMetrics.rollingVelocity} pts 3-sprint rolling velocity baseline.
+                  against {capacityMetrics.totalTeamCapacity} pts sprint capacity budget ({capacityMetrics.rollingVelocity} pts rolling velocity baseline).
                 </p>
               </div>
             </div>
@@ -820,7 +971,7 @@ export function BacklogView({
                 <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
                   <span>Team Velocity Utilization</span>
                   <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                    {capacityMetrics.totalPointsCommitted} / {capacityMetrics.rollingVelocity} pts ({capacityMetrics.teamUtilizationPct}%)
+                    {capacityMetrics.totalPointsCommitted} / {capacityMetrics.totalTeamCapacity} pts ({capacityMetrics.teamUtilizationPct}%)
                   </span>
                 </div>
                 <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
@@ -876,13 +1027,92 @@ export function BacklogView({
                     </div>
 
                     <div className="flex items-center justify-between text-[10px] text-slate-400">
-                      <span>Max {w.capacityLimit} pts</span>
-                      {w.isOver ? (
-                        <span className="text-rose-600 dark:text-rose-400 font-bold">
-                          +{w.points - w.capacityLimit} pts over
-                        </span>
+                      {editingCapacityUserId === w.user.id ? (
+                        <div className="flex items-center gap-1 w-full" onClick={(e) => e.stopPropagation()}>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300 text-[10px]">Max:</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            autoFocus
+                            value={editingCapacityValue}
+                            onChange={(e) => setEditingCapacityValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveCapacity(w.user.id);
+                              if (e.key === 'Escape') setEditingCapacityUserId(null);
+                            }}
+                            className="w-12 px-1 py-0.5 text-[11px] font-mono font-bold bg-white dark:bg-slate-800 border border-indigo-500 rounded text-slate-900 dark:text-white focus:outline-none"
+                          />
+                          <span className="text-[10px]">pts</span>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveCapacity(w.user.id)}
+                            disabled={isSavingCapacity}
+                            className="p-1 rounded bg-indigo-600 text-white hover:bg-indigo-500 cursor-pointer"
+                            title="Save custom capacity"
+                          >
+                            <Check className="w-2.5 h-2.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingCapacityUserId(null)}
+                            className="p-1 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 cursor-pointer"
+                            title="Cancel"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
                       ) : (
-                        <span>{w.utilizationPct}% target</span>
+                        <>
+                          <div className="flex items-center gap-1 group/cap">
+                            <span>Max {w.capacityLimit} pts</span>
+                            {w.isCustom ? (
+                              <span
+                                className="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 px-1 rounded cursor-help"
+                                title="Custom sprint capacity override"
+                              >
+                                Custom
+                              </span>
+                            ) : w.source === 'historical' ? (
+                              <span
+                                className="text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1 rounded cursor-help"
+                                title="Calculated from developer's rolling historical velocity"
+                              >
+                                Avg
+                              </span>
+                            ) : null}
+                            {!isViewer && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingCapacityUserId(w.user.id);
+                                  setEditingCapacityValue(String(w.capacityLimit));
+                                }}
+                                className="opacity-0 group-hover/cap:opacity-100 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-0.5 rounded transition cursor-pointer"
+                                title="Edit capacity for this sprint (e.g. PTO, part-time)"
+                              >
+                                <Edit2 className="w-2.5 h-2.5" />
+                              </button>
+                            )}
+                            {w.isCustom && !isViewer && (
+                              <button
+                                type="button"
+                                onClick={() => handleResetCapacity(w.user.id)}
+                                className="opacity-0 group-hover/cap:opacity-100 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 p-0.5 rounded transition cursor-pointer"
+                                title="Reset to default baseline velocity"
+                              >
+                                <RotateCcw className="w-2.5 h-2.5" />
+                              </button>
+                            )}
+                          </div>
+                          {w.isOver ? (
+                            <span className="text-rose-600 dark:text-rose-400 font-bold">
+                              +{w.points - w.capacityLimit} pts over
+                            </span>
+                          ) : (
+                            <span>{w.utilizationPct}% target</span>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -926,7 +1156,7 @@ export function BacklogView({
         >
           {(() => {
             const sprintIssues = localIssues.filter((i) => i.sprintId === activeSprint.id);
-            const totalPoints = sprintIssues.reduce((sum, i) => sum + (i.storyPoints || 0), 0);
+            const totalPoints = calculateSprintCommittedPoints(sprintIssues, allProjectIssues || localIssues);
 
             return (
               <>
@@ -958,7 +1188,7 @@ export function BacklogView({
       <div className="space-y-4">
         {plannedSprints.map((sprint) => {
           const sprintIssues = localIssues.filter((i) => i.sprintId === sprint.id);
-          const totalPoints = sprintIssues.reduce((sum, i) => sum + (i.storyPoints || 0), 0);
+          const totalPoints = calculateSprintCommittedPoints(sprintIssues, allProjectIssues || localIssues);
 
           return (
             <div
@@ -1075,9 +1305,9 @@ export function BacklogView({
             <div className="divide-y divide-slate-200 dark:divide-slate-700">
               {closedSprints.map((sprint) => {
                 const sprintIssues = localIssues.filter((i) => i.sprintId === sprint.id);
-                const totalPoints = sprintIssues.reduce(
-                  (sum, i) => sum + (i.storyPoints || 0),
-                  0
+                const totalPoints = calculateSprintCommittedPoints(
+                  sprintIssues,
+                  allProjectIssues || localIssues
                 );
                 const completedAt = (sprint as any).completed_at || (sprint as any).completedAt;
 

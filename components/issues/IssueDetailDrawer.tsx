@@ -503,7 +503,10 @@ export function IssueDetailDrawer({
       priority: selectedPriority,
       assigneeId: selectedAssigneeId,
       parentIssueId: selectedType === 'EPIC' ? null : selectedParentId,
-      storyPoints: Number(selectedPoints) || 0,
+      storyPoints:
+        selectedType === 'EPIC' && epicChildIssues.length > 0
+          ? epicChildIssues.reduce((sum, c) => sum + (Number(c.storyPoints) || 0), 0)
+          : Number(selectedPoints) || 0,
       sprintId: selectedSprintId,
       epicColor: selectedType === 'EPIC' ? selectedEpicColor : undefined,
       environment: selectedEnvironment,
@@ -1855,16 +1858,39 @@ export function IssueDetailDrawer({
 
             {/* Story Points */}
             <div className="bg-[#111723]/80 rounded-2xl border border-[#1e293b]/60 p-3.5 space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Story Points</span>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={selectedPoints}
-                onChange={(e) => setSelectedPoints(parseInt(e.target.value) || 0)}
-                disabled={isViewer}
-                className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500/60 transition"
-              />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block">Story Points</span>
+                {selectedType === 'EPIC' && epicChildIssues.length > 0 && (
+                  <span className="text-[9px] font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full">
+                    Dynamic Rollup ({epicChildIssues.length} issues)
+                  </span>
+                )}
+              </div>
+              {selectedType === 'EPIC' && epicChildIssues.length > 0 ? (
+                <div className="flex items-center justify-between bg-[#0c121e] border border-indigo-500/30 rounded-lg p-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-mono font-bold text-indigo-400">
+                      {epicChildIssues.reduce((sum, c) => sum + (Number(c.storyPoints) || 0), 0)} pts
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      (Aggregated from linked tickets)
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-indigo-400 font-medium bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/60">
+                    Auto-sum
+                  </span>
+                </div>
+              ) : (
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={selectedPoints}
+                  onChange={(e) => setSelectedPoints(parseInt(e.target.value) || 0)}
+                  disabled={isViewer}
+                  className="w-full bg-[#0c121e] border border-[#1e293b] rounded-lg p-2.5 text-xs text-white font-mono focus:outline-none focus:border-blue-500/60 transition"
+                />
+              )}
             </div>
 
             {/* Priority */}

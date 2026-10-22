@@ -227,6 +227,7 @@ export const sprints = sqliteTable(
     goal: text('goal'),
     startDate: text('start_date'), // ISO yyyy-mm-dd
     endDate: text('end_date'),
+    capacityOverrides: text('capacity_overrides'), // JSON string: { [userId: string]: number }
     createdAt: createdAt(),
   },
   (t) => [
