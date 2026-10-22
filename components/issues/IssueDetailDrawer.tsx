@@ -19,6 +19,7 @@ import {
   Clock,
   Calendar,
   AlertTriangle,
+  AlertCircle,
   CheckCircle2,
   ExternalLink,
   ChevronRight,
@@ -821,17 +822,28 @@ export function IssueDetailDrawer({
         aria-modal="true"
         aria-labelledby="issue-drawer-title"
       >
-        {/* Toast Notification Banner */}
+        {/* Toast Notification (Floating bottom-right pill, never overlapping header) */}
         {toastMessage && (
           <div
-            className={`absolute top-4 left-6 right-6 z-50 p-3 rounded-lg text-xs font-medium flex items-center justify-between shadow-lg transition-all ${
+            className={`fixed bottom-6 right-6 z-[100] max-w-sm px-4 py-2.5 rounded-xl shadow-2xl border backdrop-blur-md flex items-center gap-2.5 text-xs font-medium animate-in fade-in slide-in-from-bottom-2 duration-150 pointer-events-auto ${
               toastMessage.type === 'error'
-                ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/40'
-                : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40'
+                ? 'bg-rose-950/95 text-rose-100 border-rose-500/40 shadow-rose-950/50'
+                : 'bg-slate-900/95 dark:bg-slate-800/95 text-white border-slate-700/80 shadow-black/50'
             }`}
+            role="status"
+            aria-live="polite"
           >
-            <span>{toastMessage.text}</span>
-            <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white">
+            {toastMessage.type === 'error' ? (
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            )}
+            <span className="flex-1">{toastMessage.text}</span>
+            <button
+              onClick={() => setToastMessage(null)}
+              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              aria-label="Dismiss toast"
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
